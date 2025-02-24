@@ -1,0 +1,55 @@
+:root {
+  /* Base colors */
+  --color-black: #000000;
+  --color-red: #c0392b;
+  --color-brown: #5d4037;
+  --color-teal: #008b8b;
+
+  /* Semantic color aliases */
+  --primary-color: var(--color-red);
+  --secondary-color: var(--color-teal);
+  --neutral-color: var(--color-black);
+  --accent-color: var(--color-brown);
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+li,
+ul {
+  list-style: none;
+}
+.bg-black {
+  background: #000;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+}
+.nav {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+.container {
+  max-width: 1440px;
+  width: 90%;
+  margin: 0 auto;
+}
+.nav ul {
+  color: #fff;
+}
+
+.flex {
+  display: flex;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.px {
+  padding: 0 10px;
+}
