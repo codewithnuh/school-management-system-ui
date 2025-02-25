@@ -1,4 +1,3 @@
-// theme.ts
 import { createTheme } from "@mui/material/styles";
 export const palette = {
   primary: {
@@ -7,8 +6,12 @@ export const palette = {
     dark: "#c0392b", // Optional: custom dark shade
     contrastText: "#fff", // Optional: text color on primary backgrounds
   },
+  secondary: {
+    main: "#2c2c2c",
+    text: "#fff",
+  },
   global: {
-    background: "#000000", //black  }
+    background: "#121212",
   },
 };
 const theme = createTheme({
@@ -16,9 +19,23 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         containedPrimary: {
-          backgroundColor: "#ff5733", // custom background for contained primary buttons
+          backgroundColor: palette.primary.dark, // custom background for contained primary buttons
           "&:hover": {
             backgroundColor: "#c0392b", // custom hover state
+          },
+        },
+        containedSecondary: {
+          backgroundColor: palette.secondary.main,
+          color: palette.secondary.text,
+        },
+        outlinedSecondary: {
+          borderColor: palette.primary.light,
+          color: palette.primary.light,
+        },
+        textSecondary: {
+          color: palette.secondary.text,
+          "&:hover": {
+            background: palette.secondary.main,
           },
         },
       },

@@ -1,6 +1,6 @@
 :root {
   /* Base colors */
-  --color-black: #000000;
+  --color-black: #121212;
   --color-red: #c0392b;
   --color-brown: #5d4037;
   --color-teal: #008b8b;
@@ -14,6 +14,7 @@
 * {
   box-sizing: border-box;
   margin: 0;
+
   padding: 0;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
@@ -21,10 +22,10 @@ li,
 ul {
   list-style: none;
 }
-.bg-black {
-  background: #000;
+header {
+  background: var(--neutral-color);
+  padding: 20px 0;
 }
-
 .btn-primary {
   background: var(--primary-color);
 }

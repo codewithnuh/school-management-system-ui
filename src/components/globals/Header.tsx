@@ -17,7 +17,7 @@ const Header = () => {
           </ul>
         </Box>
         <Stack direction={"row"} gap={2}>
-          <Button variant="contained" color="primary">
+          <Button variant="contained" size="small" color="primary">
             Sign Up
           </Button>
           <Box sx={{ display: { xs: "block", sm: "none" } }}>
