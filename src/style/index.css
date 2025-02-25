@@ -1,3 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap");
+
 :root {
   /* Base colors */
   --color-black: #121212;
@@ -10,26 +13,43 @@
   --secondary-color: var(--color-teal);
   --neutral-color: var(--color-black);
   --accent-color: var(--color-brown);
+
+  /* Font variables */
+  --heading-font: "Sora", Arial, sans-serif;
+  --body-font: "Manrope", Arial, sans-serif;
 }
+
 * {
   box-sizing: border-box;
   margin: 0;
-
   padding: 0;
-  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
-    "Lucida Sans", Arial, sans-serif;
+  font-family: var(--body-font) !important;
 }
+
+/* Apply heading font to all heading elements */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--heading-font) !important;
+}
+
 li,
 ul {
   list-style: none;
 }
+
 header {
   background: var(--neutral-color);
   padding: 20px 0;
 }
+
 .btn-primary {
   background: var(--primary-color);
 }
+
 .nav {
   display: flex;
   width: 100%;
@@ -37,11 +57,13 @@ header {
   justify-content: space-between;
   padding: 10px 0;
 }
+
 .container {
   max-width: 1440px;
   width: 90%;
   margin: 0 auto;
 }
+
 .nav ul {
   color: #fff;
 }
@@ -49,12 +71,15 @@ header {
 .flex {
   display: flex;
 }
+
 .justify-between {
   justify-content: space-between;
 }
+
 .px {
   padding: 0 10px;
 }
+
 .cta {
   background-color: var(--neutral-color);
   padding: 40px 0;
