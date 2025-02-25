@@ -3,6 +3,7 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 const CTA = () => {
   return (
     <div className="cta">
@@ -40,7 +41,7 @@ const CTA = () => {
           <Grid size={8}>
             <Typography
               variant="h3"
-              component="h1"
+              component="h3"
               sx={{
                 color: "#FFFFFF",
                 fontWeight: 700,
@@ -64,14 +65,35 @@ const CTA = () => {
                 sx={{
                   display: "flex",
                   gap: 2,
-                  padding: "10px 0",
+                  margin: "20px 0",
                   flexDirection: { xs: "column", sm: "row" },
                   justifyContent: { xs: "center", md: "flex-start" },
                 }}
-                component={"div"}
               >
-                <Button variant="contained">Learn More</Button>
-                <Button variant="outlined">Sign Up</Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="secondary"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                  }}
+                >
+                  Sign Up
+                </Button>
+
+                <Button
+                  variant="text"
+                  size="small"
+                  color="secondary"
+                  endIcon={<ArrowForwardIcon />}
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                  }}
+                >
+                  Learn More
+                </Button>
               </Box>
             </Box>
           </Grid>

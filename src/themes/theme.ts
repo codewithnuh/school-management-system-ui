@@ -49,6 +49,16 @@ const theme = createTheme({
         colorPrimary: palette.primary.main,
       },
     },
+    MuiTypography: {
+      styleOverrides: {
+        paragraph: {
+          color: "#fff",
+        },
+        h1: {
+          color: "#fff",
+        },
+      },
+    },
   },
 });
 
