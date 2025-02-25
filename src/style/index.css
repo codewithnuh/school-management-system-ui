@@ -54,3 +54,7 @@ header {
 .px {
   padding: 0 10px;
 }
+.cta {
+  background-color: var(--neutral-color);
+  padding: 40px 0;
+}

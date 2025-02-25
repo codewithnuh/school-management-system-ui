@@ -108,6 +108,7 @@ const Hero = () => {
                 height: { xs: "300px", sm: "400px", md: "500px" },
                 overflow: "hidden",
                 borderRadius: 2,
+                margin: "0 auto",
                 boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
               }}
             >

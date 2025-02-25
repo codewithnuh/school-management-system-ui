@@ -32,6 +32,10 @@ const theme = createTheme({
           borderColor: palette.primary.light,
           color: palette.primary.light,
         },
+        outlined: {
+          borderColor: palette.primary.dark,
+          color: palette.primary.main,
+        },
         textSecondary: {
           color: palette.secondary.text,
           "&:hover": {
