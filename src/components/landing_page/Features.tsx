@@ -30,7 +30,11 @@ const Features = () => {
       component={"section"}
       sx={{ backgroundColor: palette.global.background, padding: "80px 0" }}
     >
-      <Box component={"div"} className="container">
+      <Box
+        component={"div"}
+        className="container"
+        sx={{ textAlign: { xs: "center", md: "left" } }}
+      >
         <Grid columns={{ sm: 8, md: 16 }} container>
           <Grid size={8}>
             <Typography
@@ -78,8 +82,9 @@ const Features = () => {
           spacing={{ xs: 4, md: 6 }}
           // direction={{ xs: "column", md: "row" }}
           columns={{ sm: 1, md: 32 }}
-          sx={{ my: 1.3 }}
           alignItems="center"
+          justifyItems={"center"}
+          sx={{ textAlign: { xs: "center", md: "left", my: 1.3 } }}
         >
           {featuresContent.map((feature, index) => (
             <Grid size={10} key={index}>
@@ -113,11 +118,7 @@ const Features = () => {
             variant="contained"
             size="small"
             color="secondary"
-            sx={{
-              px: 3,
-              py: 1.5,
-              my: 1,
-            }}
+            sx={{ mt: 1.4 }}
           >
             Sign Up
           </Button>
@@ -127,10 +128,6 @@ const Features = () => {
             size="small"
             color="secondary"
             endIcon={<ArrowForwardIcon />}
-            sx={{
-              px: 3,
-              py: 1.5,
-            }}
           >
             Learn More
           </Button>

@@ -11,7 +11,9 @@ const Header = () => {
           <ul>
             <Stack direction={"row"} spacing={2}>
               {["Home", "About", "Contact", "Pricing"].map((item, index) => (
-                <li key={index}>{item}</li>
+                <li key={index}>
+                  <a href="/">{item}</a>
+                </li>
               ))}
             </Stack>
           </ul>

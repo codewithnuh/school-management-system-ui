@@ -4,8 +4,7 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid2"; // MUI v6 "Grid2" import
 import Typography from "@mui/material/Typography";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-
-const Hero = () => {
+const Features3 = () => {
   return (
     <Box
       sx={{
@@ -23,12 +22,7 @@ const Hero = () => {
         >
           {/* Left content section */}
           <Grid spacing={{ xs: 12, md: 6 }} size={8}>
-            <Box
-              sx={{
-                textAlign: { xs: "center", md: "left" },
-                order: { xs: 2, md: 1 },
-              }}
-            >
+            <Box sx={{ textAlign: { xs: "center", md: "left" } }}>
               <Typography
                 variant="overline"
                 sx={{
@@ -51,7 +45,7 @@ const Hero = () => {
                   fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
                 }}
               >
-                Transforming School Management for the Future
+                Streamline School Operations for Success
               </Typography>
 
               <Typography
@@ -62,12 +56,48 @@ const Hero = () => {
                   lineHeight: 1.6,
                 }}
               >
-                Our School Management System streamlines operations through
-                robust authentication, efficient academic management, and
-                comprehensive financial oversight. Experience seamless
-                integration of all school functions in one powerful platform.
+                Our School Management System enhances efficiency and simplifies
+                daily tasks. Experience seamless integration of academic,
+                administrative, and financial functions
               </Typography>
 
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  my: 3,
+                  flexDirection: { xs: "column", sm: "row" },
+                  justifyContent: { xs: "center", md: "flex-start" },
+                }}
+              >
+                <Box>
+                  <Typography
+                    component={"p"}
+                    sx={{ mb: 1 }}
+                    color="#fff"
+                    fontWeight={700}
+                  >
+                    For Teachers
+                  </Typography>
+                  <Typography component={"p"} color="#fff">
+                    Simplify Lesson planning and track student progress with
+                    ease
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    component={"p"}
+                    sx={{ mb: 1 }}
+                    color="#fff"
+                    fontWeight={700}
+                  >
+                    For Schools
+                  </Typography>
+                  <Typography component={"p"} color="#fff">
+                    Manage schools effortlessly and focus on student process
+                  </Typography>
+                </Box>
+              </Box>
               <Box
                 sx={{
                   display: "flex",
@@ -110,13 +140,11 @@ const Hero = () => {
               sx={{
                 position: "relative",
                 width: "100%",
-
                 height: { xs: "300px", sm: "400px", md: "500px" },
                 overflow: "hidden",
                 borderRadius: 2,
                 margin: "0 auto",
                 boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-                order: { xs: 1, md: 2 },
               }}
             >
               <img
@@ -137,4 +165,4 @@ const Hero = () => {
   );
 };
 
-export default Hero;
+export default Features3;
