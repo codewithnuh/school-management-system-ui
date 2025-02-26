@@ -35,7 +35,9 @@ h5,
 h6 {
   font-family: var(--heading-font) !important;
 }
-
+body {
+  background-color: var(--color-black);
+}
 li,
 ul {
   list-style: none;

@@ -3,6 +3,7 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import MobileMenu from "./MobileNav";
 import Container from "@mui/material/Container";
+import { Link } from "react-router";
 const Header = () => {
   return (
     <header>
@@ -21,9 +22,11 @@ const Header = () => {
             </ul>
           </Box>
           <Stack direction={"row"} gap={2}>
-            <Button variant="contained" size="small" color="primary">
-              Sign Up
-            </Button>
+            <Link to={"/sign-up"}>
+              <Button variant="contained" size="small" color="primary">
+                Sign Up
+              </Button>
+            </Link>
             <Box sx={{ display: { xs: "block", sm: "none" } }}>
               <MobileMenu />
             </Box>

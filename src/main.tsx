@@ -8,10 +8,22 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { ThemeProvider } from "@emotion/react";
 import theme from "./themes/theme.ts";
+import { BrowserRouter, Route, Routes } from "react-router";
+
+import Header from "./components/globals/Header.tsx";
+import LoginPage from "./components/landing_page/LoginPage.tsx";
+import ForgotPasswordPage from "./components/landing_page/ForgotPassword.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <App />
+      <BrowserRouter>
+        <Header />
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        </Routes>
+      </BrowserRouter>
     </ThemeProvider>
   </StrictMode>
 );
