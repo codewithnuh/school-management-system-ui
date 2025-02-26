@@ -31,7 +31,7 @@ const Features = () => {
       component={"section"}
       sx={{ backgroundColor: palette.global.background, padding: "80px 0" }}
     >
-      <Container>
+      <Container maxWidth="lg">
         <Box component={"div"} sx={{ textAlign: { xs: "center", md: "left" } }}>
           <Grid columns={{ sm: 8, md: 16 }} container>
             <Grid size={8}>
