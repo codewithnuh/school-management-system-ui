@@ -5,6 +5,7 @@ import { palette } from "../../themes/theme";
 import { AutoMode, Email, SecurityRounded } from "@mui/icons-material";
 import Button from "@mui/material/Button";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import Container from "@mui/material/Container";
 const Features = () => {
   const featuresContent = [
     {
@@ -30,109 +31,107 @@ const Features = () => {
       component={"section"}
       sx={{ backgroundColor: palette.global.background, padding: "80px 0" }}
     >
-      <Box
-        component={"div"}
-        className="container"
-        sx={{ textAlign: { xs: "center", md: "left" } }}
-      >
-        <Grid columns={{ sm: 8, md: 16 }} container>
-          <Grid size={8}>
-            <Typography
-              variant="subtitle1"
-              fontWeight={500}
-              fontSize={20}
-              sx={{ color: "#fff" }}
-            >
-              Feature
-            </Typography>
+      <Container>
+        <Box component={"div"} sx={{ textAlign: { xs: "center", md: "left" } }}>
+          <Grid columns={{ sm: 8, md: 16 }} container>
+            <Grid size={8}>
+              <Typography
+                variant="subtitle1"
+                fontWeight={500}
+                fontSize={20}
+                sx={{ color: "#fff" }}
+              >
+                Feature
+              </Typography>
 
-            <Typography
-              variant="h2"
-              component={"h2"}
-              sx={{
-                color: "#FFFFFF",
-                fontWeight: 700,
-                mb: 2,
-                fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
-              }}
-            >
-              Explore Our Advanced School Management Features
-            </Typography>
-          </Grid>
-          <Grid size={8}>
-            <Typography
-              variant="body1"
-              component={"p"}
-              sx={{
-                color: "#FFFFFF",
-                mb: 2,
-                fontSize: { xs: "1rem", sm: "1.2rem", md: "1.3rem" },
-              }}
-            >
-              Our School Management System comes packed with powerful features
-              designed to streamline operations and enhance productivity. From
-              user management to financial tracking, we cover every aspect of
-              school administration. Discover how our innovative tools can
-              transform your educational institution.
-            </Typography>
-          </Grid>
-        </Grid>
-        <Grid
-          container
-          spacing={{ xs: 4, md: 6 }}
-          // direction={{ xs: "column", md: "row" }}
-          columns={{ sm: 1, md: 32 }}
-          alignItems="center"
-          justifyItems={"center"}
-          sx={{ textAlign: { xs: "center", md: "left", my: 1.3 } }}
-        >
-          {featuresContent.map((feature, index) => (
-            <Grid size={10} key={index}>
-              <Box component={"div"}>
-                {feature.icon}
-                <Typography
-                  component={"p"}
-                  sx={{ margin: "3px 0" }}
-                  fontSize={"1.3rem"}
-                  fontWeight={600}
-                  color="#fff"
-                >
-                  {feature.title}
-                </Typography>
-                <Typography component={"p"} fontWeight={300} color="#fff">
-                  {feature.subtitle}
-                </Typography>
-              </Box>
+              <Typography
+                variant="h2"
+                component={"h2"}
+                sx={{
+                  color: "#FFFFFF",
+                  fontWeight: 700,
+                  mb: 2,
+                  fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+                }}
+              >
+                Explore Our Advanced School Management Features
+              </Typography>
             </Grid>
-          ))}
-        </Grid>
-        <Box
-          sx={{
-            display: "flex",
-            gap: 2,
-            flexDirection: { xs: "column", sm: "row" },
-            justifyContent: { xs: "center", md: "flex-start" },
-          }}
-        >
-          <Button
-            variant="contained"
-            size="small"
-            color="secondary"
-            sx={{ mt: 1.4 }}
+            <Grid size={8}>
+              <Typography
+                variant="body1"
+                component={"p"}
+                sx={{
+                  color: "#FFFFFF",
+                  mb: 2,
+                  fontSize: { xs: "1rem", sm: "1.2rem", md: "1.3rem" },
+                }}
+              >
+                Our School Management System comes packed with powerful features
+                designed to streamline operations and enhance productivity. From
+                user management to financial tracking, we cover every aspect of
+                school administration. Discover how our innovative tools can
+                transform your educational institution.
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid
+            container
+            spacing={{ xs: 4, md: 6 }}
+            // direction={{ xs: "column", md: "row" }}
+            columns={{ sm: 1, md: 32 }}
+            alignItems="center"
+            justifyItems={"center"}
+            sx={{ textAlign: { xs: "center", md: "left", my: 1.3 } }}
           >
-            Sign Up
-          </Button>
+            {featuresContent.map((feature, index) => (
+              <Grid size={10} key={index}>
+                <Box component={"div"}>
+                  {feature.icon}
+                  <Typography
+                    component={"p"}
+                    sx={{ margin: "3px 0" }}
+                    fontSize={"1.3rem"}
+                    fontWeight={600}
+                    color="#fff"
+                  >
+                    {feature.title}
+                  </Typography>
+                  <Typography component={"p"} fontWeight={300} color="#fff">
+                    {feature.subtitle}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: { xs: "center", md: "flex-start" },
+            }}
+          >
+            <Button
+              variant="contained"
+              size="small"
+              color="secondary"
+              sx={{ mt: 1.4 }}
+            >
+              Sign Up
+            </Button>
 
-          <Button
-            variant="text"
-            size="small"
-            color="secondary"
-            endIcon={<ArrowForwardIcon />}
-          >
-            Learn More
-          </Button>
+            <Button
+              variant="text"
+              size="small"
+              color="secondary"
+              endIcon={<ArrowForwardIcon />}
+            >
+              Learn More
+            </Button>
+          </Box>
         </Box>
-      </Box>
+      </Container>
     </Box>
   );
 };

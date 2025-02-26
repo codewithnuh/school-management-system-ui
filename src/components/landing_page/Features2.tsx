@@ -4,7 +4,7 @@ import Grid from "@mui/material/Grid2";
 import SecurityIcon from "@mui/icons-material/Security";
 import PaymentIcon from "@mui/icons-material/Payment";
 import PeopleIcon from "@mui/icons-material/People";
-
+import Container from "@mui/material/Container";
 const features = [
   {
     icon: <PeopleIcon fontSize="large" />,
@@ -34,48 +34,54 @@ const features = [
 const Features2 = () => {
   return (
     <Box sx={{ backgroundColor: "#121212", padding: "80px 0", color: "#fff" }}>
-      <Typography
-        component={"h2"}
-        fontWeight={700}
-        fontSize={"1.9rem"}
-        maxWidth={900}
-        margin={"0 auto"}
-        textAlign={"center"}
-        variant="h2"
-      >
-        Discover how our School Management System streamlines your educational
-        operations.
-      </Typography>
+      <Container>
+        <Typography
+          component={"h2"}
+          fontWeight={700}
+          fontSize={"1.9rem"}
+          maxWidth={900}
+          margin={"0 auto"}
+          textAlign={"center"}
+          variant="h2"
+        >
+          Discover how our School Management System streamlines your educational
+          operations.
+        </Typography>
 
-      <Grid
-        container
-        columns={{ sm: 16, md: 32 }}
-        alignItems={"top"}
-        sx={{
-          my: 10,
-          gap: 12,
-        }}
-        justifyContent={"center"}
-      >
-        {features.map((feature, index) => (
-          <Grid key={index} size={8} textAlign={"center"}>
-            <Box component={"div"}>
-              {feature.icon}
-              <Typography
-                variant="h3"
-                sx={{ my: 1.2 }}
-                fontWeight={500}
-                fontSize={"1.6rem"}
-              >
-                {feature.title}
-              </Typography>
-              <Typography variant="body1" fontWeight={400} fontSize={"1.4rem"}>
-                {feature.description}
-              </Typography>
-            </Box>
-          </Grid>
-        ))}
-      </Grid>
+        <Grid
+          container
+          columns={{ sm: 16, md: 32 }}
+          alignItems={"top"}
+          sx={{
+            my: 10,
+            gap: 12,
+          }}
+          justifyContent={"center"}
+        >
+          {features.map((feature, index) => (
+            <Grid key={index} size={8} textAlign={"center"}>
+              <Box component={"div"}>
+                {feature.icon}
+                <Typography
+                  variant="h3"
+                  sx={{ my: 1.2 }}
+                  fontWeight={500}
+                  fontSize={"1.6rem"}
+                >
+                  {feature.title}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  fontWeight={400}
+                  fontSize={"1.4rem"}
+                >
+                  {feature.description}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
     </Box>
   );
 };

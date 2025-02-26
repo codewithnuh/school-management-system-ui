@@ -48,6 +48,10 @@ a {
     transition: all;
   }
 }
+.logo {
+  font-weight: 600;
+  color: #fff;
+}
 
 header {
   background: var(--neutral-color);
