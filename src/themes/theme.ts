@@ -28,9 +28,9 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         containedPrimary: {
-          backgroundColor: palette.primary.dark, // custom background for contained primary buttons
+          backgroundColor: palette.primary.main, // custom background for contained primary buttons
           "&:hover": {
-            backgroundColor: "#c0392b", // custom hover state
+            backgroundColor: palette.primary.dark, // custom hover state
           },
         },
         containedSecondary: {
