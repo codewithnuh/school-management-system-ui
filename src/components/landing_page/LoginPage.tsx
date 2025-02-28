@@ -26,7 +26,7 @@ import {
   ChildCare as ParentIcon,
 } from "@mui/icons-material";
 
-type Role = "Administrator" | "Teacher" | "Student" | "Parent";
+type Role = "ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
 
 const LoginPage: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -57,10 +57,10 @@ const LoginPage: React.FC = () => {
   };
 
   const roleCards: { role: Role; icon: React.ReactNode }[] = [
-    { role: "Administrator", icon: <AdminIcon /> },
-    { role: "Teacher", icon: <TeacherIcon /> },
-    { role: "Student", icon: <StudentIcon /> },
-    { role: "Parent", icon: <ParentIcon /> },
+    { role: "ADMIN", icon: <AdminIcon /> },
+    { role: "TEACHER", icon: <TeacherIcon /> },
+    { role: "STUDENT", icon: <StudentIcon /> },
+    { role: "PARENT", icon: <ParentIcon /> },
   ];
 
   return (
