@@ -28,9 +28,10 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         containedPrimary: {
-          backgroundColor: palette.primary.main, // custom background for contained primary buttons
+          backgroundColor: palette.primary.dark, // custom background for contained primary buttons
+          color: "white",
           "&:hover": {
-            backgroundColor: palette.primary.dark, // custom hover state
+            backgroundColor: palette.primary.main, // custom hover state
           },
         },
         containedSecondary: {
@@ -65,6 +66,39 @@ const theme = createTheme({
         },
         h1: {
           color: "#fff",
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          background: "#171515d4",
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          background: "#171515f9",
+        },
+      },
+    },
+    MuiInput: {
+      styleOverrides: {
+        root: {
+          borderColor: palette.primary.main,
+          outlineColor: palette.primary.main,
+        },
+      },
+    },
+    MuiStepIcon: {
+      styleOverrides: {
+        root: {
+          // backgroundColor: palette.primary.dark,
+          color: palette.primary.dark,
+          "&:active": {
+            color: palette.primary.main,
+          },
         },
       },
     },

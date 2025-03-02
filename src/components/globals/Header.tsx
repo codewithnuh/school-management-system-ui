@@ -21,13 +21,13 @@ const Header = () => {
               </Stack>
             </ul>
           </Box>
-          <Stack direction={"row"} gap={2}>
+          <Stack direction={"row"} alignItems={"center"} gap={2}>
             <Link to={"/sign-up"}>
               <Button variant="contained" size="small" color="primary">
                 Sign Up
               </Button>
             </Link>
-            <Box sx={{ display: { xs: "block", sm: "none" } }}>
+            <Box sx={{ display: { xs: "inline-block", sm: "none" }, mt: 1 }}>
               <MobileMenu />
             </Box>
           </Stack>

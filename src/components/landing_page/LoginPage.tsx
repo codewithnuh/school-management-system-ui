@@ -1,8 +1,8 @@
 "use client";
-
-import type React from "react";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate, Link } from "react-router";
+
 import {
   Container,
   Grid,
@@ -10,14 +10,14 @@ import {
   Typography,
   TextField,
   Button,
-  Link,
   Checkbox,
   FormControlLabel,
   Card,
   CardContent,
   Box,
-  useTheme,
-  useMediaQuery,
+  Snackbar,
+  Alert,
+  AlertColor,
 } from "@mui/material";
 import {
   AdminPanelSettings as AdminIcon,
@@ -28,35 +28,79 @@ import {
 
 type Role = "ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
 
-const LoginPage: React.FC = () => {
+interface ApiResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+  statusCode: number;
+}
+
+const LoginPage = () => {
+  const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: "", severity: "success" });
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedRole) {
+        throw new Error("Please select a role");
+      }
+
+      const response = await fetch(
+        // "https://school-management-system-production-366e.up.railway.app/api/v1/auth/login",
+        "http://localhost:3000/api/v1/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, entityType: selectedRole }),
+          credentials: "include",
+        }
+      );
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        throw new Error("Invalid server response");
+      }
+
+      const data: ApiResponse = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || data.message || "Login failed");
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      const role = selectedRole || "STUDENT"; // Fallback to default if needed
+      navigate(`/${role.toLowerCase()}/dashboard`);
+    },
+    onError: (error: Error) => {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: "error",
+      });
+    },
+  });
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder for login logic
-    if (!selectedRole) {
-      setError("Please select a role");
-    } else if (!email || !password) {
-      setError("Please enter both email and password");
-    } else {
-      setError(null);
-      console.log("Login attempt", {
-        role: selectedRole,
-        email,
-        password,
-        rememberMe,
-      });
-    }
+    loginMutation.mutate();
   };
 
-  const roleCards: { role: Role; icon: React.ReactNode }[] = [
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const roleCards = [
     { role: "ADMIN", icon: <AdminIcon /> },
     { role: "TEACHER", icon: <TeacherIcon /> },
     { role: "STUDENT", icon: <StudentIcon /> },
@@ -64,7 +108,7 @@ const LoginPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ background: "black" }}>
+    <Box sx={{ background: "black", mt: { xs: 17.5, sm: 15, md: 0, lg: 8 } }}>
       <Container
         component="main"
         maxWidth="lg"
@@ -92,7 +136,7 @@ const LoginPage: React.FC = () => {
                   <Grid item xs={6} key={role}>
                     <Card
                       raised={selectedRole === role}
-                      onClick={() => setSelectedRole(role)}
+                      onClick={() => setSelectedRole(role as Role)}
                       sx={{
                         cursor: "pointer",
                         transition: "all 0.3s",
@@ -147,31 +191,18 @@ const LoginPage: React.FC = () => {
                   }
                   label="Remember me"
                 />
-                {error && (
-                  <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                    {error}
-                  </Typography>
-                )}
                 <Button
                   type="submit"
                   fullWidth
                   variant="contained"
                   sx={{ mt: 3, mb: 2 }}
+                  disabled={loginMutation.isPending}
                 >
-                  Login
+                  {loginMutation.isPending ? "Logging in..." : "Login"}
                 </Button>
-                <Grid
-                  container
-                  justifyContent={isMobile ? "center" : "flex-end"}
-                >
+                <Grid container justifyContent="flex-end">
                   <Grid item>
-                    <Link
-                      component={RouterLink}
-                      to="/forgot-password"
-                      variant="body2"
-                    >
-                      Forgot password?
-                    </Link>
+                    <Link to="/forgot-password">Forgot password?</Link>
                   </Grid>
                 </Grid>
               </Box>
@@ -179,6 +210,16 @@ const LoginPage: React.FC = () => {
           </Grid>
         </Paper>
       </Container>
+      <Snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

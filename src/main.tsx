@@ -20,6 +20,7 @@ import SignupForm from "./components/landing_page/SignUp.tsx";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // Optional dev tools
 import { queryClient } from "./utils/queryClient"; // Centralized QueryClient
+import Dashboard from "./pages/Dashboard.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -40,6 +41,7 @@ createRoot(document.getElementById("root")!).render(
               path="/register/teacher"
               element={<TeacherRegistrationForm />}
             />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </BrowserRouter>
       </ThemeProvider>
