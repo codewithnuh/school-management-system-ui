@@ -13,7 +13,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   children,
 }) => {
   const { data: user, isLoading, isError } = useUser();
-
+  console.log(user);
   if (isLoading) {
     // Show a loading indicator while fetching
     return <div>Loading...</div>;
@@ -25,7 +25,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   }
 
   // Check if the user role is in the list of allowed roles.
-  if (!allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(user.data.role)) {
     return <Navigate to="/login" replace />;
   }
 

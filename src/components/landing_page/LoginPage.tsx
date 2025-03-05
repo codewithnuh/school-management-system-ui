@@ -52,8 +52,8 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (userIsSuccess && user) {
-      if (user.role) {
-        navigate(`/${user.role.toLowerCase()}/dashboard`);
+      if (user.data.role) {
+        navigate(`/dashboard/${user.data.role.toLowerCase()}`);
       }
     }
   }, [user, userIsSuccess, navigate]);
@@ -93,12 +93,9 @@ const LoginPage = () => {
       // after successfully logging in refetch the user
       // because the backend might set the cookies after login
       // this will trigger the use effect up there and navigate to dashboard
-
       // This will also cause the login button to "disappear" as the component reloads
       // after successful login
-
       // queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      const role = selectedRole || "STUDENT"; // Fallback to default if needed
       // navigate(`/${role.toLowerCase()}/dashboard`);
     },
     onError: (error: Error) => {

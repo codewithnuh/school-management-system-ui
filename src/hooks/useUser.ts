@@ -4,7 +4,7 @@ import axios from "axios";
 
 export interface User {
   id: string;
-  role: "ADMIN" | "TEACHER" | "PARENT" | "STUDENT";
+  data: { role: "ADMIN" | "TEACHER" | "PARENT" | "STUDENT" };
   // ...other user properties
 }
 
