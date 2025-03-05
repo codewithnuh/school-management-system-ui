@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router"; // Import from react-router-dom
 
 import {
   Container,
@@ -25,6 +25,7 @@ import {
   Person as StudentIcon,
   ChildCare as ParentIcon,
 } from "@mui/icons-material";
+import { useUser } from "../../hooks/useUser";
 
 type Role = "ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
 
@@ -46,6 +47,16 @@ const LoginPage = () => {
     message: string;
     severity: AlertColor;
   }>({ open: false, message: "", severity: "success" });
+
+  const { data: user, isSuccess: userIsSuccess } = useUser();
+
+  useEffect(() => {
+    if (userIsSuccess && user) {
+      if (user.role) {
+        navigate(`/${user.role.toLowerCase()}/dashboard`);
+      }
+    }
+  }, [user, userIsSuccess, navigate]);
 
   const loginMutation = useMutation({
     mutationFn: async () => {
@@ -79,8 +90,16 @@ const LoginPage = () => {
       return data;
     },
     onSuccess: () => {
+      // after successfully logging in refetch the user
+      // because the backend might set the cookies after login
+      // this will trigger the use effect up there and navigate to dashboard
+
+      // This will also cause the login button to "disappear" as the component reloads
+      // after successful login
+
+      // queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       const role = selectedRole || "STUDENT"; // Fallback to default if needed
-      navigate(`/${role.toLowerCase()}/dashboard`);
+      // navigate(`/${role.toLowerCase()}/dashboard`);
     },
     onError: (error: Error) => {
       setSnackbar({

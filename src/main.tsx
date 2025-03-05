@@ -19,13 +19,14 @@ import SignupForm from "./components/landing_page/SignUp.tsx";
 // Import TanStack Query components
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // Optional dev tools
-import { queryClient } from "./utils/queryClient"; // Centralized QueryClient
-import Dashboard from "./pages/Dashboard.tsx";
+import { queryClient } from "./utils/queryClient.ts";
+import { RoleGuard } from "./components/RoleGuard.tsx";
+import Admin from "./components/dashboards/Admin.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme}>
+      <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Header />
           <Routes>
@@ -38,15 +39,23 @@ createRoot(document.getElementById("root")!).render(
               element={<StudentRegistrationForm />}
             />
             <Route
+              path="/dashboard/admin"
+              element={
+                <RoleGuard allowedRoles={["ADMIN"]}>
+                  <Admin />
+                </RoleGuard>
+              }
+            />
+
+            <Route
               path="/register/teacher"
               element={<TeacherRegistrationForm />}
             />
-            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </BrowserRouter>
-      </ThemeProvider>
-      {/* Add dev tools for debugging */}
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+    {/* Add dev tools for debugging */}
+    <ReactQueryDevtools initialIsOpen={false} client={queryClient} />
   </StrictMode>
 );
