@@ -8,7 +8,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { ThemeProvider } from "@emotion/react";
 import theme from "./themes/theme.ts";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import Header from "./components/globals/Header.tsx";
 import LoginPage from "./components/landing_page/LoginPage.tsx";
 import ForgotPasswordPage from "./components/landing_page/ForgotPassword.tsx";
@@ -22,6 +22,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // Optional
 import { queryClient } from "./utils/queryClient.ts";
 import { RoleGuard } from "./components/RoleGuard.tsx";
 import Admin from "./components/dashboards/Admin.tsx";
+import NotFound from "./pages/NotFound.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -45,12 +46,18 @@ createRoot(document.getElementById("root")!).render(
                   <Admin />
                 </RoleGuard>
               }
-            />
+            >
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<div>Overview is nothing</div>} />
+              <Route path="reports" element={<div>REPORTS</div>} />
+              <Route path="settings" element={<div>Setting</div>} />
+            </Route>
 
             <Route
               path="/register/teacher"
               element={<TeacherRegistrationForm />}
             />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>
