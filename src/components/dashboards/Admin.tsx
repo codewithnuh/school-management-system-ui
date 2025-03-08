@@ -1,97 +1,53 @@
+// src/pages/Admin.tsx
 import React from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
-import Divider from "@mui/material/Divider";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
-import InboxIcon from "@mui/icons-material/MoveToInbox";
-import MailIcon from "@mui/icons-material/Mail";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Outlet } from "react-router";
-import { Logout } from "@mui/icons-material";
+import Sidebar, { NavItem } from "@/components/dashboards/Sidebar.tsx";
 
 const drawerWidth = 240;
 
-interface AdminProps {
-  window?: () => Window;
-}
-
-const Admin: React.FC<AdminProps> = (props) => {
-  const { window } = props;
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-
-  // Toggle the mobile sidebar
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  // Sidebar content
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div" color="white">
-          Dashboard
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <List>
-        {["Overview", "Reports", "Settings"].map((text, index) => (
-          <ListItem button key={text}>
-            <ListItemIcon>
-              {index % 2 === 0 ? (
-                <InboxIcon sx={{ color: "white" }} />
-              ) : (
-                <MailIcon sx={{ color: "white" }} />
-              )}
-            </ListItemIcon>
-            <ListItemText primary={text} sx={{ color: "white" }} />
-          </ListItem>
-        ))}
-      </List>
-      <List>
-        <ListItem
-          sx={{
-            ":hover": {
-              cursor: "pointer",
-            },
-          }}
-        >
-          <ListItemIcon>
-            <Logout />
-          </ListItemIcon>
-          <ListItemText>Logout</ListItemText>
-        </ListItem>
-      </List>
-    </div>
-  );
-
-  // Define a dark theme using MUI's createTheme
-  const darkTheme = createTheme({
-    palette: {
-      mode: "dark",
-      background: {
-        default: "#121212",
-        paper: "#1e1e1e",
-      },
+// Create a dark theme with a glassy effect for the sidebar.
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+    background: {
+      default: "#121212",
+      paper: "#1e1e1e",
     },
-  });
+    primary: {
+      main: "#90caf9",
+    },
+    secondary: {
+      main: "#f48fb1",
+    },
+  },
+});
 
-  // For responsive drawer container
-  const container =
-    window !== undefined ? () => window().document.body : undefined;
+// Define navigation items for the admin dashboard.
+// Replace the icons below with appropriate MUI icons for each menu item.
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import SettingsIcon from "@mui/icons-material/Settings";
 
+const navItems: NavItem[] = [
+  { label: "Overview", path: "/admin/overview", icon: <DashboardIcon /> },
+  { label: "Reports", path: "/admin/reports", icon: <AssessmentIcon /> },
+  { label: "Settings", path: "/admin/settings", icon: <SettingsIcon /> },
+];
+
+const Admin: React.FC = () => {
   return (
     <ThemeProvider theme={darkTheme}>
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
+        {/* Top AppBar */}
         <AppBar
           position="fixed"
           sx={{
@@ -100,12 +56,11 @@ const Admin: React.FC<AdminProps> = (props) => {
           }}
         >
           <Toolbar>
-            {/* Mobile: show hamburger menu */}
+            {/* For mobile: show hamburger menu (if needed) */}
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
-              onClick={handleDrawerToggle}
               sx={{ mr: 2, display: { sm: "none" } }}
             >
               <MenuIcon />
@@ -115,48 +70,18 @@ const Admin: React.FC<AdminProps> = (props) => {
             </Typography>
           </Toolbar>
         </AppBar>
-        {/* Sidebar / Drawer */}
-        <Box
-          component="nav"
-          sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-          aria-label="sidebar navigation"
-        >
-          {/* Mobile Drawer */}
-          <Drawer
-            container={container}
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{
-              keepMounted: true, // Improves performance on mobile.
-            }}
-            sx={{
-              display: { xs: "block", sm: "none" },
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: drawerWidth,
-                backgroundColor: darkTheme.palette.background.paper,
-              },
-            }}
-          >
-            {drawer}
-          </Drawer>
-          {/* Desktop Permanent Drawer */}
-          <Drawer
-            variant="permanent"
-            sx={{
-              display: { xs: "none", sm: "block" },
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: drawerWidth,
-                backgroundColor: darkTheme.palette.background.paper,
-              },
-            }}
-            open
-          >
-            {drawer}
-          </Drawer>
-        </Box>
+
+        {/* Sidebar */}
+        <Sidebar
+          navItems={navItems}
+          userName="Admin User"
+          userAvatarUrl="" // Provide a valid URL if available
+          onLogout={() => {
+            // Perform any additional logout logic here
+            window.location.href = "/login";
+          }}
+        />
+
         {/* Main Content */}
         <Box
           component="main"
@@ -173,7 +98,7 @@ const Admin: React.FC<AdminProps> = (props) => {
           <Typography paragraph color="white">
             Welcome to the admin dashboard.
           </Typography>
-          {/* Insert additional admin content here */}
+          {/* Additional admin content can be added here */}
         </Box>
       </Box>
     </ThemeProvider>

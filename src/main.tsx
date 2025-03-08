@@ -10,7 +10,8 @@ import { ThemeProvider } from "@emotion/react";
 import theme from "./themes/theme.ts";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import Header from "./components/globals/Header.tsx";
-import LoginPage from "./components/landing_page/LoginPage.tsx";
+import LoginPage from "@/components/landing_page/LoginPage.tsx";
+
 import ForgotPasswordPage from "./components/landing_page/ForgotPassword.tsx";
 import StudentRegistrationForm from "./components/landing_page/StudentRigisteration.tsx";
 import TeacherRegistrationForm from "./components/landing_page/TeacherRegisteration.tsx";
