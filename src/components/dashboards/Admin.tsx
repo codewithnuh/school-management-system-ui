@@ -30,14 +30,16 @@ const darkTheme = createTheme({
   },
 });
 
-// Define navigation items for the admin dashboard.
-// Replace the icons below with appropriate MUI icons for each menu item.
-import DashboardIcon from "@mui/icons-material/Dashboard";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { SettingsApplications } from "@mui/icons-material";
 
 const navItems: NavItem[] = [
-  { label: "Overview", path: "/admin/overview", icon: <DashboardIcon /> },
+  {
+    label: "Applications",
+    path: "/admin/applications",
+    icon: <SettingsApplications />,
+  },
   { label: "Reports", path: "/admin/reports", icon: <AssessmentIcon /> },
   { label: "Settings", path: "/admin/settings", icon: <SettingsIcon /> },
 ];
@@ -95,10 +97,6 @@ const Admin: React.FC = () => {
         >
           <Toolbar />
           <Outlet />
-          <Typography paragraph color="white">
-            Welcome to the admin dashboard.
-          </Typography>
-          {/* Additional admin content can be added here */}
         </Box>
       </Box>
     </ThemeProvider>

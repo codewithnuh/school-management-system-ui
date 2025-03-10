@@ -24,6 +24,7 @@ import { queryClient } from "./utils/queryClient.ts";
 import { RoleGuard } from "./components/RoleGuard.tsx";
 import Admin from "./components/dashboards/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import ApplicationsTab from "./components/layout/Application.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -48,8 +49,8 @@ createRoot(document.getElementById("root")!).render(
                 </RoleGuard>
               }
             >
-              <Route index element={<Navigate to="overview" replace />} />
-              <Route path="overview" element={<div>Overview is nothing</div>} />
+              <Route index element={<Navigate to="applications" replace />} />
+              <Route path="applications" element={<ApplicationsTab />} />
               <Route path="reports" element={<div>REPORTS</div>} />
               <Route path="settings" element={<div>Setting</div>} />
             </Route>
