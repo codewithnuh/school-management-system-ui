@@ -29,6 +29,7 @@ class TeacherApplicationsApi {
     this.baseUrl = baseUrl;
     this.client = axios.create({
       baseURL: this.baseUrl,
+      withCredentials: true,
       headers: {
         "Content-Type": "application/json",
       },

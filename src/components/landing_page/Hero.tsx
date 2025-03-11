@@ -4,6 +4,7 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid2"; // MUI v6 "Grid2" import
 import Typography from "@mui/material/Typography";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { useApplications } from "../../services/queries/application";
 
 const Hero = () => {
   return (
