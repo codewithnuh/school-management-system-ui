@@ -10,40 +10,32 @@ export type Role = "TEACHER" | "STUDENT" | "ADMIN";
 
 // Application item interface
 export interface Application {
-  error: null | undefined | string;
-  message: string;
-  statusCode: number;
-  success: boolean;
-  timestamp: string;
-
-  data: {
-    id: number;
-    firstName: string;
-    middleName: string | null;
-    lastName: string;
-    dateOfBirth: string;
-    gender: Gender;
-    nationality: string | null;
-    email: string;
-    phoneNo: string;
-    entityType: EntityType;
-    address: string;
-    currentAddress: string | null;
-    cnic: string;
-    highestQualification: string;
-    specialization: string | null;
-    experienceYears: number | null;
-    joiningDate: string;
-    photo: string | null;
-    emergencyContactName: string;
-    emergencyContactNumber: string;
-    isVerified: boolean;
-    applicationStatus: ApplicationStatus;
-    role: Role;
-    subjectId: number;
-    createdAt: string;
-    updatedAt: string;
-  };
+  id: number;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  dateOfBirth: string;
+  gender: Gender;
+  nationality: string | null;
+  email: string;
+  phoneNo: string;
+  entityType: EntityType;
+  address: string;
+  currentAddress: string | null;
+  cnic: string;
+  highestQualification: string;
+  specialization: string | null;
+  experienceYears: number | null;
+  joiningDate: string;
+  photo: string | null;
+  emergencyContactName: string;
+  emergencyContactNumber: string;
+  isVerified: boolean;
+  applicationStatus: ApplicationStatus;
+  role: Role;
+  subjectId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Pagination data
@@ -56,7 +48,7 @@ export interface PaginationData {
 
 // Application response data
 export interface ApplicationResponseData extends PaginationData {
-  items: Application[];
+  teachers: Application[];
 }
 
 // Complete API response

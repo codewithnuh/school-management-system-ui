@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import {
   Container,
   Paper,
   Typography,
   TextField,
   Button,
-  Grid,
+  Grid2,
   Select,
   MenuItem,
   FormControl,
@@ -15,6 +15,14 @@ import {
   IconButton,
   InputAdornment,
   LinearProgress,
+  FilledTextFieldProps,
+  OutlinedTextFieldProps,
+  StandardTextFieldProps,
+  TextFieldVariants,
+  FilledTextFieldProps,
+  OutlinedTextFieldProps,
+  StandardTextFieldProps,
+  TextFieldVariants,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -24,24 +32,6 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { styled } from "@mui/material/styles";
 import CloudUpload from "@mui/icons-material/CloudUpload";
 import { Description } from "@mui/icons-material";
-
-// Dark theme configuration
-const darkTheme = {
-  palette: {
-    mode: "dark",
-    primary: {
-      main: "#bb86fc",
-    },
-    background: {
-      default: "#121212",
-      paper: "#1e1e1e",
-    },
-    text: {
-      primary: "#e0e0e0",
-    },
-  },
-};
-
 // Styled components for dark mode
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -89,7 +79,7 @@ const TeacherRegistrationForm = () => {
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
@@ -100,16 +90,19 @@ const TeacherRegistrationForm = () => {
     }
   };
 
-  const handleDateChange = (date, field) => {
+  const handleDateChange = (date: Date, field: string) => {
     setFormData((prev) => ({ ...prev, [field]: date }));
   };
 
-  const handleFileChange = (e, field) => {
+  const handleFileChange = (
+    e: ChangeEvent<HTMLInputElement>,
+    field: string
+  ) => {
     const file = e.target.files[0];
     setFormData((prev) => ({ ...prev, [field]: file }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setLoading(true);
     // Simulate API call
@@ -119,7 +112,7 @@ const TeacherRegistrationForm = () => {
     }, 2000);
   };
 
-  const calculatePasswordStrength = (password) => {
+  const calculatePasswordStrength = (password: string | any[]) => {
     let strength = 0;
     if (password.length >= 8) strength += 25;
     if (/[A-Z]/.test(password)) strength += 25;
@@ -139,8 +132,8 @@ const TeacherRegistrationForm = () => {
           <form onSubmit={handleSubmit}>
             {/* Personal Information */}
             <SectionTitle variant="h6">Personal Information</SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={4}>
+            <Grid2 container spacing={3}>
+              <Grid2 columns={{ xs: 12, sm: 4 }}>
                 <TextField
                   name="firstName"
                   label="First Name"
@@ -149,8 +142,8 @@ const TeacherRegistrationForm = () => {
                   fullWidth
                   required
                 />
-              </Grid>
-              <Grid item xs={12} sm={4}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 4 }}>
                 <TextField
                   name="middleName"
                   label="Middle Name"
@@ -158,8 +151,8 @@ const TeacherRegistrationForm = () => {
                   onChange={handleInputChange}
                   fullWidth
                 />
-              </Grid>
-              <Grid item xs={12} sm={4}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 4 }}>
                 <TextField
                   name="lastName"
                   label="Last Name"
@@ -168,16 +161,25 @@ const TeacherRegistrationForm = () => {
                   fullWidth
                   required
                 />
-              </Grid>
-              <Grid item xs={12} sm={4}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 4 }}>
                 <DatePicker
                   label="Date of Birth"
                   value={formData.dateOfBirth}
                   onChange={(date) => handleDateChange(date, "dateOfBirth")}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
+                  renderInput={(
+                    params: JSX.IntrinsicAttributes & {
+                      variant?: TextFieldVariants | undefined;
+                    } & Omit<
+                        | OutlinedTextFieldProps
+                        | FilledTextFieldProps
+                        | StandardTextFieldProps,
+                        "variant"
+                      >
+                  ) => <TextField {...params} fullWidth />}
                 />
-              </Grid>
-              <Grid item xs={12} sm={4}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 4 }}>
                 <FormControl fullWidth>
                   <InputLabel>Gender</InputLabel>
                   <Select
@@ -191,8 +193,8 @@ const TeacherRegistrationForm = () => {
                     <MenuItem value="Other">Other</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={4}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 4 }}>
                 <TextField
                   name="nationality"
                   label="Nationality"
@@ -200,13 +202,13 @@ const TeacherRegistrationForm = () => {
                   onChange={handleInputChange}
                   fullWidth
                 />
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
 
             {/* Contact Information */}
             <SectionTitle variant="h6">Contact Information</SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+            <Grid2 container spacing={3}>
+              <Grid2 columns={{ xs: 12, sm: 4 }}>
                 <TextField
                   name="email"
                   label="Email"
@@ -216,8 +218,8 @@ const TeacherRegistrationForm = () => {
                   fullWidth
                   required
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="phoneNo"
                   label="Phone Number"
@@ -227,8 +229,8 @@ const TeacherRegistrationForm = () => {
                   inputProps={{ maxLength: 15 }}
                   required
                 />
-              </Grid>
-              <Grid item xs={12}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12 }}>
                 <TextField
                   name="address"
                   label="Permanent Address"
@@ -239,8 +241,8 @@ const TeacherRegistrationForm = () => {
                   rows={2}
                   required
                 />
-              </Grid>
-              <Grid item xs={12}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12 }}>
                 <TextField
                   name="currentAddress"
                   label="Current Address"
@@ -250,13 +252,13 @@ const TeacherRegistrationForm = () => {
                   multiline
                   rows={2}
                 />
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
 
             {/* Professional Information */}
             <SectionTitle variant="h6">Professional Information</SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+            <Grid2 container spacing={3}>
+              <Grid2 columns={{ xs: 12 }}>
                 <TextField
                   name="highestQualification"
                   label="Highest Qualification"
@@ -265,8 +267,8 @@ const TeacherRegistrationForm = () => {
                   fullWidth
                   required
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="specialization"
                   label="Specialization"
@@ -274,8 +276,8 @@ const TeacherRegistrationForm = () => {
                   onChange={handleInputChange}
                   fullWidth
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="experienceYears"
                   label="Years of Experience"
@@ -285,21 +287,30 @@ const TeacherRegistrationForm = () => {
                   fullWidth
                   InputProps={{ inputProps: { min: 0 } }}
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 6 }}>
                 <DatePicker
                   label="Joining Date"
                   value={formData.joiningDate}
                   onChange={(date) => handleDateChange(date, "joiningDate")}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
+                  renderInput={(
+                    params: JSX.IntrinsicAttributes & {
+                      variant?: TextFieldVariants | undefined;
+                    } & Omit<
+                        | OutlinedTextFieldProps
+                        | FilledTextFieldProps
+                        | StandardTextFieldProps,
+                        "variant"
+                      >
+                  ) => <TextField {...params} fullWidth />}
                 />
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
 
             {/* CNIC and Emergency Contact */}
             <SectionTitle variant="h6">Verification & Security</SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+            <Grid2 container spacing={3}>
+              <Grid2 columns={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="cnic"
                   label="CNIC (13 digits)"
@@ -309,8 +320,8 @@ const TeacherRegistrationForm = () => {
                   inputProps={{ maxLength: 13 }}
                   required
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="emergencyContactName"
                   label="Emergency Contact Name"
@@ -319,8 +330,8 @@ const TeacherRegistrationForm = () => {
                   fullWidth
                   required
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Grid2>
+              <Grid2 columns={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="emergencyContactNumber"
                   label="Emergency Contact Number"
@@ -330,8 +341,8 @@ const TeacherRegistrationForm = () => {
                   inputProps={{ maxLength: 15 }}
                   required
                 />
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
 
             {/* File Uploads */}
             <SectionTitle variant="h6">Document Upload</SectionTitle>
@@ -372,8 +383,8 @@ const TeacherRegistrationForm = () => {
 
             {/* Password */}
             <SectionTitle variant="h6">Account Security</SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
+            <Grid2 container spacing={3}>
+              <Grid2 columns={{ xs: 12 }}>
                 <TextField
                   name="password"
                   label="Password"
@@ -416,8 +427,8 @@ const TeacherRegistrationForm = () => {
                     }
                   />
                 </Box>
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
 
             <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
               <Button

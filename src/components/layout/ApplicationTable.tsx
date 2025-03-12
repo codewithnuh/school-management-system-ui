@@ -23,20 +23,10 @@ import {
   styled,
 } from "@mui/material";
 import { Edit, Visibility } from "@mui/icons-material";
-import { useNavigate } from "react-router";
+import { useApplications } from "../../services/queries/application";
+import { Application, ApplicationStatus } from "../../types";
 
-interface Teacher {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  highestQualification: string;
-  applicationStatus: string;
-  phoneNo: string;
-  address: string;
-  emergencyContactName: string;
-  emergencyContactNumber: string;
-}
+type Teacher = Application; // teacher will now extend the application interface
 
 const style = {
   position: "absolute",
@@ -55,33 +45,26 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
 }));
 
 export default function ApplicationsTable() {
-  const [teachers, setTeachers] = React.useState<Teacher[]>([
-    // Mock data entries as before
-    {
-      id: 1,
-      firstName: "Moses",
-      lastName: "Doyle",
-      email: "Lesley38@gmail.com",
-      highestQualification: "Masters",
-      applicationStatus: "Pending",
-      phoneNo: "(941) 256-7774 x11268",
-      address: "388 Becker Street",
-      emergencyContactName: "William Schultz",
-      emergencyContactNumber: "786-923-0380 x94863",
-    },
-    // Add more mock entries here...
-  ]);
+  const { data } = useApplications();
+  //removed console.log
 
+  const [teachers, setTeachers] = React.useState<Teacher[]>([]); // Initialize as empty array
   const [selectedTeacher, setSelectedTeacher] = React.useState<Teacher | null>(
     null
   );
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [newStatus, setNewStatus] = React.useState("");
+  const [newStatus, setNewStatus] = React.useState<ApplicationStatus | "">(""); // set a literal type
 
   // Pagination states
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+
+  React.useEffect(() => {
+    if (data?.data?.teachers) {
+      setTeachers(data.data.teachers);
+    }
+  }, [data?.data?.teachers]); // Update when the data changes
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -99,19 +82,25 @@ export default function ApplicationsTable() {
   const currentItems = teachers.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleStatusChange = (teacherId: number, status: string) => {
-    setNewStatus(status);
+    setNewStatus(status as ApplicationStatus);
     setConfirmOpen(true);
+    const selectedTeacher = teachers.find(
+      (teacher) => teacher.id === teacherId
+    );
+    setSelectedTeacher(selectedTeacher || null);
   };
 
   const confirmUpdate = () => {
     setConfirmOpen(false);
-    setTeachers((prev) =>
-      prev.map((t) =>
-        t.id === selectedTeacher?.id
-          ? { ...t, applicationStatus: newStatus }
-          : t
-      )
-    );
+    if (selectedTeacher && newStatus) {
+      setTeachers((prev) =>
+        prev.map((t) =>
+          t.id === selectedTeacher.id
+            ? { ...t, applicationStatus: newStatus }
+            : t
+        )
+      );
+    }
     setAnchorEl(null);
   };
 
@@ -225,7 +214,38 @@ export default function ApplicationsTable() {
 
       {/* Details Modal */}
       <Modal open={!!selectedTeacher} onClose={() => setSelectedTeacher(null)}>
-        <Box sx={style}>{/* Details content as before */}</Box>
+        <Box sx={style}>
+          {selectedTeacher && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Teacher Details
+              </Typography>
+              <Typography variant="body1">
+                First Name: {selectedTeacher.firstName}
+              </Typography>
+              <Typography variant="body1">
+                Last Name: {selectedTeacher.lastName}
+              </Typography>
+              <Typography variant="body1">
+                Email: {selectedTeacher.email}
+              </Typography>
+              <Typography variant="body1">
+                Phone Number: {selectedTeacher.phoneNo}
+              </Typography>
+              <Typography variant="body1">
+                Address: {selectedTeacher.address}
+              </Typography>
+              <Typography variant="body1">
+                Emergency Contact Name: {selectedTeacher.emergencyContactName}
+              </Typography>
+              <Typography variant="body1">
+                Emergency Contact Number:{" "}
+                {selectedTeacher.emergencyContactNumber}
+              </Typography>
+              {/* Add more details here */}
+            </Box>
+          )}
+        </Box>
       </Modal>
     </StyledTableContainer>
   );
