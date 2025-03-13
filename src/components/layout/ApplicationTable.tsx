@@ -39,10 +39,12 @@ const style = {
   p: 4,
 };
 
-const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+const StyledTableContainer = styled(TableContainer, {
+  shouldForwardProp: (prop) => prop !== "component",
+})(({ theme }) => ({
   marginBottom: theme.spacing(4),
   borderRadius: theme.shape.borderRadius,
-}));
+})) as typeof TableContainer;
 
 export default function ApplicationsTable() {
   const { data } = useApplications();
