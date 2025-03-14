@@ -12,3 +12,11 @@ export const getTeacherApplications = async () => {
   const response = await axiosInstance.get<ApplicationResponse>("teachers");
   return response.data;
 };
+
+export const acceptTeacherApplication = async (id: number) => {
+  const response = await axiosInstance.post<ApplicationResponse>(
+    `accept-teacher-application?id=${id}`,
+    { status: "Accepted" }
+  );
+  return response.data;
+};

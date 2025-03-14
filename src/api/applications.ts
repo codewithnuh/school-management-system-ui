@@ -179,7 +179,7 @@ class TeacherApplicationsApi {
     try {
       return await this.request<ApplicationActionResponse>({
         method: "post",
-        url: `/schedule-interview-teacher-application`,
+        url: `/interview`,
         params: { id: teacherId },
       });
     } catch (error) {

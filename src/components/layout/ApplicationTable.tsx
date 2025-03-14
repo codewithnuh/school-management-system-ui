@@ -1,4 +1,4 @@
-// EnhancedApplicationsTable.tsx
+// src/components/EnhancedApplicationsTable.tsx
 import * as React from "react";
 import {
   Table,
@@ -21,12 +21,15 @@ import {
   DialogActions,
   TablePagination,
   styled,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Edit, Visibility } from "@mui/icons-material";
 import { useApplications } from "../../services/queries/application";
 import { Application, ApplicationStatus } from "../../types";
+import { useAcceptTeacherApplication } from "../../services/queries/application";
 
-type Teacher = Application; // teacher will now extend the application interface
+type Teacher = Application; // teacher now extends the application interface
 
 const style = {
   position: "absolute",
@@ -48,25 +51,31 @@ const StyledTableContainer = styled(TableContainer, {
 
 export default function ApplicationsTable() {
   const { data } = useApplications();
-  //removed console.log
-
-  const [teachers, setTeachers] = React.useState<Teacher[]>([]); // Initialize as empty array
+  const [teachers, setTeachers] = React.useState<Teacher[]>([]);
   const [selectedTeacher, setSelectedTeacher] = React.useState<Teacher | null>(
     null
   );
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [newStatus, setNewStatus] = React.useState<ApplicationStatus | "">(""); // set a literal type
+  const [newStatus, setNewStatus] = React.useState<ApplicationStatus | "">("");
+  const [toastOpen, setToastOpen] = React.useState(false);
 
   // Pagination states
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
+  // Use the custom mutation hook to update teacher application status.
+  const {
+    mutate: acceptTeacherApplicationMutate,
+    isPending: isAccepting,
+    error: acceptError,
+  } = useAcceptTeacherApplication();
+
   React.useEffect(() => {
     if (data?.data?.teachers) {
       setTeachers(data.data.teachers);
     }
-  }, [data?.data?.teachers]); // Update when the data changes
+  }, [data?.data?.teachers]);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -86,24 +95,31 @@ export default function ApplicationsTable() {
   const handleStatusChange = (teacherId: number, status: string) => {
     setNewStatus(status as ApplicationStatus);
     setConfirmOpen(true);
-    const selectedTeacher = teachers.find(
-      (teacher) => teacher.id === teacherId
-    );
-    setSelectedTeacher(selectedTeacher || null);
+    const teacher = teachers.find((t) => t.id === teacherId);
+    setSelectedTeacher(teacher || null);
   };
 
   const confirmUpdate = () => {
     setConfirmOpen(false);
-    if (selectedTeacher && newStatus) {
-      setTeachers((prev) =>
-        prev.map((t) =>
-          t.id === selectedTeacher.id
-            ? { ...t, applicationStatus: newStatus }
-            : t
-        )
-      );
+    if (selectedTeacher && newStatus === "Approved") {
+      // Use the mutation hook to update the teacher application.
+      acceptTeacherApplicationMutate(selectedTeacher.id, {
+        onSuccess: () => {
+          setToastOpen(true);
+        },
+      });
     }
     setAnchorEl(null);
+  };
+
+  const handleToastClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setToastOpen(false);
   };
 
   const open = Boolean(anchorEl);
@@ -205,6 +221,16 @@ export default function ApplicationsTable() {
             Are you sure you want to change the status to{" "}
             <strong>{newStatus}</strong>?
           </Typography>
+          {isAccepting && (
+            <Typography variant="body2" color="textSecondary">
+              Updating status...
+            </Typography>
+          )}
+          {acceptError && (
+            <Typography variant="body2" color="error">
+              Error updating status: {acceptError.message}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
@@ -249,6 +275,21 @@ export default function ApplicationsTable() {
           )}
         </Box>
       </Modal>
+
+      {/* Success Toast */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={6000}
+        onClose={handleToastClose}
+      >
+        <Alert
+          onClose={handleToastClose}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          Application status updated successfully!
+        </Alert>
+      </Snackbar>
     </StyledTableContainer>
   );
 }
