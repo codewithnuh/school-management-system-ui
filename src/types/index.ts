@@ -3,7 +3,7 @@ export type EntityType = "TEACHER" | "STUDENT";
 export type Gender = "Male" | "Female" | "Other";
 export type ApplicationStatus =
   | "Pending"
-  | "Approved"
+  | "Accepted"
   | "Rejected"
   | "Interview";
 export type Role = "TEACHER" | "STUDENT" | "ADMIN";

@@ -63,7 +63,7 @@ export default function ApplicationsTable() {
   // Pagination states
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
-
+  console.log(teachers);
   // Use the custom mutation hook to update teacher application status.
   const {
     mutate: acceptTeacherApplicationMutate,
@@ -73,7 +73,11 @@ export default function ApplicationsTable() {
 
   React.useEffect(() => {
     if (data?.data?.teachers) {
-      setTeachers(data.data.teachers);
+      const filteredTeachers = data.data.teachers.filter(
+        (teacher) => teacher.applicationStatus != "Accepted"
+      );
+      console.log(filteredTeachers);
+      setTeachers(filteredTeachers);
     }
   }, [data?.data?.teachers]);
 
@@ -101,7 +105,7 @@ export default function ApplicationsTable() {
 
   const confirmUpdate = () => {
     setConfirmOpen(false);
-    if (selectedTeacher && newStatus === "Approved") {
+    if (selectedTeacher && newStatus === "Accepted") {
       // Use the mutation hook to update the teacher application.
       acceptTeacherApplicationMutate(selectedTeacher.id, {
         onSuccess: () => {
@@ -139,57 +143,60 @@ export default function ApplicationsTable() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {currentItems.map((teacher) => (
-            <TableRow key={teacher.id}>
-              <TableCell>{teacher.firstName}</TableCell>
-              <TableCell>{teacher.lastName}</TableCell>
-              <TableCell>{teacher.email}</TableCell>
-              <TableCell>{teacher.highestQualification}</TableCell>
-              <TableCell>
-                <IconButton
-                  aria-label="edit status"
-                  aria-controls={id}
-                  aria-haspopup="true"
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                >
-                  <Edit />
-                </IconButton>
-                <Menu
-                  id={id}
-                  anchorEl={anchorEl}
-                  open={open}
-                  onClose={() => setAnchorEl(null)}
-                >
-                  <MenuItem
-                    onClick={() => handleStatusChange(teacher.id, "Pending")}
+          {currentItems.map((teacher) => {
+            console.log(teacher.applicationStatus);
+            return (
+              <TableRow key={teacher.id}>
+                <TableCell>{teacher.firstName}</TableCell>
+                <TableCell>{teacher.lastName}</TableCell>
+                <TableCell>{teacher.email}</TableCell>
+                <TableCell>{teacher.highestQualification}</TableCell>
+                <TableCell>
+                  <IconButton
+                    aria-label="edit status"
+                    aria-controls={id}
+                    aria-haspopup="true"
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
                   >
-                    Pending
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => handleStatusChange(teacher.id, "Approved")}
+                    <Edit />
+                  </IconButton>
+                  <Menu
+                    id={id}
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={() => setAnchorEl(null)}
                   >
-                    Approved
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => handleStatusChange(teacher.id, "Rejected")}
+                    <MenuItem
+                      onClick={() => handleStatusChange(teacher.id, "Pending")}
+                    >
+                      Pending
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => handleStatusChange(teacher.id, "Approved")}
+                    >
+                      Approved
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => handleStatusChange(teacher.id, "Rejected")}
+                    >
+                      Rejected
+                    </MenuItem>
+                  </Menu>
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    {teacher.applicationStatus}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <IconButton
+                    aria-label="view details"
+                    onClick={() => setSelectedTeacher(teacher)}
                   >
-                    Rejected
-                  </MenuItem>
-                </Menu>
-                <Typography variant="body2" sx={{ ml: 1 }}>
-                  {teacher.applicationStatus}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <IconButton
-                  aria-label="view details"
-                  onClick={() => setSelectedTeacher(teacher)}
-                >
-                  <Visibility />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          ))}
+                    <Visibility />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
