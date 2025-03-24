@@ -8,9 +8,16 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import Button from "@mui/material/Button";
 import DetailsDialog from "../common/DetailsDialog";
-import { Application } from "../../types"; // Assuming you have Application type
+import Alert from "@mui/material/Alert";
+import { Application } from "../../types";
+import Snackbar from "@mui/material/Snackbar";
+import { useAcceptTeacherApplication } from "../../services/queries/application";
 
-const ApplicantList = ({ applicants }: { applicants: Application[] }) => {
+interface ApplicantListProps {
+  applicants: Application[];
+}
+
+const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
   const unRegisteredTeachers = applicants.filter(
     (applicant) => applicant.applicationStatus !== "Accepted"
   );
@@ -18,19 +25,78 @@ const ApplicantList = ({ applicants }: { applicants: Application[] }) => {
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [selectedApplicant, setSelectedApplicant] =
     useState<Application | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success"
+  );
+  const {
+    mutate: acceptTeacher,
+    isLoading,
+    isError,
+    error,
+  } = useAcceptTeacherApplication();
 
   const handleOpenDetails = (applicant: Application) => {
     setSelectedApplicant(applicant);
     setOpenDetailsDialog(true);
   };
+  console.error(error);
 
   const handleCloseDetailsDialog = () => {
     setOpenDetailsDialog(false);
+    setSelectedApplicant(null);
+  };
+
+  const handleAccept = (id: number) => {
+    acceptTeacher(id, {
+      onSuccess: () => {
+        setSnackbarMessage("Application accepted successfully!");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
+      },
+      onError: (err) => {
+        setSnackbarMessage(
+          `Error accepting application: ${
+            err instanceof Error ? err.message : "Unknown error"
+          }`
+        );
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      },
+    });
+  };
+
+  const handleReject = (id: number) => {
+    try {
+      // Implement reject logic here
+      setSnackbarMessage("Application rejected!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(
+        `Error rejecting application: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleSnackbarClose = (
+    _event: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   return (
     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 500 }} aria-label="custom pagination table">
+      <Table sx={{ minWidth: 500 }} aria-label="applicants table">
         <TableHead>
           <TableRow>
             <TableCell>Name</TableCell>
@@ -69,10 +135,17 @@ const ApplicantList = ({ applicants }: { applicants: Application[] }) => {
                   color="success"
                   size="small"
                   sx={{ mr: 3 }}
+                  onClick={() => handleAccept(applicant.id)}
+                  disabled={isLoading}
                 >
                   Accept
                 </Button>
-                <Button variant="contained" color="warning" size="small">
+                <Button
+                  variant="contained"
+                  color="warning"
+                  size="small"
+                  onClick={() => handleReject(applicant.id)}
+                >
                   Reject
                 </Button>
               </TableCell>
@@ -92,6 +165,19 @@ const ApplicantList = ({ applicants }: { applicants: Application[] }) => {
         onClose={handleCloseDetailsDialog}
         applicant={selectedApplicant}
       />
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </TableContainer>
   );
 };
