@@ -16,10 +16,13 @@ import {
   Button,
   Avatar,
   Typography,
+  IconButton,
 } from "@mui/material";
 import { NavLink } from "react-router";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import MenuIcon from "@mui/icons-material/Menu";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 
 export interface NavItem {
   label: string;
@@ -43,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
 }) => {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const handleLogoutClick = () => {
     setLogoutDialogOpen(true);
@@ -57,19 +61,46 @@ const Sidebar: React.FC<SidebarProps> = ({
     setLogoutDialogOpen(false);
   };
 
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
+
   return (
     <>
+      <IconButton
+        color="inherit"
+        aria-label="toggle drawer"
+        onClick={handleDrawerToggle}
+        edge="start"
+        sx={{
+          position: "fixed",
+          left: open ? drawerWidth - 40 : 10,
+          top: 10,
+          zIndex: 1300,
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
+          color: "white",
+          "&:hover": {
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+          },
+        }}
+      >
+        {open ? <ChevronLeftIcon /> : <MenuIcon />}
+      </IconButton>
+
       <Drawer
         variant="permanent"
+        open={open}
         sx={{
-          width: drawerWidth,
+          width: open ? drawerWidth : 0,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "rgba(0, 0, 0, 0.8)", // dark, semi-transparent background
-            backdropFilter: "blur(10px)", // glassy effect
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(10px)",
             color: "white",
+            transform: open ? "none" : `translateX(-${drawerWidth}px)`,
+            transition: "transform 225ms cubic-bezier(0, 0, 0.2, 1) 0ms",
           },
         }}
       >

@@ -12,7 +12,7 @@ const Application = () => {
       <Box sx={{ mt: 4 }}>
         {/* <ApplicationsTable /> */}
 
-        <ApplicantList applicants={data!.data.teachers} />
+        <ApplicantList applicants={data ? data.data.teachers : []} />
       </Box>
     </div>
   );
