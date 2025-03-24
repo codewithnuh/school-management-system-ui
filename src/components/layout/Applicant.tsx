@@ -9,9 +9,12 @@ import TableBody from "@mui/material/TableBody";
 import Button from "@mui/material/Button";
 import DetailsDialog from "../common/DetailsDialog";
 import Alert from "@mui/material/Alert";
-import { Application } from "../../types";
 import Snackbar from "@mui/material/Snackbar";
-import { useAcceptTeacherApplication } from "../../services/queries/application";
+import { Application } from "../../types";
+import {
+  useAcceptTeacherApplication,
+  useRejectTeacherApplication,
+} from "../../services/queries/application";
 
 interface ApplicantListProps {
   applicants: Application[];
@@ -30,58 +33,58 @@ const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
     "success"
   );
-  const {
-    mutate: acceptTeacher,
-    isLoading,
-    isError,
-    error,
-  } = useAcceptTeacherApplication();
+
+  const { mutate: acceptTeacher, isLoading: isAcceptLoading } =
+    useAcceptTeacherApplication();
+  const { mutate: rejectTeacher, isLoading: isRejectLoading } =
+    useRejectTeacherApplication();
 
   const handleOpenDetails = (applicant: Application) => {
     setSelectedApplicant(applicant);
     setOpenDetailsDialog(true);
   };
-  console.error(error);
 
   const handleCloseDetailsDialog = () => {
     setOpenDetailsDialog(false);
     setSelectedApplicant(null);
   };
 
+  const showSnackbar = (message: string, severity: "success" | "error") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
   const handleAccept = (id: number) => {
     acceptTeacher(id, {
       onSuccess: () => {
-        setSnackbarMessage("Application accepted successfully!");
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
+        showSnackbar("Application accepted successfully!", "success");
       },
       onError: (err) => {
-        setSnackbarMessage(
+        showSnackbar(
           `Error accepting application: ${
             err instanceof Error ? err.message : "Unknown error"
-          }`
+          }`,
+          "error"
         );
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
       },
     });
   };
 
   const handleReject = (id: number) => {
-    try {
-      // Implement reject logic here
-      setSnackbarMessage("Application rejected!");
-      setSnackbarSeverity("success");
-      setSnackbarOpen(true);
-    } catch (err) {
-      setSnackbarMessage(
-        `Error rejecting application: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-    }
+    rejectTeacher(id, {
+      onSuccess: () => {
+        showSnackbar("Application rejected successfully!", "success");
+      },
+      onError: (err) => {
+        showSnackbar(
+          `Error rejecting application: ${
+            err instanceof Error ? err.message : "Unknown error"
+          }`,
+          "error"
+        );
+      },
+    });
   };
 
   const handleSnackbarClose = (
@@ -136,7 +139,7 @@ const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
                   size="small"
                   sx={{ mr: 3 }}
                   onClick={() => handleAccept(applicant.id)}
-                  disabled={isLoading}
+                  disabled={isAcceptLoading}
                 >
                   Accept
                 </Button>
@@ -145,6 +148,7 @@ const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
                   color="warning"
                   size="small"
                   onClick={() => handleReject(applicant.id)}
+                  disabled={isRejectLoading}
                 >
                   Reject
                 </Button>

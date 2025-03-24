@@ -21,3 +21,13 @@ export const acceptTeacherApplication = async (id: number) => {
 
   return response.data;
 };
+
+export const rejectTeacherApplication = async (id: number) => {
+  const response = await axiosInstance.post<ApplicationResponse>(
+    `/teachers/reject-teacher-application?id=${id}`,
+    {
+      status: "Rejected",
+    }
+  );
+  return response.data;
+};
