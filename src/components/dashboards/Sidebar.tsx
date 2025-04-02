@@ -1,3 +1,4 @@
+// [src/components/dashboards/Sidebar.tsx](file:///C:\Users\Noor%20Ul%20Hassan\Desktop\Projects\school-management-system-ui\src\components\dashboards\Sidebar.tsx)
 // src/components/dashboard/Sidebar.tsx
 import React, { useState } from "react";
 import {
@@ -17,17 +18,22 @@ import {
   Avatar,
   Typography,
   IconButton,
+  Collapse, // Import Collapse
 } from "@mui/material";
+
 import { NavLink } from "react-router";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ExpandLess from "@mui/icons-material/ExpandLess"; // Import ExpandLess
+import ExpandMore from "@mui/icons-material/ExpandMore"; // Import ExpandMore
 
 export interface NavItem {
   label: string;
-  path: string;
+  path?: string;
   icon: React.ReactElement;
+  subItems?: NavItem[]; // Optional array of sub-items
 }
 
 interface SidebarProps {
@@ -47,6 +53,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [open, setOpen] = useState(true);
+  const [openDropdown, setOpenDropdown] = useState<{ [key: string]: boolean }>(
+    {}
+  ); // State to manage dropdown open state
 
   const handleLogoutClick = () => {
     setLogoutDialogOpen(true);
@@ -63,6 +72,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleDrawerToggle = () => {
     setOpen(!open);
+  };
+
+  // Function to toggle dropdown
+  const handleDropdownToggle = (label: string) => {
+    setOpenDropdown((prevState) => ({
+      ...prevState,
+      [label]: !prevState[label],
+    }));
   };
 
   return (
@@ -121,19 +138,61 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Navigation Items */}
         <List>
           {navItems.map((item, index) => (
-            <ListItemButton
-              key={index}
-              component={NavLink}
-              to={item.path}
-              sx={({ isActive }) => ({
-                backgroundColor: isActive
-                  ? "rgba(144,202,249, 0.2)"
-                  : "inherit",
-              })}
-            >
-              <ListItemIcon sx={{ color: "white" }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
+            <React.Fragment key={index}>
+              {item.subItems ? (
+                <>
+                  <ListItemButton
+                    onClick={() => handleDropdownToggle(item.label)}
+                  >
+                    <ListItemIcon sx={{ color: "white" }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText primary={item.label} />
+                    {openDropdown[item.label] ? (
+                      <ExpandLess sx={{ color: "white" }} />
+                    ) : (
+                      <ExpandMore sx={{ color: "white" }} />
+                    )}
+                  </ListItemButton>
+                  <Collapse
+                    in={openDropdown[item.label] || false}
+                    timeout="auto"
+                    unmountOnExit
+                  >
+                    <List component="div" disablePadding>
+                      {item.subItems.map((subItem, subIndex) => (
+                        <ListItemButton
+                          key={subIndex}
+                          component={NavLink}
+                          to={subItem.path}
+                          sx={{ pl: 4 }}
+                        >
+                          <ListItemIcon sx={{ color: "white" }}>
+                            {subItem.icon}
+                          </ListItemIcon>
+                          <ListItemText primary={subItem.label} />
+                        </ListItemButton>
+                      ))}
+                    </List>
+                  </Collapse>
+                </>
+              ) : (
+                <ListItemButton
+                  component={NavLink}
+                  to={item.path}
+                  sx={({ isActive }) => ({
+                    backgroundColor: isActive
+                      ? "rgba(144,202,249, 0.2)"
+                      : "inherit",
+                  })}
+                >
+                  <ListItemIcon sx={{ color: "white" }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              )}
+            </React.Fragment>
           ))}
         </List>
 

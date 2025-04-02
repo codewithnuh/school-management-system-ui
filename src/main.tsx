@@ -50,7 +50,10 @@ createRoot(document.getElementById("root")!).render(
               }
             >
               <Route index element={<Navigate to="applications" replace />} />
-              <Route path="applications" element={<ApplicationsTab />} />
+              <Route
+                path="applications/teachers"
+                element={<ApplicationsTab />}
+              />
               <Route path="reports" element={<div>REPORTS</div>} />
               <Route path="settings" element={<div>Setting</div>} />
             </Route>

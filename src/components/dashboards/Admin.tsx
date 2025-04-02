@@ -1,4 +1,4 @@
-// src/pages/Admin.tsx
+// [Admin.tsx](file:///C:\Users\Noor%20Ul%20Hassan\Desktop\Projects\school-management-system-ui\src\components\dashboards\Admin.tsx)
 import React from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -37,11 +37,30 @@ import { SettingsApplications } from "@mui/icons-material";
 const navItems: NavItem[] = [
   {
     label: "Applications",
-    path: "/admin/applications",
     icon: <SettingsApplications />,
+    subItems: [
+      {
+        label: "Teachers",
+        path: "/dashboard/admin/applications/teachers",
+        icon: <AssessmentIcon />,
+      },
+      {
+        label: "Students",
+        path: "/dashboard/admin/applications/students",
+        icon: <SettingsIcon />,
+      },
+    ],
   },
-  { label: "Reports", path: "/admin/reports", icon: <AssessmentIcon /> },
-  { label: "Settings", path: "/admin/settings", icon: <SettingsIcon /> },
+  {
+    label: "Reports",
+    path: "/dashboard/admin/reports",
+    icon: <AssessmentIcon />,
+  },
+  {
+    label: "Settings",
+    path: "/dashboard/admin/settings",
+    icon: <SettingsIcon />,
+  },
 ];
 
 const Admin: React.FC = () => {
