@@ -21,7 +21,22 @@ export const acceptTeacherApplication = async (id: number) => {
 
   return response.data;
 };
-
+export const acceptStudentApplication = async (id: number) => {
+  const response = await axiosInstance.post(`/users/accept-user?id=${id}`, {
+    status: "Accepted",
+  });
+  return response.data;
+};
+export const getStudentApplications = async () => {
+  const response = await axiosInstance.get<ApplicationResponse>("users");
+  return response.data;
+};
+export const rejectStudentApplication = async (id: number) => {
+  const response = await axiosInstance.post(`/users/reject-user?id=${id}`, {
+    status: "Rejected",
+  });
+  return response.data;
+};
 export const rejectTeacherApplication = async (id: number) => {
   const response = await axiosInstance.post<ApplicationResponse>(
     `/teachers/reject-teacher-application?id=${id}`,
