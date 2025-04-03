@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   useMutation,
   useQuery,
@@ -147,10 +148,12 @@ export const useRejectStudentApplication = (): UseMutationResult<
       // optional: perform some actions before the mutation occurs.
     },
     onSettled: async (
-      data: StudentApplicationResponse | undefined,
+      _data: StudentApplicationResponse | undefined,
       error: Error | null,
-      variables: number,
-      context: unknown
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _variables: number,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _context: unknown
     ): Promise<void> => {
       // optional: perform some actions after the mutation occurs.
       if (error) {
