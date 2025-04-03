@@ -26,6 +26,7 @@ import Admin from "./components/dashboards/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ApplicationsTab from "./components/layout/Application.tsx";
 import StudentApplicationsTab from "./components/layout/StudentApplicationsTab.tsx";
+import CreateClassForm from "./components/layout/CreateClassForm.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -62,7 +63,7 @@ createRoot(document.getElementById("root")!).render(
                 path="applications/students"
                 element={<StudentApplicationsTab />}
               />
-              <Route path="reports" element={<div>REPORTS</div>} />
+              <Route path="reports" element={<CreateClassForm />} />
               <Route path="settings" element={<div>Setting</div>} />
             </Route>
 
