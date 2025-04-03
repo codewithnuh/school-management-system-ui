@@ -33,6 +33,7 @@ export interface Application {
   isVerified: boolean;
   applicationStatus: ApplicationStatus;
   role: Role;
+  isRegistered?: boolean;
   subjectId: number;
   createdAt: string;
   updatedAt: string;
@@ -50,11 +51,21 @@ export interface PaginationData {
 export interface ApplicationResponseData extends PaginationData {
   teachers: Application[];
 }
-
+interface StudentApplicationResponseData extends PaginationData {
+  data: Application[];
+}
 // Complete API response
 export interface ApplicationResponse {
   success: boolean;
   data: ApplicationResponseData;
+  error: string | null;
+  message: string;
+  statusCode: number;
+  timestamp: string;
+}
+export interface StudentApplicationResponse {
+  success: boolean;
+  data: StudentApplicationResponseData;
   error: string | null;
   message: string;
   statusCode: number;

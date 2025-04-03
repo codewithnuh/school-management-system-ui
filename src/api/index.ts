@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ApplicationResponse } from "../types";
+import { ApplicationResponse, StudentApplicationResponse } from "../types";
 
 const BASE_URL = "http://localhost:3000/api/v1/";
 
@@ -22,19 +22,25 @@ export const acceptTeacherApplication = async (id: number) => {
   return response.data;
 };
 export const acceptStudentApplication = async (id: number) => {
-  const response = await axiosInstance.post(`/users/accept-user?id=${id}`, {
-    status: "Accepted",
-  });
+  const response = await axiosInstance.post<StudentApplicationResponse>(
+    `/users/accept-user?id=${id}`,
+    {
+      status: "Accepted",
+    }
+  );
   return response.data;
 };
 export const getStudentApplications = async () => {
-  const response = await axiosInstance.get<ApplicationResponse>("users");
+  const response = await axiosInstance.get<StudentApplicationResponse>("users");
   return response.data;
 };
 export const rejectStudentApplication = async (id: number) => {
-  const response = await axiosInstance.post(`/users/reject-user?id=${id}`, {
-    status: "Rejected",
-  });
+  const response = await axiosInstance.post<StudentApplicationResponse>(
+    `/users/reject-user?id=${id}`,
+    {
+      status: "Rejected",
+    }
+  );
   return response.data;
 };
 export const rejectTeacherApplication = async (id: number) => {

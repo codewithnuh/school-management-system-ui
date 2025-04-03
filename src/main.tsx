@@ -25,6 +25,7 @@ import { RoleGuard } from "./components/RoleGuard.tsx";
 import Admin from "./components/dashboards/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ApplicationsTab from "./components/layout/Application.tsx";
+import StudentApplicationsTab from "./components/layout/StudentApplicationsTab.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -49,10 +50,17 @@ createRoot(document.getElementById("root")!).render(
                 </RoleGuard>
               }
             >
-              <Route index element={<Navigate to="applications" replace />} />
+              <Route
+                index
+                element={<Navigate to="applications/teachers" replace />}
+              />
               <Route
                 path="applications/teachers"
                 element={<ApplicationsTab />}
+              />
+              <Route
+                path="applications/students"
+                element={<StudentApplicationsTab />}
               />
               <Route path="reports" element={<div>REPORTS</div>} />
               <Route path="settings" element={<div>Setting</div>} />

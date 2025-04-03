@@ -4,11 +4,11 @@ import {
   getStudentApplications,
   rejectStudentApplication,
 } from "../../api/index";
-import { ApplicationResponse } from "../../types";
+import { StudentApplicationResponse } from "../../types";
 import { queryClient } from "../../utils/queryClient";
 
 export const useStudentApplications = () => {
-  return useQuery<ApplicationResponse>({
+  return useQuery<StudentApplicationResponse>({
     queryKey: ["studentApplications"],
     queryFn: getStudentApplications,
   });
@@ -17,7 +17,7 @@ export const useStudentApplications = () => {
 export const useAcceptStudentApplication = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<ApplicationResponse, Error, number>({
+  return useMutation<StudentApplicationResponse, Error, number>({
     mutationFn: (id: number) => acceptStudentApplication(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["studentApplications"] });
@@ -39,7 +39,7 @@ export const useAcceptStudentApplication = () => {
 };
 
 export const useRejectStudentApplication = () => {
-  return useMutation<ApplicationResponse, Error, number>({
+  return useMutation<StudentApplicationResponse, Error, number>({
     mutationFn: (id: number) => rejectStudentApplication(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["studentApplications"] });
