@@ -26,7 +26,7 @@ export interface ApiResponse<T> {
  */
 const fetchSubjects = async (): Promise<Subject[]> => {
   const response = await axiosInstance.get<ApiResponse<Subject[]>>(
-    "/api/v1/subjects/"
+    "subjects"
   );
 
   return response.data.data;
