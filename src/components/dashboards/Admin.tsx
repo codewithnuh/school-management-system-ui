@@ -69,28 +69,6 @@ const Admin: React.FC = () => {
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         {/* Top AppBar */}
-        <AppBar
-          position="fixed"
-          sx={{
-            width: { sm: `calc(100% - ${drawerWidth}px)` },
-            ml: { sm: `${drawerWidth}px` },
-          }}
-        >
-          <Toolbar>
-            {/* For mobile: show hamburger menu (if needed) */}
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              sx={{ mr: 2, display: { sm: "none" } }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h4" noWrap component="div">
-              Admin Dashboard
-            </Typography>
-          </Toolbar>
-        </AppBar>
 
         {/* Sidebar */}
         <Sidebar

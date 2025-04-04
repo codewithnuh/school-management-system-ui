@@ -40,7 +40,7 @@ import {
 } from "@mui/icons-material";
 import { useSubjects } from "../../services/queries/subject";
 import { useTeachers } from "../../services/queries/classTeachers";
-
+import { useCreateClass } from "../../services/queries/classes";
 // Type for our form
 type CreateClassFormValues = z.infer<typeof CreateClassSchema>;
 
@@ -66,6 +66,8 @@ const DAYS_OF_WEEK = [
 const CreateClassForm: React.FC = () => {
   const theme = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Create mutation of createclass hook
+  const createClass = useCreateClass();
 
   // Fetch subjects from API
   const {
@@ -168,7 +170,12 @@ const CreateClassForm: React.FC = () => {
     setIsSubmitting(true);
     try {
       console.log("Form data submitted:", data);
-
+      const classCreated = createClass.mutate({
+        ...data,
+        description: data.description || "",
+      });
+      console.log({ classCreated });
+      //)
       // Validate that teachers are assigned to subjects they are qualified for
       let hasInvalidAssignments = false;
 
@@ -782,8 +789,11 @@ const CreateClassForm: React.FC = () => {
                                         </MenuItem>
                                         {/* Filter teachers by qualification for this subject */}
                                         {teachers.length > 0 ? (
-                                          getQualifiedTeachers(subject.id).length > 0 ? (
-                                            getQualifiedTeachers(subject.id).map((teacher) => (
+                                          getQualifiedTeachers(subject.id)
+                                            .length > 0 ? (
+                                            getQualifiedTeachers(
+                                              subject.id
+                                            ).map((teacher) => (
                                               <MenuItem
                                                 key={teacher.id}
                                                 value={teacher.id}
@@ -794,7 +804,8 @@ const CreateClassForm: React.FC = () => {
                                             ))
                                           ) : (
                                             <MenuItem disabled>
-                                              No teachers qualified for this subject
+                                              No teachers qualified for this
+                                              subject
                                             </MenuItem>
                                           )
                                         ) : (
