@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,18 +39,12 @@ import {
   School as SchoolIcon,
 } from "@mui/icons-material";
 import { useSubjects } from "../../services/queries/subject";
-
-// Mock data for teachers - replace with actual API calls
-const MOCK_TEACHERS = [
-  { id: 1, name: "John Doe" },
-  { id: 2, name: "Jane Smith" },
-  { id: 3, name: "Robert Johnson" },
-  { id: 4, name: "Emily Davis" },
-  { id: 5, name: "Michael Wilson" },
-];
+import { useTeachers } from "../../services/queries/classTeachers";
 
 // Type for our form
 type CreateClassFormValues = z.infer<typeof CreateClassSchema>;
+
+// Constants
 
 // Toast notification type
 type ToastState = {
@@ -79,7 +74,17 @@ const CreateClassForm: React.FC = () => {
     isError: isSubjectsError,
     error: subjectsError,
   } = useSubjects();
-  console.log({ subjectsError });
+
+  // Fetch teachers from API
+  const {
+    data: teachersData,
+    isLoading: isLoadingTeachers,
+    isError: isTeachersError,
+    error: teachersError,
+  } = useTeachers();
+
+  // Extract teachers array from the response
+  const teachers = teachersData?.teachers || [];
 
   // Toast notification state
   const [toast, setToast] = useState<ToastState>({
@@ -164,6 +169,37 @@ const CreateClassForm: React.FC = () => {
     try {
       console.log("Form data submitted:", data);
 
+      // Validate that teachers are assigned to subjects they are qualified for
+      let hasInvalidAssignments = false;
+
+      // Check each section's subject teachers
+      data.sections.forEach((section) => {
+        Object.entries(section.subjectTeachers).forEach(
+          ([subjectId, teacherId]) => {
+            if (teacherId !== 0) {
+              // 0 means no teacher selected
+              const numericSubjectId = parseInt(subjectId, 10);
+              const teacherIsQualified = teachers.find(
+                (t) => t.id === teacherId && t.subjectId == numericSubjectId
+              );
+
+              if (!teacherIsQualified) {
+                hasInvalidAssignments = true;
+                showToast(
+                  `Section ${section.name}: Teacher is not qualified to teach the assigned subject`,
+                  "error"
+                );
+              }
+            }
+          }
+        );
+      });
+
+      if (hasInvalidAssignments) {
+        setIsSubmitting(false);
+        return;
+      }
+
       // Simulate API call with a delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -187,6 +223,12 @@ const CreateClassForm: React.FC = () => {
     }
   };
 
+  // Filter teachers by subject qualification
+  const getQualifiedTeachers = (subjectId: number) => {
+    // Filter teachers who are qualified to teach this subject
+    return teachers.filter((teacher) => teacher.subjectId == subjectId);
+  };
+
   // Add a new empty section
   const handleAddSection = () => {
     appendSection({
@@ -197,15 +239,27 @@ const CreateClassForm: React.FC = () => {
     });
   };
 
-  // Show error if subjects failed to load
-  if (isSubjectsError) {
+  // Display a full-screen error if either teachers or subjects fail to load
+  if (isSubjectsError || isTeachersError) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">
-          Failed to load subjects:{" "}
-          {subjectsError instanceof Error
-            ? subjectsError.message
-            : "Unknown error"}
+          {isSubjectsError && (
+            <Typography component="div" gutterBottom>
+              Failed to load subjects:{" "}
+              {subjectsError instanceof Error
+                ? subjectsError.message
+                : "Unknown error"}
+            </Typography>
+          )}
+          {isTeachersError && (
+            <Typography component="div">
+              Failed to load teachers:{" "}
+              {teachersError instanceof Error
+                ? teachersError.message
+                : "Unknown error"}
+            </Typography>
+          )}
         </Alert>
       </Box>
     );
@@ -625,22 +679,49 @@ const CreateClassForm: React.FC = () => {
                             <FormControl
                               fullWidth
                               error={!!errors.sections?.[index]?.classTeacherId}
-                              disabled={isSubmitting}
+                              disabled={isSubmitting || isLoadingTeachers}
                             >
                               <InputLabel id={`class-teacher-label-${index}`}>
                                 Class Teacher
                               </InputLabel>
-                              <Select
-                                {...field}
-                                labelId={`class-teacher-label-${index}`}
-                                label="Class Teacher"
-                              >
-                                {MOCK_TEACHERS.map((teacher) => (
-                                  <MenuItem key={teacher.id} value={teacher.id}>
-                                    {teacher.name}
+                              {isLoadingTeachers ? (
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    mt: 2,
+                                  }}
+                                >
+                                  <CircularProgress size={24} sx={{ mr: 2 }} />
+                                  <Typography>Loading teachers...</Typography>
+                                </Box>
+                              ) : (
+                                <Select
+                                  {...field}
+                                  labelId={`class-teacher-label-${index}`}
+                                  label="Class Teacher"
+                                >
+                                  <MenuItem value={0}>
+                                    <em>Select a teacher</em>
                                   </MenuItem>
-                                ))}
-                              </Select>
+
+                                  {/* Show all teachers for class teacher selection */}
+                                  {teachers.length > 0 ? (
+                                    teachers.map((teacher) => (
+                                      <MenuItem
+                                        key={teacher.id}
+                                        value={teacher.id}
+                                      >
+                                        {teacher.firstName} {teacher.lastName}
+                                      </MenuItem>
+                                    ))
+                                  ) : (
+                                    <MenuItem disabled>
+                                      No teachers available
+                                    </MenuItem>
+                                  )}
+                                </Select>
+                              )}
                               {errors.sections?.[index]?.classTeacherId && (
                                 <FormHelperText>
                                   {
@@ -682,7 +763,9 @@ const CreateClassForm: React.FC = () => {
                                   render={({ field }) => (
                                     <FormControl
                                       fullWidth
-                                      disabled={isSubmitting}
+                                      disabled={
+                                        isSubmitting || isLoadingTeachers
+                                      }
                                     >
                                       <InputLabel
                                         id={`subject-teacher-label-${index}-${subject.id}`}
@@ -694,15 +777,36 @@ const CreateClassForm: React.FC = () => {
                                         labelId={`subject-teacher-label-${index}-${subject.id}`}
                                         label={`${subject.name} Teacher`}
                                       >
-                                        {MOCK_TEACHERS.map((teacher) => (
-                                          <MenuItem
-                                            key={teacher.id}
-                                            value={teacher.id}
-                                          >
-                                            {teacher.name}
+                                        <MenuItem value={0}>
+                                          <em>Select a teacher</em>
+                                        </MenuItem>
+                                        {/* Filter teachers by qualification for this subject */}
+                                        {teachers.length > 0 ? (
+                                          getQualifiedTeachers(subject.id).length > 0 ? (
+                                            getQualifiedTeachers(subject.id).map((teacher) => (
+                                              <MenuItem
+                                                key={teacher.id}
+                                                value={teacher.id}
+                                              >
+                                                {teacher.firstName}{" "}
+                                                {teacher.lastName}
+                                              </MenuItem>
+                                            ))
+                                          ) : (
+                                            <MenuItem disabled>
+                                              No teachers qualified for this subject
+                                            </MenuItem>
+                                          )
+                                        ) : (
+                                          <MenuItem disabled>
+                                            No teachers available
                                           </MenuItem>
-                                        ))}
+                                        )}
                                       </Select>
+                                      <FormHelperText>
+                                        Only teachers qualified to teach this
+                                        subject are listed
+                                      </FormHelperText>
                                     </FormControl>
                                   )}
                                 />
@@ -729,7 +833,7 @@ const CreateClassForm: React.FC = () => {
             color="primary"
             size="large"
             type="submit"
-            disabled={isSubmitting || isLoadingSubjects}
+            disabled={isSubmitting || isLoadingSubjects || isLoadingTeachers}
             sx={{
               px: 4,
               py: 1.5,

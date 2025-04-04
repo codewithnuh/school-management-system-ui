@@ -1,11 +1,12 @@
-import z from "zod";
+import { z } from "zod";
+
 export const CreateClassSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(1, "Class name is required"),
   description: z.string().optional(),
-  maxStudents: z.number().min(1, "Max students must be at least 1"),
-  periodsPerDay: z.number().min(1).max(10),
-  periodLength: z.number().min(30).max(60),
+  maxStudents: z.number().int().min(1, "Class must have at least 1 student"),
+  periodsPerDay: z.number().int().min(1, "At least 1 period per day is required").max(10),
+  periodLength: z.number().int().min(30, "Period length must be at least 30 minutes").max(60),
   workingDays: z
     .array(
       z.enum([
@@ -22,14 +23,12 @@ export const CreateClassSchema = z.object({
   subjectIds: z.array(z.number()).min(1, "At least one subject is required"),
   sections: z.array(
     z.object({
-      name: z.string().length(1, "Section name must be a single character"),
-      maxStudents: z
-        .number()
-        .min(1, "Max students per section must be at least 1"),
-      classTeacherId: z
-        .number()
-        .positive("Class teacher ID must be a positive number"),
+      name: z.string().min(1, "Section name is required"),
+      maxStudents: z.number().int().min(1, "Section must have at least 1 student"),
+      classTeacherId: z.number().int().positive("Class teacher ID must be a positive number"),
       subjectTeachers: z.record(z.string(), z.number()), // { subjectId: teacherId }
     })
-  ),
+  ).min(1, "At least one section is required"),
 });
+
+export type CreateClassFormValues = z.infer<typeof CreateClassSchema>;
