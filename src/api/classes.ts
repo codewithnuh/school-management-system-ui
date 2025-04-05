@@ -14,7 +14,7 @@ export const fetchClasses = async (): Promise<Class[]> => {
 // Get a single class by ID
 export const fetchClassById = async (id: number): Promise<Class> => {
   const response = await axiosInstance.get(`/classes/${id}`);
-  return response.data;
+  return response.data.data;
 };
 
 // Create a new class

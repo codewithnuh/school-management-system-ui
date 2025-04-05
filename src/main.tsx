@@ -28,6 +28,7 @@ import ApplicationsTab from "./components/layout/Application.tsx";
 import StudentApplicationsTab from "./components/layout/StudentApplicationsTab.tsx";
 import CreateClassForm from "./components/layout/CreateClassForm.tsx";
 import ClassesPage from "./pages/ClassesPage";
+import UpdateClassForm from "./components/layout/UpdateClassForm.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -65,6 +66,7 @@ createRoot(document.getElementById("root")!).render(
                 element={<StudentApplicationsTab />}
               />
               <Route path="class/create" element={<CreateClassForm />} />
+              <Route path="classes/edit/:id" element={<UpdateClassForm />} />
               <Route path="classes" element={<ClassesPage />} />
               <Route path="settings" element={<div>Setting</div>} />
             </Route>

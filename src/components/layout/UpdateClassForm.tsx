@@ -40,7 +40,12 @@ import {
 } from "@mui/icons-material";
 import { useSubjects } from "../../services/queries/subject";
 import { useTeachers } from "../../services/queries/classTeachers";
-import { useCreateClass } from "../../services/queries/classes";
+import {
+  useClass,
+  useCreateClass,
+  useUpdateClass,
+} from "../../services/queries/classes";
+import { useParams } from "react-router";
 // Type for our form
 type CreateClassFormValues = z.infer<typeof CreateClassSchema>;
 
@@ -63,11 +68,18 @@ const DAYS_OF_WEEK = [
   "Sunday",
 ] as const;
 
-const CreateClassForm: React.FC = () => {
+// Define the type for working days
+type WorkingDay = (typeof DAYS_OF_WEEK)[number];
+
+const UpdateClassForm: React.FC = () => {
   const theme = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Create mutation of createclass hook
-  const createClass = useCreateClass();
+  const updateClass = useUpdateClass();
+  const { id } = useParams();
+  const { data: classData, isLoading: isLoadingClassData } = useClass(
+    Number(id)
+  );
 
   // Fetch subjects from API
   const {
@@ -84,10 +96,8 @@ const CreateClassForm: React.FC = () => {
     isError: isTeachersError,
     error: teachersError,
   } = useTeachers();
-
   // Extract teachers array from the response
   const teachers = teachersData?.teachers || [];
-
   // Toast notification state
   const [toast, setToast] = useState<ToastState>({
     open: false,
@@ -108,14 +118,86 @@ const CreateClassForm: React.FC = () => {
     defaultValues: {
       name: "",
       description: "",
-      maxStudents: 30,
-      periodsPerDay: 6,
-      periodLength: 45,
-      workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      maxStudents: 0,
+      periodsPerDay: 0,
+      periodLength: 0,
+      workingDays: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+      ] as WorkingDay[],
       subjectIds: [],
       sections: [],
     },
   });
+
+  // Update form values when classData is loaded
+  useEffect(() => {
+    if (classData) {
+      console.log("Setting form values with class data:", classData);
+
+      // Validate and filter workingDays to ensure they match the expected type
+      const validWorkingDays = Array.isArray(classData.workingDays)
+        ? classData.workingDays.filter((day): day is WorkingDay =>
+            DAYS_OF_WEEK.includes(day as WorkingDay)
+          )
+        : ([
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+          ] as WorkingDay[]);
+
+      // Convert string numbers to actual numbers
+      const maxStudents =
+        typeof classData.maxStudents === "string"
+          ? parseInt(classData.maxStudents, 10)
+          : Number(classData.maxStudents) || 0;
+
+      const periodsPerDay =
+        typeof classData.periodsPerDay === "string"
+          ? parseInt(classData.periodsPerDay, 10)
+          : Number(classData.periodsPerDay) || 0;
+
+      const periodLength =
+        typeof classData.periodLength === "string"
+          ? parseInt(classData.periodLength, 10)
+          : Number(classData.periodLength) || 0;
+
+      // Process sections to ensure numeric values
+      const processedSections =
+        classData.sections?.map((section) => ({
+          ...section,
+          maxStudents:
+            typeof section.maxStudents === "string"
+              ? parseInt(section.maxStudents, 10)
+              : Number(section.maxStudents),
+          classTeacherId:
+            typeof section.classTeacherId === "string"
+              ? parseInt(section.classTeacherId, 10)
+              : Number(section.classTeacherId),
+        })) || [];
+
+      // Reset the form with the loaded data
+      reset({
+        name: classData.name || "",
+        description: classData.description || "",
+        maxStudents,
+        periodsPerDay,
+        periodLength,
+        workingDays: validWorkingDays,
+        subjectIds: Array.isArray(classData.subjectIds)
+          ? classData.subjectIds.map((id) =>
+              typeof id === "string" ? parseInt(id, 10) : id
+            )
+          : [],
+        sections: processedSections,
+      });
+    }
+  }, [classData, reset]);
 
   // Field array for sections
   const {
@@ -129,15 +211,15 @@ const CreateClassForm: React.FC = () => {
 
   // Add a default section if none exists
   useEffect(() => {
-    if (sectionFields.length === 0) {
+    if (sectionFields.length === 0 && !isLoadingClassData) {
       appendSection({
         name: "A",
         maxStudents: 30,
-        classTeacherId: 0,
+        classTeacherId: 1, // Changed from 0 to 1 to match schema requirement for positive number
         subjectTeachers: {},
       });
     }
-  }, [appendSection, sectionFields.length]);
+  }, [appendSection, sectionFields.length, isLoadingClassData]);
 
   // Watch for selected subjects to use in sections
   const selectedSubjectIds = watch("subjectIds");
@@ -169,20 +251,34 @@ const CreateClassForm: React.FC = () => {
   const onSubmit = async (data: CreateClassFormValues) => {
     setIsSubmitting(true);
     try {
-      console.log("Form data submitted:", data);
-      const classCreated = createClass.mutate({
+      // Ensure all numeric fields are actually numbers
+      const formattedData = {
         ...data,
+        maxStudents: Number(data.maxStudents),
+        periodsPerDay: Number(data.periodsPerDay),
+        periodLength: Number(data.periodLength),
+        sections: data.sections.map((section) => ({
+          ...section,
+          maxStudents: Number(section.maxStudents),
+          classTeacherId: Number(section.classTeacherId),
+          // Convert subjectTeachers values to numbers
+          subjectTeachers: Object.fromEntries(
+            Object.entries(section.subjectTeachers).map(([key, value]) => [
+              key,
+              typeof value === "string" ? parseInt(value, 10) : Number(value),
+            ])
+          ),
+        })),
         description: data.description || "",
         examId: null,
         classId: null,
-      });
-      console.log({ classCreated });
-      //)
+      };
+
       // Validate that teachers are assigned to subjects they are qualified for
       let hasInvalidAssignments = false;
 
       // Check each section's subject teachers
-      data.sections.forEach((section) => {
+      formattedData.sections.forEach((section) => {
         Object.entries(section.subjectTeachers).forEach(
           ([subjectId, teacherId]) => {
             if (teacherId !== 0) {
@@ -209,20 +305,23 @@ const CreateClassForm: React.FC = () => {
         return;
       }
 
-      // Simulate API call with a delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Here you would typically send the data to your API
-      // await createClass(data);
-
-      showToast("Class created successfully!", "success");
+      // Call the mutation and wait for it to complete
+      const result = await updateClass.mutateAsync({
+        id: Number(id),
+        data: formattedData,
+      });
+      
+      // The updated class data will be in the result
+      console.log("Updated class data:", result);
+      
+      showToast("Class updated successfully!", "success");
 
       // Optionally reset the form after successful submission
       // reset();
     } catch (error) {
-      console.error("Error creating class:", error);
+      console.error("Error updating class:", error);
       showToast(
-        `Failed to create class: ${
+        `Failed to update class: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
         "error"
@@ -243,7 +342,7 @@ const CreateClassForm: React.FC = () => {
     appendSection({
       name: String.fromCharCode(65 + sectionFields.length), // A, B, C, etc.
       maxStudents: 30,
-      classTeacherId: 0,
+      classTeacherId: 1, // Changed from 0 to 1 to match schema requirement for positive number
       subjectTeachers: {},
     });
   };
@@ -274,6 +373,25 @@ const CreateClassForm: React.FC = () => {
     );
   }
 
+  // Show loading state while class data is being fetched
+  if (isLoadingClassData) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "50vh",
+        }}
+      >
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Loading class data...
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box
       component="form"
@@ -296,7 +414,7 @@ const CreateClassForm: React.FC = () => {
         open={isSubmitting}
       >
         <CircularProgress color="inherit" size={60} />
-        <Typography variant="h6">Creating class...</Typography>
+        <Typography variant="h6">Updating class...</Typography>
       </Backdrop>
 
       {/* Toast notification */}
@@ -329,7 +447,7 @@ const CreateClassForm: React.FC = () => {
         <Stack direction="row" alignItems="center" spacing={2} mb={3}>
           <SchoolIcon color="primary" fontSize="large" />
           <Typography variant="h4" component="h1" fontWeight="bold">
-            Create New Class
+            Update Class
           </Typography>
         </Stack>
 
@@ -366,9 +484,15 @@ const CreateClassForm: React.FC = () => {
             <Controller
               name="maxStudents"
               control={control}
-              render={({ field }) => (
+              render={({ field: { onChange, value, ...field } }) => (
                 <TextField
                   {...field}
+                  value={value}
+                  onChange={(e) => {
+                    const numValue =
+                      e.target.value === "" ? 0 : Number(e.target.value);
+                    onChange(numValue);
+                  }}
                   label="Maximum Students"
                   variant="outlined"
                   fullWidth
@@ -428,7 +552,7 @@ const CreateClassForm: React.FC = () => {
                     step={1}
                     marks
                     valueLabelDisplay="auto"
-                    onChange={(_, value) => field.onChange(value)}
+                    onChange={(_, value) => field.onChange(Number(value))}
                     disabled={isSubmitting}
                   />
                   {errors.periodsPerDay && (
@@ -457,7 +581,7 @@ const CreateClassForm: React.FC = () => {
                     step={5}
                     marks
                     valueLabelDisplay="auto"
-                    onChange={(_, value) => field.onChange(value)}
+                    onChange={(_, value) => field.onChange(Number(value))}
                     disabled={isSubmitting}
                   />
                   {errors.periodLength && (
@@ -660,9 +784,19 @@ const CreateClassForm: React.FC = () => {
                         <Controller
                           name={`sections.${index}.maxStudents`}
                           control={control}
-                          render={({ field }) => (
+                          render={({
+                            field: { onChange, value, ...field },
+                          }) => (
                             <TextField
                               {...field}
+                              value={value}
+                              onChange={(e) => {
+                                const numValue =
+                                  e.target.value === ""
+                                    ? 0
+                                    : Number(e.target.value);
+                                onChange(numValue);
+                              }}
                               label="Max Students"
                               variant="outlined"
                               fullWidth
@@ -684,7 +818,9 @@ const CreateClassForm: React.FC = () => {
                         <Controller
                           name={`sections.${index}.classTeacherId`}
                           control={control}
-                          render={({ field }) => (
+                          render={({
+                            field: { onChange, value, ...field },
+                          }) => (
                             <FormControl
                               fullWidth
                               error={!!errors.sections?.[index]?.classTeacherId}
@@ -707,6 +843,10 @@ const CreateClassForm: React.FC = () => {
                               ) : (
                                 <Select
                                   {...field}
+                                  value={value}
+                                  onChange={(e) => {
+                                    onChange(Number(e.target.value));
+                                  }}
                                   labelId={`class-teacher-label-${index}`}
                                   label="Class Teacher"
                                 >
@@ -769,7 +909,9 @@ const CreateClassForm: React.FC = () => {
                                   name={`sections.${index}.subjectTeachers.${subject.id}`}
                                   control={control}
                                   defaultValue={0}
-                                  render={({ field }) => (
+                                  render={({
+                                    field: { onChange, value, ...field },
+                                  }) => (
                                     <FormControl
                                       fullWidth
                                       disabled={
@@ -783,6 +925,10 @@ const CreateClassForm: React.FC = () => {
                                       </InputLabel>
                                       <Select
                                         {...field}
+                                        value={value}
+                                        onChange={(e) => {
+                                          onChange(Number(e.target.value));
+                                        }}
                                         labelId={`subject-teacher-label-${index}-${subject.id}`}
                                         label={`${subject.name} Teacher`}
                                       >
@@ -862,7 +1008,7 @@ const CreateClassForm: React.FC = () => {
               ) : null
             }
           >
-            {isSubmitting ? "Creating..." : "Create Class"}
+            {isSubmitting ? "Updating..." : "Update Class"}
           </Button>
         </Box>
       </Paper>
@@ -870,4 +1016,4 @@ const CreateClassForm: React.FC = () => {
   );
 };
 
-export default CreateClassForm;
+export default UpdateClassForm;

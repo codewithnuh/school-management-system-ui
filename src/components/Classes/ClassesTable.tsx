@@ -21,6 +21,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import { useClasses } from "../../services/queries/classes";
+import { useNavigate } from "react-router";
 
 const ClassesTable: React.FC = () => {
   const [page, setPage] = useState(0);
@@ -28,7 +29,7 @@ const ClassesTable: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
   const { data } = useClasses();
   const classesData = data ? data : [];
-
+  const navigate = useNavigate();
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -44,6 +45,7 @@ const ClassesTable: React.FC = () => {
     // This will be replaced with actual navigation in the future
     console.log(`Navigate to edit page for class ${classId}`);
     // Example implementation:
+    navigate(`/dashboard/admin/classes/edit/${classId}`);
     // navigate(`/classes/edit/${classId}`);
   };
 
