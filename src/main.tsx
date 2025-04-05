@@ -10,7 +10,7 @@ import { ThemeProvider } from "@emotion/react";
 import theme from "./themes/theme.ts";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import Header from "./components/globals/Header.tsx";
-import LoginPage from "@/components/landing_page/LoginPage.tsx";
+import LoginPage from "../src/components/landing_page/LoginPage.tsx";
 
 import ForgotPasswordPage from "./components/landing_page/ForgotPassword.tsx";
 import StudentRegistrationForm from "./components/landing_page/StudentRigisteration.tsx";
@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound.tsx";
 import ApplicationsTab from "./components/layout/Application.tsx";
 import StudentApplicationsTab from "./components/layout/StudentApplicationsTab.tsx";
 import CreateClassForm from "./components/layout/CreateClassForm.tsx";
+import ClassesPage from "./pages/ClassesPage";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -63,7 +64,8 @@ createRoot(document.getElementById("root")!).render(
                 path="applications/students"
                 element={<StudentApplicationsTab />}
               />
-              <Route path="reports" element={<CreateClassForm />} />
+              <Route path="class/create" element={<CreateClassForm />} />
+              <Route path="classes" element={<ClassesPage />} />
               <Route path="settings" element={<div>Setting</div>} />
             </Route>
 

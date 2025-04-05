@@ -1,15 +1,11 @@
-// [Admin.tsx](file:///C:\Users\Noor%20Ul%20Hassan\Desktop\Projects\school-management-system-ui\src\components\dashboards\Admin.tsx)
 import React from "react";
-import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
+
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Outlet } from "react-router";
-import Sidebar, { NavItem } from "@/components/dashboards/Sidebar.tsx";
+import Sidebar, { NavItem } from "../dashboards/Sidebar";
 
 const drawerWidth = 240;
 
@@ -32,7 +28,12 @@ const darkTheme = createTheme({
 
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { SettingsApplications } from "@mui/icons-material";
+import {
+  Class,
+  ClassOutlined,
+  Create,
+  SettingsApplications,
+} from "@mui/icons-material";
 
 const navItems: NavItem[] = [
   {
@@ -52,9 +53,20 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: "Reports",
-    path: "/dashboard/admin/reports",
-    icon: <AssessmentIcon />,
+    label: "Classes",
+    icon: <Class />,
+    subItems: [
+      {
+        label: "Create Class",
+        path: "/dashboard/admin/class/create",
+        icon: <Create />,
+      },
+      {
+        label: "All Classes",
+        path: "/dashboard/admin/classes",
+        icon: <ClassOutlined />,
+      },
+    ],
   },
   {
     label: "Settings",

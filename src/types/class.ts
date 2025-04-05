@@ -11,6 +11,8 @@ export interface Class {
   workingDays: string[];
   subjectIds: number[];
   sections: Section[];
+  examId: null | number; // Assuming it can be null or a number
+  classId: null | number; // Assuming it can be null or a number
   createdAt?: string;
   updatedAt?: string;
 }
@@ -40,3 +42,20 @@ export type CreateClassFormValues = Omit<
 > & {
   sections: SectionFormValues[];
 };
+
+interface ClassData {
+  id: number;
+  name: string;
+  maxStudents: number;
+  periodsPerDay?: number;
+  periodLength?: number;
+  workingDays?: string[];
+  subjectIds?: number[];
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  examId: null | number; // Assuming it can be null or a number
+  classId: null | number; // Assuming it can be null or a number
+}
+
+export type { ClassData };
