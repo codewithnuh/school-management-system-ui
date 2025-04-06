@@ -29,6 +29,9 @@ import StudentApplicationsTab from "./components/layout/StudentApplicationsTab.t
 import CreateClassForm from "./components/layout/CreateClassForm.tsx";
 import ClassesPage from "./pages/ClassesPage";
 import UpdateClassForm from "./components/layout/UpdateClassForm.tsx";
+import TimetableView from "./components/timetable/TimetableView.tsx";
+import mockTimetableData from "./mocks/timetableMockData.ts";
+import TimetableGenerator from "./pages/TimetableGenerator.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -74,6 +77,10 @@ createRoot(document.getElementById("root")!).render(
             <Route
               path="/register/teacher"
               element={<TeacherRegistrationForm />}
+            />
+            <Route
+              path="/dashboard/admin/timetable"
+              element={<TimetableGenerator />}
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

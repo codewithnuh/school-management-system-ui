@@ -1,5 +1,5 @@
-import axiosInstance from "./axiosInstance";
-import { Class, CreateClassFormValues } from "../types/class";
+import axiosInstance from "../axiosInstance";
+import { Class, CreateClassFormValues } from "../../types/class";
 
 /**
  * API functions for class operations

@@ -6,7 +6,7 @@ import {
   createClass,
   updateClass,
   deleteClass,
-} from "../../api/classes";
+} from "../../api/axios/classes";
 import { Class, CreateClassFormValues } from "../../types/class";
 
 /**

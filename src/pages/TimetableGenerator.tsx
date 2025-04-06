@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Container,
   FormControl,
   Grid,
@@ -13,286 +10,301 @@ import {
   Paper,
   Select,
   Typography,
+  CircularProgress,
+  Alert,
+  Divider,
+  Card,
+  CardContent,
+  useTheme,
+  alpha,
+  Fade,
+  Chip,
 } from "@mui/material";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
 import { SelectChangeEvent } from "@mui/material/Select";
-import TimetableView from "../components/timetable/TimetableView";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { useClasses } from "../services/queries/classes";
+import { useGenerateTimeTable } from "../services/queries/timeTable";
 
+// Define interfaces for type safety
 interface Class {
   id: number;
   name: string;
 }
 
-interface Section {
-  id: number;
-  name: string;
-}
-
-interface Teacher {
-  id: number;
-  firstName: string;
-  lastName: string;
-}
-
-interface Subject {
-  id: number;
-  name: string;
-  description: string;
-}
-
-interface Period {
-  id: number;
-  timetableId: number;
-  sectionId: number;
-  classId: number;
-  subjectId: number;
-  teacherId: number;
-  dayOfWeek: string;
-  periodNumber: number;
-  startTime: string;
-  endTime: string;
-  subject: Subject;
-  teacher: Teacher;
-}
-
-interface TimetableData {
-  [day: string]: Period[];
-}
-
 const TimetableGenerator: React.FC = () => {
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [sections, setSections] = useState<Section[]>([]);
+  const theme = useTheme();
   const [selectedClass, setSelectedClass] = useState<number | "">("");
-  const [selectedSection, setSelectedSection] = useState<number | "">("");
-  const [timetableData, setTimetableData] = useState<TimetableData | null>(
-    null
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Query for classes
+  const { data: classes = [], isLoading: classesLoading } = useClasses();
+
+  // Query for timetable generation
+  const timetableQuery = useGenerateTimeTable(
+    selectedClass ? Number(selectedClass) : 0
   );
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch classes on component mount
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const response = await axios.get("/api/classes");
-        setClasses(response.data.data);
-      } catch (err) {
-        setError("Failed to fetch classes. Please try again later.");
-        console.error("Error fetching classes:", err);
-      }
-    };
-
-    fetchClasses();
-  }, []);
-
   // Handle class selection
-  const handleClassChange = async (event: SelectChangeEvent) => {
+  const handleClassChange = (event: SelectChangeEvent) => {
     const classId = event.target.value;
     setSelectedClass(classId === "" ? "" : Number(classId));
-    setSelectedSection("");
-    setTimetableData(null);
-
-    if (classId !== "") {
-      setLoading(true);
-      try {
-        // Generate timetables for all sections of the selected class
-        await axios.post(`/api/timetables/generate/${classId}`);
-
-        // Fetch available sections for the selected class
-        const sectionsResponse = await axios.get(
-          `/api/classes/${classId}/sections`
-        );
-        setSections(sectionsResponse.data.data);
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to generate timetables. Please try again later.");
-        console.error("Error generating timetables:", err);
-        setLoading(false);
-      }
-    } else {
-      setSections([]);
-    }
+    setSuccessMessage(null); // Clear any previous success message
   };
 
-  // Handle section selection
-  const handleSectionChange = async (event: SelectChangeEvent) => {
-    const sectionId = event.target.value;
-    setSelectedSection(sectionId === "" ? "" : Number(sectionId));
-
-    if (sectionId !== "") {
-      setLoading(true);
-      try {
-        // Fetch timetable for the selected section
-        const response = await axios.get(
-          `/api/timetables/section/${sectionId}`
+  // Handle timetable generation
+  const handleGenerateTimetableClick = () => {
+    if (selectedClass) {
+      setIsGenerating(true);
+      timetableQuery.refetch().then(() => {
+        setSuccessMessage(
+          `Timetable for the selected class has been generated successfully!`
         );
-        setTimetableData(response.data.data);
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch timetable. Please try again later.");
-        console.error("Error fetching timetable:", err);
-        setLoading(false);
-      }
-    } else {
-      setTimetableData(null);
-    }
-  };
-
-  // Generate PDF of the timetable
-  const generatePDF = () => {
-    if (!timetableData || !selectedClass || !selectedSection) return;
-
-    const selectedClassObj = classes.find((c) => c.id === selectedClass);
-    const selectedSectionObj = sections.find((s) => s.id === selectedSection);
-
-    if (!selectedClassObj || !selectedSectionObj) return;
-
-    // Create new jsPDF instance
-    const doc = new jsPDF();
-
-    // Add title
-    doc.setFontSize(16);
-    doc.text(
-      `${selectedClassObj.name} - Section ${selectedSectionObj.name} Timetable`,
-      14,
-      22
-    );
-
-    // Get weekdays from the timetable data
-    const weekdays = Object.keys(timetableData);
-
-    // Function to format time
-    const formatTime = (time: string) => {
-      return time.substring(0, 5);
-    };
-
-    // Process each day
-    let yPos = 30;
-    weekdays.forEach((day) => {
-      // Add day header
-      doc.setFontSize(14);
-      doc.text(day, 14, yPos);
-      yPos += 10;
-
-      // Sort periods by periodNumber
-      const sortedPeriods = [...timetableData[day]].sort(
-        (a, b) => a.periodNumber - b.periodNumber
-      );
-
-      // Prepare table data
-      const tableData = sortedPeriods.map((period) => [
-        period.periodNumber.toString(),
-        `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
-        period.subject.name,
-        `${period.teacher.firstName} ${period.teacher.lastName}`,
-      ]);
-
-      // Add table
-      (doc as any).autoTable({
-        startY: yPos,
-        head: [["Period", "Time", "Subject", "Teacher"]],
-        body: tableData,
-        margin: { top: 10, bottom: 10 },
-        styles: { overflow: "linebreak" },
-        headStyles: { fillColor: [75, 75, 75] },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
+        setIsGenerating(false);
+      }).catch(() => {
+        setIsGenerating(false);
       });
-
-      yPos = (doc as any).lastAutoTable.finalY + 15;
-
-      // Add a new page if needed
-      if (yPos > 250 && day !== weekdays[weekdays.length - 1]) {
-        doc.addPage();
-        yPos = 20;
-      }
-    });
-
-    // Save the PDF
-    doc.save(
-      `${selectedClassObj.name}_Section_${selectedSectionObj.name}_Timetable.pdf`
-    );
+    }
   };
+
+  // Clear success message after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  // Find the selected class object for display
+  const selectedClassObj = classes.find((c) => c.id === selectedClass);
+
+  // Check if data is available
+  const hasData = timetableQuery.data && Object.keys(timetableQuery.data).length > 0;
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Timetable Generator
-        </Typography>
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          borderRadius: 2,
+          backgroundImage: `linear-gradient(to right, ${alpha(
+            theme.palette.primary.light,
+            0.1
+          )}, ${alpha(theme.palette.primary.light, 0.05)})`,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+          <CalendarTodayIcon
+            sx={{
+              fontSize: 40,
+              mr: 2,
+              color: theme.palette.primary.main,
+            }}
+          />
+          <Typography
+            variant="h4"
+            component="h1"
+            fontWeight="bold"
+            sx={{
+              background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.dark} 90%)`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Timetable Generator
+          </Typography>
+        </Box>
 
-        <Grid container spacing={3}>
-          {/* Class Selection */}
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel id="class-select-label">Class</InputLabel>
-              <Select
-                labelId="class-select-label"
-                id="class-select"
-                value={selectedClass.toString()}
-                label="Class"
-                onChange={handleClassChange}
-              >
-                <MenuItem value="">
-                  <em>Select a class</em>
-                </MenuItem>
-                {classes.map((cls) => (
-                  <MenuItem key={cls.id} value={cls.id.toString()}>
-                    {cls.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+        <Divider sx={{ mb: 4 }} />
 
-          {/* Section Selection */}
-          <Grid item xs={12} md={6}>
-            <FormControl
-              fullWidth
-              disabled={!selectedClass || sections.length === 0}
+        <Card variant="outlined" sx={{ mb: 4, borderRadius: 2 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom color="textSecondary">
+              Generate Class Timetables
+            </Typography>
+            <Typography variant="body2" color="textSecondary" paragraph>
+              Select a class from the dropdown and click the generate button to
+              create a timetable for all sections of that class.
+            </Typography>
+
+            <Grid container spacing={3} alignItems="center" sx={{ mt: 1 }}>
+              {/* Class Selection */}
+              <Grid item xs={12} md={6}>
+                <FormControl
+                  fullWidth
+                  disabled={classesLoading || isGenerating}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    },
+                  }}
+                >
+                  <InputLabel id="class-select-label">Class</InputLabel>
+                  <Select
+                    labelId="class-select-label"
+                    id="class-select"
+                    value={selectedClass.toString()}
+                    label="Class"
+                    onChange={handleClassChange}
+                  >
+                    <MenuItem value="">
+                      <em>Select a class</em>
+                    </MenuItem>
+                    {classes.map((cls: Class) => (
+                      <MenuItem key={cls.id} value={cls.id.toString()}>
+                        {cls.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  fullWidth
+                  onClick={handleGenerateTimetableClick}
+                  disabled={
+                    !selectedClass || isGenerating || timetableQuery.isFetching
+                  }
+                  startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    boxShadow: 2,
+                    background: theme.palette.primary.main,
+                    "&:hover": {
+                      background: theme.palette.primary.dark,
+                    },
+                  }}
+                >
+                  {isGenerating
+                    ? "Generating..."
+                    : "Generate Timetable"}
+                </Button>
+              </Grid>
+            </Grid>
+
+            {hasData && (
+              <Box mt={2} display="flex" justifyContent="flex-end">
+                <Chip 
+                  icon={<CheckCircleOutlineIcon />} 
+                  label="Timetable data available" 
+                  color="success" 
+                  variant="outlined" 
+                />
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Loading Indicator */}
+        {(classesLoading || timetableQuery.isFetching) && !isGenerating && (
+          <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {/* Error Message */}
+        {timetableQuery.isError && (
+          <Fade in={true}>
+            <Alert
+              severity="error"
+              sx={{
+                mt: 2,
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
             >
-              <InputLabel id="section-select-label">Section</InputLabel>
-              <Select
-                labelId="section-select-label"
-                id="section-select"
-                value={selectedSection.toString()}
-                label="Section"
-                onChange={handleSectionChange}
-              >
-                <MenuItem value="">
-                  <em>Select a section</em>
-                </MenuItem>
-                {sections.map((section) => (
-                  <MenuItem key={section.id} value={section.id.toString()}>
-                    {section.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        {loading && (
-          <Box sx={{ textAlign: "center", my: 4 }}>
-            <Typography>Loading...</Typography>
-          </Box>
+              Failed to generate timetable. Please try again.
+              {timetableQuery.error instanceof Error && (
+                <Typography variant="body2" mt={1}>
+                  Error: {timetableQuery.error.message}
+                </Typography>
+              )}
+            </Alert>
+          </Fade>
         )}
 
-        {error && (
-          <Box sx={{ textAlign: "center", my: 4 }}>
-            <Typography color="error">{error}</Typography>
-          </Box>
+        {/* Success Message */}
+        {successMessage && (
+          <Fade in={!!successMessage}>
+            <Alert
+              severity="success"
+              sx={{
+                mt: 2,
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
+            >
+              {successMessage}
+            </Alert>
+          </Fade>
         )}
 
-        {timetableData && (
-          <Box sx={{ mt: 4 }}>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-              <Button variant="contained" color="primary" onClick={generatePDF}>
-                Download PDF
-              </Button>
-            </Box>
+        {/* Data Summary */}
+        {hasData && (
+          <Card 
+            variant="outlined" 
+            sx={{ 
+              mt: 3, 
+              borderRadius: 2,
+              borderColor: theme.palette.success.main,
+              bgcolor: alpha(theme.palette.success.light, 0.05)
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" color="primary" gutterBottom>
+                Timetable Data Summary
+              </Typography>
+              <Typography variant="body2">
+                Timetable has been successfully generated. The data includes schedule information for all sections in the selected class.
+              </Typography>
 
-            <TimetableView timetableData={timetableData} />
+              <Box mt={2}>
+                <Typography variant="subtitle2" color="textSecondary">
+                  Data Preview:
+                </Typography>
+                <Box 
+                  component="pre" 
+                  sx={{ 
+                    mt: 1,
+                    p: 2, 
+                    bgcolor: alpha(theme.palette.background.default, 0.7),
+                    borderRadius: 1,
+                    overflowX: 'auto',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  {JSON.stringify(timetableQuery.data, null, 2).substring(0, 200)}...
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Selection Summary */}
+        {selectedClassObj && (
+          <Box
+            sx={{
+              mt: 4,
+              p: 3,
+              bgcolor: alpha(theme.palette.info.light, 0.1),
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Selected: {selectedClassObj.name}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Click the Generate Timetable button to create schedules for all
+              sections in this class.
+            </Typography>
           </Box>
         )}
       </Paper>
