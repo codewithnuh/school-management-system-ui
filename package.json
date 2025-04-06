@@ -22,6 +22,8 @@
     "@tanstack/react-query-persist-client": "^5.66.9",
     "axios": "^1.8.1",
     "dayjs": "^1.11.13",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",
