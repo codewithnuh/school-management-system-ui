@@ -41,6 +41,17 @@ interface FormattedRow {
   [day: string]: { subject: string; teacher: string; time: string } | number;
 }
 
+// Add an interface for the timetable response data
+interface TimetableData {
+  id: number;
+  classId: number;
+  sectionId: number;
+  teacherId: number;
+  periodsPerDay: number;
+  timetableEntries: TimetablePeriod[];
+  // Add other fields as necessary
+}
+
 const TimetableView: React.FC = () => {
   // Theme for styling
   const theme = useTheme();
@@ -76,9 +87,9 @@ const TimetableView: React.FC = () => {
     }
   }, [classWithSections]);
 
-  // Fetch timetable data - expecting TimetablePeriod[] now
+  // Fetch timetable data - expecting a TimetableData object now
   const {
-    data: timetablePeriods, // Renamed to reflect it's an array of periods
+    data: timetableData, // Renamed to reflect it's potentially a TimetableData object
     isLoading: isLoadingTimetable,
     isError: isErrorTimetable, // Track errors from timetable fetch
     error: timetableError, // Access error details
@@ -86,11 +97,11 @@ const TimetableView: React.FC = () => {
 
   // Log data and errors for debugging
   useEffect(() => {
-    console.log("Raw Timetable Periods Data:", timetablePeriods);
+    console.log("Raw Timetable Data:", timetableData);
     if (isErrorTimetable) {
       console.error("Error fetching timetable:", timetableError);
     }
-  }, [timetablePeriods, isErrorTimetable, timetableError]);
+  }, [timetableData, isErrorTimetable, timetableError]);
 
   // Days of the week
   const daysOfWeek = [
@@ -126,6 +137,17 @@ const TimetableView: React.FC = () => {
       console.warn("Please select both class and section.");
       // Optionally show a user message
     }
+  };
+
+  // Get timetable entries from the data structure
+  const getTimetableEntries = (): TimetablePeriod[] => {
+    if (!timetableData) return [];
+
+    // Check if data is already an array of periods
+    if (Array.isArray(timetableData)) return timetableData;
+
+    // Otherwise, extract entries from the object
+    return (timetableData as TimetableData).timetableEntries || [];
   };
 
   // Group raw periods by day
@@ -204,9 +226,10 @@ const TimetableView: React.FC = () => {
     );
   };
 
-  // Check if raw data is available before trying to format
+  // Check if timetable data is available - updated to handle the nested structure
   const isTimetableDataAvailable = (): boolean => {
-    return Array.isArray(timetablePeriods) && timetablePeriods.length > 0;
+    const entries = getTimetableEntries();
+    return Array.isArray(entries) && entries.length > 0;
   };
 
   // Export PDF function (remains largely the same, ensure tableRef content is correct)
@@ -257,8 +280,9 @@ const TimetableView: React.FC = () => {
     }
   };
 
-  // Group and format the data
-  const groupedData = groupPeriodsByDay(timetablePeriods);
+  // Group and format the data - using the updated method to get entries
+  const timetableEntries = getTimetableEntries();
+  const groupedData = groupPeriodsByDay(timetableEntries);
   const formattedData = formatGroupedDataForTable(groupedData);
 
   return (
