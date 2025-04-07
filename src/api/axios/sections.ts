@@ -5,7 +5,7 @@ export const fetchSectionsOfAClass = async (
   classId: number
 ): Promise<SectionsApiResponse["data"]> => {
   const response = await axiosInstance.get<SectionsApiResponse>(
-    `/class/${classId}`
+    `/classes/${classId}`
   );
   return response.data.data;
 };

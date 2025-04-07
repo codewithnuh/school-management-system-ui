@@ -26,7 +26,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useClasses } from "../services/queries/classes";
 import { useGenerateTimeTable } from "../services/queries/timeTable";
-
+import Link from "@mui/material/Link";
 // Define interfaces for type safety
 interface Class {
   id: number;
@@ -57,14 +57,17 @@ const TimetableGenerator: React.FC = () => {
   const handleGenerateTimetableClick = () => {
     if (selectedClass) {
       setIsGenerating(true);
-      timetableQuery.refetch().then(() => {
-        setSuccessMessage(
-          `Timetable for the selected class has been generated successfully!`
-        );
-        setIsGenerating(false);
-      }).catch(() => {
-        setIsGenerating(false);
-      });
+      timetableQuery
+        .refetch()
+        .then(() => {
+          setSuccessMessage(
+            `Timetable for the selected class has been generated successfully!`
+          );
+          setIsGenerating(false);
+        })
+        .catch(() => {
+          setIsGenerating(false);
+        });
     }
   };
 
@@ -82,7 +85,8 @@ const TimetableGenerator: React.FC = () => {
   const selectedClassObj = classes.find((c) => c.id === selectedClass);
 
   // Check if data is available
-  const hasData = timetableQuery.data && Object.keys(timetableQuery.data).length > 0;
+  const hasData =
+    timetableQuery.data && Object.keys(timetableQuery.data).length > 0;
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -172,7 +176,13 @@ const TimetableGenerator: React.FC = () => {
                   disabled={
                     !selectedClass || isGenerating || timetableQuery.isFetching
                   }
-                  startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
+                  startIcon={
+                    isGenerating ? (
+                      <CircularProgress size={20} color="inherit" />
+                    ) : (
+                      <RefreshIcon />
+                    )
+                  }
                   sx={{
                     py: 1.5,
                     borderRadius: 2,
@@ -183,20 +193,21 @@ const TimetableGenerator: React.FC = () => {
                     },
                   }}
                 >
-                  {isGenerating
-                    ? "Generating..."
-                    : "Generate Timetable"}
+                  {isGenerating ? "Generating..." : "Generate Timetable"}
                 </Button>
               </Grid>
+              <Button>
+                <Link>View Generated TimeTable</Link>
+              </Button>
             </Grid>
 
             {hasData && (
               <Box mt={2} display="flex" justifyContent="flex-end">
-                <Chip 
-                  icon={<CheckCircleOutlineIcon />} 
-                  label="Timetable data available" 
-                  color="success" 
-                  variant="outlined" 
+                <Chip
+                  icon={<CheckCircleOutlineIcon />}
+                  label="Timetable data available"
+                  color="success"
+                  variant="outlined"
                 />
               </Box>
             )}
@@ -249,13 +260,13 @@ const TimetableGenerator: React.FC = () => {
 
         {/* Data Summary */}
         {hasData && (
-          <Card 
-            variant="outlined" 
-            sx={{ 
-              mt: 3, 
+          <Card
+            variant="outlined"
+            sx={{
+              mt: 3,
               borderRadius: 2,
               borderColor: theme.palette.success.main,
-              bgcolor: alpha(theme.palette.success.light, 0.05)
+              bgcolor: alpha(theme.palette.success.light, 0.05),
             }}
           >
             <CardContent>
@@ -263,25 +274,30 @@ const TimetableGenerator: React.FC = () => {
                 Timetable Data Summary
               </Typography>
               <Typography variant="body2">
-                Timetable has been successfully generated. The data includes schedule information for all sections in the selected class.
+                Timetable has been successfully generated. The data includes
+                schedule information for all sections in the selected class.
               </Typography>
 
               <Box mt={2}>
                 <Typography variant="subtitle2" color="textSecondary">
                   Data Preview:
                 </Typography>
-                <Box 
-                  component="pre" 
-                  sx={{ 
+                <Box
+                  component="pre"
+                  sx={{
                     mt: 1,
-                    p: 2, 
+                    p: 2,
                     bgcolor: alpha(theme.palette.background.default, 0.7),
                     borderRadius: 1,
-                    overflowX: 'auto',
-                    fontSize: '0.75rem'
+                    overflowX: "auto",
+                    fontSize: "0.75rem",
                   }}
                 >
-                  {JSON.stringify(timetableQuery.data, null, 2).substring(0, 200)}...
+                  {JSON.stringify(timetableQuery.data, null, 2).substring(
+                    0,
+                    200
+                  )}
+                  ...
                 </Box>
               </Box>
             </CardContent>

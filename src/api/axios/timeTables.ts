@@ -1,5 +1,8 @@
 import { axiosInstance } from "..";
-import { TimetableGenerationResponse } from "../types/timetables";
+import {
+  TimetableGenerationResponse,
+  WeeklyTimetableResponse,
+} from "../types/timetables";
 
 export const generateTimeTableOfAClass = async (
   classId: number
@@ -9,3 +12,14 @@ export const generateTimeTableOfAClass = async (
   );
   return response.data.data;
 };
+export const fetchTimeTableOfSections = async (
+  classId: number,
+  sectionId: number
+): Promise<WeeklyTimetableResponse["data"]> => {
+  const response = await axiosInstance.get<WeeklyTimetableResponse>(
+    `/timetables/weekly/${classId}/${sectionId}`
+  );
+  return response.data.data;
+};
+
+// /weekly/:classId/:sectionId
