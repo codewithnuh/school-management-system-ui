@@ -8,19 +8,19 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 const EmpowerSection = () => {
   const instructions = [
     {
-      imgUrl: "/hero.jpg",
+      imgUrl: "/laptop.jpg",
       title: "Setup Your School Management System Effortlessly",
       subtitle:
         "We provide a straightforward setup process to get you started quickly",
     },
     {
-      imgUrl: "/hero.jpg",
+      imgUrl: "/exams.jpg",
       title: "Manage Your Classes and Exams with Ease",
       subtitle:
         "Our tools simplify scheduling and administration, saving you time",
     },
     {
-      imgUrl: "/hero.jpg",
+      imgUrl: "/progress.jpg",
       title: "Track Student Progress in Real-Time",
       subtitle:
         "Stay updated with comprehensive analytics and reporting features",
@@ -139,6 +139,8 @@ const EmpowerSection = () => {
                     width: "100%",
                     height: "auto",
                     display: "block",
+                    aspectRatio: "16/9",
+                    objectFit: "cover",
                   }}
                 />
               </Box>

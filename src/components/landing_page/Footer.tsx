@@ -19,7 +19,7 @@ export default function Footer() {
       <Box
         sx={{
           background:
-            "linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-02-26%20094251-JiP2bvlCLbh53qudZe7gQ4TywPUR7n.png)",
+            "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.6)), url(/discover.jpg)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           color: "white",

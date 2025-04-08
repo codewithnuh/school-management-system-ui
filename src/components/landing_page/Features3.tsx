@@ -148,7 +148,7 @@ const Features3 = () => {
               }}
             >
               <img
-                src="/hero.jpg" // Replace with your actual image path
+                src="/school-managment.jpg" // Replace with your actual image path
                 alt="Person working on a laptop in a cozy environment"
                 style={{
                   width: "100%",

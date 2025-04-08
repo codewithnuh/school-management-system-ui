@@ -20,7 +20,7 @@ const CTA = () => {
           }}
         >
           <img
-            src="/hero.jpg" // Replace with your actual image path
+            src="/notebook.webp" // Replace with your actual image path
             alt="Person working on a laptop in a cozy environment"
             style={{
               width: "100%",
