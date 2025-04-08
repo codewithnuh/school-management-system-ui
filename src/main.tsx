@@ -13,8 +13,7 @@ import Header from "./components/globals/Header.tsx";
 import LoginPage from "../src/components/landing_page/LoginPage.tsx";
 
 import ForgotPasswordPage from "./components/landing_page/ForgotPassword.tsx";
-import StudentRegistrationForm from "./components/landing_page/StudentRigisteration.tsx";
-import TeacherRegistrationForm from "./components/landing_page/TeacherRegisteration.tsx";
+import TeacherRegistrationForm from "./components/forms/TeacherRegistrationForm.tsx";
 import SignupForm from "./components/landing_page/SignUp.tsx";
 
 // Import TanStack Query components
@@ -32,6 +31,7 @@ import UpdateClassForm from "./components/layout/UpdateClassForm.tsx";
 
 import TimetableGenerator from "./pages/TimetableGenerator.tsx";
 import TimetableView from "./components/timetable/TimetableView.tsx";
+import UserRegistrationForm from "./components/forms/UserRegistrationForm.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -45,7 +45,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route
               path="/register/student"
-              element={<StudentRegistrationForm />}
+              element={<UserRegistrationForm />}
             />
             <Route
               path="/dashboard/admin"
@@ -76,6 +76,51 @@ createRoot(document.getElementById("root")!).render(
             <Route
               path="/register/teacher"
               element={<TeacherRegistrationForm />}
+            />
+            <Route
+              path="/register/student"
+              element={
+                <UserRegistrationForm
+                  onSubmit={function (data: {
+                    firstName: string;
+                    lastName: string;
+                    dateOfBirth: string;
+                    gender: "Male" | "Female" | "Other";
+                    email: string;
+                    phoneNo: string;
+                    emergencyContactName: string;
+                    emergencyContactNumber: string;
+                    address: string;
+                    guardianName: string;
+                    guardianCNIC: string;
+                    CNIC: string;
+                    classId: number;
+                    sectionId: number;
+                    enrollmentDate: string;
+                    middleName?: string | undefined;
+                    placeOfBirth?: string | undefined;
+                    nationality?: string | undefined;
+                    currentAddress?: string | undefined;
+                    previousSchool?: string | undefined;
+                    previousGrade?: string | undefined;
+                    previousMarks?: string | undefined;
+                    password?: string | undefined;
+                    guardianPhone?: string | undefined;
+                    guardianEmail?: string | undefined;
+                    photo?: string | undefined;
+                    transportation?: string | undefined;
+                    extracurriculars?: string | undefined;
+                    medicalConditions?: string | undefined;
+                    allergies?: string | undefined;
+                    healthInsuranceInfo?: string | undefined;
+                    doctorContact?: string | undefined;
+                  }): void {
+                    throw new Error("Function not implemented.");
+                  }}
+                  classes={[]}
+                  sections={[]}
+                />
+              }
             />
             <Route
               path="/dashboard/admin/timetable/generate"

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreateClassSchema } from "../../schema";
+import { CreateClassSchema } from "../../schema/index";
 import { z } from "zod";
 import {
   Box,
