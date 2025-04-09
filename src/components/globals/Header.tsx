@@ -22,9 +22,9 @@ const Header = () => {
             </ul>
           </Box>
           <Stack direction={"row"} alignItems={"center"} gap={2}>
-            <Link to={"/sign-up"}>
+            <Link to={"/login"}>
               <Button variant="contained" size="small" color="primary">
-                Sign Up
+                Login
               </Button>
             </Link>
             <Box sx={{ display: { xs: "inline-block", sm: "none" }, mt: 1 }}>

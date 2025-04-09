@@ -14,7 +14,7 @@ export const registerStudent = async (formData: UserFormData): Promise<any> => {
       // Adding required fields that are missing according to server validation
       entityType: "STUDENT", // Server requires this field with value 'STUDENT'
       studentId: formData.CNIC || `STD-${Date.now()}`, // Using CNIC as studentId or generating a temporary one
-      
+
       // Convert string dates to proper format if needed
       dateOfBirth: formData.dateOfBirth
         ? new Date(formData.dateOfBirth).toISOString().split("T")[0]
@@ -25,7 +25,10 @@ export const registerStudent = async (formData: UserFormData): Promise<any> => {
     };
 
     // Debug: Log the payload being sent
-    console.log("Sending registration payload:", JSON.stringify(payload, null, 2));
+    console.log(
+      "Sending registration payload:",
+      JSON.stringify(payload, null, 2)
+    );
 
     // Make the API call
     const response = await axiosInstance.post("/users/register", payload);

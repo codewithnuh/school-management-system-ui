@@ -1,738 +1,561 @@
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Box,
   Button,
-  TextField,
-  Typography,
+  Container,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  FormLabel,
   Grid,
   MenuItem,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  Select,
-  Divider,
   Paper,
+  Radio,
+  RadioGroup,
+  TextField,
+  Typography,
   CircularProgress,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import {
+  teacherSchema,
+  TeacherSchemaType,
+  Gender,
+  ApplicationStatus,
+} from "../../schema/teacher.schema";
 
-// Define the form schema using Zod
-const userFormSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required" }),
-  middleName: z.string().optional(),
-  lastName: z.string().min(1, { message: "Last name is required" }),
-  dateOfBirth: z.string().min(1, { message: "Date of birth is required" }),
-  gender: z.enum(["Male", "Female", "Other"], {
-    required_error: "Gender is required",
-  }),
-  placeOfBirth: z.string().optional(),
-  nationality: z.string().optional(),
-  email: z.string().email({ message: "Invalid email address" }),
-  phoneNo: z.string().min(10).max(15).regex(/^\d+$/, {
-    message:
-      "Phone number must contain only digits and be between 10-15 characters",
-  }),
-  emergencyContactName: z
-    .string()
-    .min(1, { message: "Emergency contact name is required" }),
-  emergencyContactNumber: z.string().min(10).max(15).regex(/^\d+$/, {
-    message:
-      "Contact number must contain only digits and be between 10-15 characters",
-  }),
-  address: z.string().min(1, { message: "Address is required" }),
-  currentAddress: z.string().optional(),
-  previousSchool: z.string().optional(),
-  previousGrade: z.string().optional(),
-  previousMarks: z.string().optional(),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters" })
-    .optional(),
-  guardianName: z.string().min(1, { message: "Guardian name is required" }),
-  guardianCNIC: z
-    .string()
-    .length(13, { message: "CNIC must be 13 digits" })
-    .regex(/^\d+$/, {
-      message: "CNIC must contain only digits",
-    }),
-  guardianPhone: z
-    .string()
-    .min(10)
-    .max(15)
-    .regex(/^\d+$/, {
-      message:
-        "Phone number must contain only digits and be between 10-15 characters",
-    })
-    .optional(),
-  guardianEmail: z
-    .string()
-    .email({ message: "Invalid email address" })
-    .optional(),
-  CNIC: z
-    .string()
-    .length(13, { message: "CNIC must be 13 digits" })
-    .regex(/^\d+$/, {
-      message: "CNIC must contain only digits",
-    }),
-  classId: z.number({ required_error: "Class is required" }),
-  sectionId: z.number({ required_error: "Section is required" }),
-  enrollmentDate: z.string().min(1, { message: "Enrollment date is required" }),
-  photo: z.string().optional(),
-  transportation: z.string().optional(),
-  extracurriculars: z.string().optional(),
-  medicalConditions: z.string().optional(),
-  allergies: z.string().optional(),
-  healthInsuranceInfo: z.string().optional(),
-  doctorContact: z.string().optional(),
-});
+/**
+ * TeacherRegistrationForm Component
+ *
+ * A form for registering new teachers in the school management system.
+ * Uses React Hook Form with Zod validation and Material UI components.
+ */
+const TeacherRegistrationForm = () => {
+  // State for tracking form submission status
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-type UserFormData = z.infer<typeof userFormSchema>;
-
-const UserRegistrationForm = () => {
-  // Mock data for classes and sections
-  const classes = [
-    { id: 1, name: "Class 1" },
-    { id: 2, name: "Class 2" },
-    { id: 3, name: "Class 3" },
-    { id: 4, name: "Class 4" },
-    { id: 5, name: "Class 5" },
-  ];
-
-  const sections = [
-    { id: 1, name: "Section A" },
-    { id: 2, name: "Section B" },
-    { id: 3, name: "Section C" },
-  ];
-
-  // Mock loading state
-  const isLoading = false;
-
+  // Initialize form with React Hook Form and Zod resolver
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<UserFormData>({
-    resolver: zodResolver(userFormSchema),
+    reset,
+  } = useForm<TeacherSchemaType>({
+    resolver: zodResolver(teacherSchema),
     defaultValues: {
-      gender: "Male",
+      entityType: "TEACHER",
+      role: "TEACHER",
+
+      applicationStatus: ApplicationStatus.Pending,
+      isVerified: false,
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      dateOfBirth: new Date().toISOString(),
+      gender: Gender.Male, // or Gender.Other
+      nationality: "",
+      cnic: "",
+      email: "",
+      phoneNo: "",
+      address: "",
+      currentAddress: "",
+      emergencyContactName: "",
+      emergencyContactNumber: "",
+      highestQualification: "",
+      specialization: "",
+      experienceYears: 0,
+      joiningDate: new Date().toISOString(),
+      subjectId: 1, // as explained before
+      password: "",
     },
   });
 
-  const handleFormSubmit = (data: UserFormData) => {
-    // Mock submit function
-    console.log("Form submitted with data:", data);
-    // In a real application, you would call an API here
+  // Handle form submission
+  const onSubmit = async (data: TeacherSchemaType) => {
+    setIsSubmitting(true);
+    try {
+      // Log form data to console as per requirements
+      console.log("Teacher Registration Form Data:", data);
+
+      // In a real app, you would send this data to an API
+      // await teacherApi.register(data);
+
+      // Reset form after successful submission
+      reset();
+      // Optionally show success message or redirect
+    } catch (error) {
+      console.error("Registration failed:", error);
+      // Handle errors (could show error toast/message)
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-      <Box
-        component="form"
-        onSubmit={handleSubmit(handleFormSubmit)}
-        noValidate
-      >
-        <Typography variant="h5" component="h2" gutterBottom>
-          Student Registration Form
-        </Typography>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-          Fields marked with * are required
+    <Container maxWidth="md">
+      <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Teacher Registration Form
         </Typography>
 
-        <Divider sx={{ my: 3 }} />
+        <Box
+          component="form"
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+          sx={{ mt: 3 }}
+        >
+          <Grid container spacing={3}>
+            {/* Personal Information Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" component="h2">
+                Personal Information
+              </Typography>
+            </Grid>
 
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Basic Information
-        </Typography>
+            {/* First Name */}
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="firstName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="First Name"
+                    error={!!errors.firstName}
+                    helperText={errors.firstName?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
 
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <Controller
-              name="firstName"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="First Name *"
-                  fullWidth
-                  error={!!errors.firstName}
-                  helperText={errors.firstName?.message}
+            {/* Middle Name */}
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="middleName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Middle Name"
+                    error={!!errors.middleName}
+                    helperText={errors.middleName?.message}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Last Name */}
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="lastName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Last Name"
+                    error={!!errors.lastName}
+                    helperText={errors.lastName?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Date of Birth */}
+            <Grid item xs={12} sm={6}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <Controller
+                  name="dateOfBirth"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Date of Birth"
+                      value={field.value ? new Date(field.value) : null}
+                      onChange={(date) => field.onChange(date)}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors.dateOfBirth,
+                          helperText: errors.dateOfBirth?.message,
+                          required: true,
+                        },
+                      }}
+                    />
+                  )}
                 />
-              )}
-            />
-          </Grid>
+              </LocalizationProvider>
+            </Grid>
 
-          <Grid item xs={12} sm={4}>
-            <Controller
-              name="middleName"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Middle Name"
-                  fullWidth
-                  error={!!errors.middleName}
-                  helperText={errors.middleName?.message}
+            {/* Gender */}
+            <Grid item xs={12} sm={6}>
+              <FormControl error={!!errors.gender} required>
+                <FormLabel id="gender-label">Gender</FormLabel>
+                <Controller
+                  name="gender"
+                  control={control}
+                  render={({ field }) => (
+                    <RadioGroup {...field} row aria-labelledby="gender-label">
+                      <FormControlLabel
+                        value={Gender.Male}
+                        control={<Radio />}
+                        label="Male"
+                      />
+                      <FormControlLabel
+                        value={Gender.Female}
+                        control={<Radio />}
+                        label="Female"
+                      />
+                      <FormControlLabel
+                        value={Gender.Other}
+                        control={<Radio />}
+                        label="Other"
+                      />
+                    </RadioGroup>
+                  )}
                 />
-              )}
-            />
-          </Grid>
+                {errors.gender && (
+                  <FormHelperText>{errors.gender.message}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
 
-          <Grid item xs={12} sm={4}>
-            <Controller
-              name="lastName"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Last Name *"
-                  fullWidth
-                  error={!!errors.lastName}
-                  helperText={errors.lastName?.message}
+            {/* Nationality */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="nationality"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Nationality"
+                    error={!!errors.nationality}
+                    helperText={errors.nationality?.message}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* CNIC */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="cnic"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="CNIC (13 digits)"
+                    error={!!errors.cnic}
+                    helperText={errors.cnic?.message}
+                    required
+                    inputProps={{ maxLength: 13 }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Contact Information Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" component="h2" sx={{ mt: 2 }}>
+                Contact Information
+              </Typography>
+            </Grid>
+
+            {/* Email */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Email Address"
+                    type="email"
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Phone Number */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="phoneNo"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Phone Number"
+                    error={!!errors.phoneNo}
+                    helperText={errors.phoneNo?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Permanent Address */}
+            <Grid item xs={12}>
+              <Controller
+                name="address"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Permanent Address"
+                    multiline
+                    rows={2}
+                    error={!!errors.address}
+                    helperText={errors.address?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Current Address */}
+            <Grid item xs={12}>
+              <Controller
+                name="currentAddress"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Current Address (if different from permanent)"
+                    multiline
+                    rows={2}
+                    error={!!errors.currentAddress}
+                    helperText={errors.currentAddress?.message}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Emergency Contact Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" component="h2" sx={{ mt: 2 }}>
+                Emergency Contact
+              </Typography>
+            </Grid>
+
+            {/* Emergency Contact Name */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="emergencyContactName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Emergency Contact Name"
+                    error={!!errors.emergencyContactName}
+                    helperText={errors.emergencyContactName?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Emergency Contact Number */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="emergencyContactNumber"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Emergency Contact Number"
+                    error={!!errors.emergencyContactNumber}
+                    helperText={errors.emergencyContactNumber?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Professional Information Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" component="h2" sx={{ mt: 2 }}>
+                Professional Information
+              </Typography>
+            </Grid>
+
+            {/* Highest Qualification */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="highestQualification"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Highest Qualification"
+                    error={!!errors.highestQualification}
+                    helperText={errors.highestQualification?.message}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Specialization */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="specialization"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Specialization"
+                    error={!!errors.specialization}
+                    helperText={errors.specialization?.message}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Experience Years */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="experienceYears"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Years of Experience"
+                    type="number"
+                    InputProps={{ inputProps: { min: 0 } }}
+                    error={!!errors.experienceYears}
+                    helperText={errors.experienceYears?.message}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? parseInt(e.target.value, 10) : ""
+                      )
+                    }
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Joining Date */}
+            <Grid item xs={12} sm={6}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <Controller
+                  name="joiningDate"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Joining Date"
+                      value={
+                        field.value === null ? undefined : new Date(field.value)
+                      }
+                      onChange={(date) => field.onChange(date)}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors.joiningDate,
+                          helperText: errors.joiningDate?.message,
+                          required: true,
+                        },
+                      }}
+                    />
+                  )}
                 />
-              )}
-            />
+              </LocalizationProvider>
+            </Grid>
+
+            {/* Subject ID */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="subjectId"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    value={1}
+                    label="Subject"
+                    error={!!errors.subjectId}
+                    helperText={errors.subjectId?.message}
+                    required
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value, 10))
+                    }
+                  >
+                    {/* Replace with actual subjects from your API */}
+                    <MenuItem value={1}>Mathematics</MenuItem>
+                    <MenuItem value={2}>Science</MenuItem>
+                    <MenuItem value={3}>English</MenuItem>
+                    <MenuItem value={4}>History</MenuItem>
+                    <MenuItem value={5}>Computer Science</MenuItem>
+                  </TextField>
+                )}
+              />
+            </Grid>
+
+            {/* Password */}
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Password"
+                    type="password"
+                    error={!!errors.password}
+                    helperText={
+                      errors.password?.message || "Minimum 8 characters"
+                    }
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Submit Button */}
+            <Grid item xs={12} sx={{ mt: 2 }}>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                size="large"
+                disabled={isSubmitting}
+                sx={{ height: 56 }}
+              >
+                {isSubmitting ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Register"
+                )}
+              </Button>
+            </Grid>
           </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="dateOfBirth"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Date of Birth *"
-                  type="date"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  error={!!errors.dateOfBirth}
-                  helperText={errors.dateOfBirth?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="gender"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.gender}>
-                  <InputLabel id="gender-label">Gender *</InputLabel>
-                  <Select {...field} labelId="gender-label" label="Gender *">
-                    <MenuItem value="Male">Male</MenuItem>
-                    <MenuItem value="Female">Female</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
-                  </Select>
-                  <FormHelperText>{errors.gender?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="placeOfBirth"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Place of Birth"
-                  fullWidth
-                  error={!!errors.placeOfBirth}
-                  helperText={errors.placeOfBirth?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="nationality"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Nationality"
-                  fullWidth
-                  error={!!errors.nationality}
-                  helperText={errors.nationality?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="email"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Email *"
-                  type="email"
-                  fullWidth
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="phoneNo"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Phone Number *"
-                  fullWidth
-                  error={!!errors.phoneNo}
-                  helperText={errors.phoneNo?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Controller
-              name="address"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Permanent Address *"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  error={!!errors.address}
-                  helperText={errors.address?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Controller
-              name="currentAddress"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Current Address (if different)"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  error={!!errors.currentAddress}
-                  helperText={errors.currentAddress?.message}
-                />
-              )}
-            />
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Guardian Information
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="guardianName"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Guardian Name *"
-                  fullWidth
-                  error={!!errors.guardianName}
-                  helperText={errors.guardianName?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="guardianCNIC"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Guardian CNIC *"
-                  fullWidth
-                  error={!!errors.guardianCNIC}
-                  helperText={errors.guardianCNIC?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="guardianPhone"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Guardian Phone"
-                  fullWidth
-                  error={!!errors.guardianPhone}
-                  helperText={errors.guardianPhone?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="guardianEmail"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Guardian Email"
-                  type="email"
-                  fullWidth
-                  error={!!errors.guardianEmail}
-                  helperText={errors.guardianEmail?.message}
-                />
-              )}
-            />
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Academic Information
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="CNIC"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Student CNIC *"
-                  fullWidth
-                  error={!!errors.CNIC}
-                  helperText={errors.CNIC?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="enrollmentDate"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Enrollment Date *"
-                  type="date"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  error={!!errors.enrollmentDate}
-                  helperText={errors.enrollmentDate?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="classId"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.classId}>
-                  <InputLabel id="class-label">Class *</InputLabel>
-                  <Select {...field} labelId="class-label" label="Class *">
-                    {classes.map((classItem) => (
-                      <MenuItem key={classItem.id} value={classItem.id}>
-                        {classItem.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>{errors.classId?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="sectionId"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.sectionId}>
-                  <InputLabel id="section-label">Section *</InputLabel>
-                  <Select {...field} labelId="section-label" label="Section *">
-                    {sections.map((section) => (
-                      <MenuItem key={section.id} value={section.id}>
-                        {section.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>{errors.sectionId?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <Controller
-              name="previousSchool"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Previous School"
-                  fullWidth
-                  error={!!errors.previousSchool}
-                  helperText={errors.previousSchool?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <Controller
-              name="previousGrade"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Previous Grade"
-                  fullWidth
-                  error={!!errors.previousGrade}
-                  helperText={errors.previousGrade?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <Controller
-              name="previousMarks"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Previous Marks"
-                  fullWidth
-                  error={!!errors.previousMarks}
-                  helperText={errors.previousMarks?.message}
-                />
-              )}
-            />
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Emergency Contact Information
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="emergencyContactName"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Emergency Contact Name *"
-                  fullWidth
-                  error={!!errors.emergencyContactName}
-                  helperText={errors.emergencyContactName?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="emergencyContactNumber"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Emergency Contact Number *"
-                  fullWidth
-                  error={!!errors.emergencyContactNumber}
-                  helperText={errors.emergencyContactNumber?.message}
-                />
-              )}
-            />
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Additional Information
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="transportation"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Transportation Details"
-                  fullWidth
-                  error={!!errors.transportation}
-                  helperText={errors.transportation?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="extracurriculars"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Extracurricular Activities"
-                  fullWidth
-                  error={!!errors.extracurriculars}
-                  helperText={errors.extracurriculars?.message}
-                />
-              )}
-            />
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Medical Information
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="medicalConditions"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Medical Conditions"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  error={!!errors.medicalConditions}
-                  helperText={errors.medicalConditions?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="allergies"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Allergies"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  error={!!errors.allergies}
-                  helperText={errors.allergies?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="healthInsuranceInfo"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Health Insurance Information"
-                  fullWidth
-                  error={!!errors.healthInsuranceInfo}
-                  helperText={errors.healthInsuranceInfo?.message}
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="doctorContact"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Doctor Contact"
-                  fullWidth
-                  error={!!errors.doctorContact}
-                  helperText={errors.doctorContact?.message}
-                />
-              )}
-            />
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Authentication
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="password"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Password"
-                  type="password"
-                  fullWidth
-                  error={!!errors.password}
-                  helperText={errors.password?.message}
-                />
-              )}
-            />
-          </Grid>
-        </Grid>
-
-        <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={isLoading}
-            startIcon={
-              isLoading ? <CircularProgress size={20} color="inherit" /> : null
-            }
-          >
-            {isLoading ? "Submitting..." : "Register Student"}
-          </Button>
         </Box>
-      </Box>
-    </Paper>
+      </Paper>
+    </Container>
   );
 };
 
-export default UserRegistrationForm;
+export default TeacherRegistrationForm;

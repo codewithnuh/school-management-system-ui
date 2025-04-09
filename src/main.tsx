@@ -32,6 +32,7 @@ import UpdateClassForm from "./components/layout/UpdateClassForm.tsx";
 import TimetableGenerator from "./pages/TimetableGenerator.tsx";
 import TimetableView from "./components/timetable/TimetableView.tsx";
 import UserRegistrationForm from "./components/forms/UserRegistrationForm.tsx";
+import SampleUploadForm from "./components/forms/SampleUploadForm.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/" element={<App />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/sign-up" element={<SignupForm />} />
+            <Route path="/sample-upload" element={<SampleUploadForm />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route
               path="/register/student"
