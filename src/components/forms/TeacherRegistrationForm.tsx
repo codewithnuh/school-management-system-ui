@@ -27,18 +27,41 @@ import {
   Box,
   InputLabel,
   Container,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { uploadDirect } from "@uploadcare/upload-client";
+import { useState } from "react";
+import { useRegisterTeacher } from "../../services/queries/teacherReegisteration";
+// Define the public key for Uploadcare
+const UPLOADCARE_PUBLIC_KEY = "39d5faf5f775c673cb85";
 
-function TeacherRegisterationForm() {
+// Interface for the file upload states
+interface FileUploads {
+  cvPath: string;
+  photo: string;
+  verificationDocument: string;
+}
+
+// Interface for the loading states during file uploads
+interface FileUploadingStates {
+  cvPath: boolean;
+  photo: boolean;
+  verificationDocument: boolean;
+}
+
+function TeacherRegistrationForm() {
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     setValue,
+    reset,
   } = useForm<TeacherSchemaType>({
     resolver: zodResolver(teacherSchema),
     defaultValues: {
@@ -48,23 +71,145 @@ function TeacherRegisterationForm() {
       isVerified: false,
     },
   });
+  const registerTeacherMutation = useRegisterTeacher();
+  // State for uploaded file URLs
+  const [files, setFiles] = useState<FileUploads>({
+    cvPath: "",
+    photo: "",
+    verificationDocument: "",
+  });
 
-  const onSubmit = (data: TeacherSchemaType) => {
-    console.log("Form submitted:", data);
+  // State for tracking file upload loading states
+  const [isUploading, setIsUploading] = useState<FileUploadingStates>({
+    cvPath: false,
+    photo: false,
+    verificationDocument: false,
+  });
+
+  // State for toast notification
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  // Handle toast close
+  const handleCloseToast = () => {
+    setToast({ ...toast, open: false });
   };
 
-  const handleFileChange =
-    (fieldName: keyof TeacherSchemaType) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setValue(fieldName, reader.result as string);
-        };
-        reader.readAsDataURL(file);
+  console.log(files);
+  // Handle form submission
+  const onSubmit = async (data: TeacherSchemaType) => {
+    try {
+      // Combine form data with file URLs
+      const fullData = {
+        ...data,
+        cvPath: files.cvPath,
+        photo: files.photo,
+        verificationDocument: files.verificationDocument,
+      };
+
+      registerTeacherMutation.mutate(fullData, {
+        onSuccess: (response) => {
+          // Show success toast when registration is successful
+          setToast({
+            open: true,
+            message: "Teacher registration submitted successfully!",
+            severity: "success",
+          });
+
+          // Reset form after successful submission
+          reset();
+          setFiles({
+            cvPath: "",
+            photo: "",
+            verificationDocument: "",
+          });
+        },
+        onError: (error) => {
+          // Show error toast
+          setToast({
+            open: true,
+            message:
+              error.message || "Failed to register teacher. Please try again.",
+            severity: "error",
+          });
+        },
+      });
+
+      // Here you would typically send the data to your API
+      // const response = await fetch('/api/teachers', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(fullData),
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error('Failed to submit form');
+      // }
+
+      // const result = await response.json();
+      // Handle successful submission
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      // Handle error - show notification to user
+      setToast({
+        open: true,
+        message: "Error submitting form. Please try again.",
+        severity: "error",
+      });
+    }
+  };
+
+  // Handle file upload
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldName: keyof FileUploads
+  ) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      try {
+        // Set loading state for this specific field
+        setIsUploading((prev) => ({
+          ...prev,
+          [fieldName]: true,
+        }));
+
+        // Upload file to Uploadcare
+        const uploadedFile = await uploadDirect(file, {
+          publicKey: UPLOADCARE_PUBLIC_KEY,
+          store: "auto",
+        });
+
+        // Update file URL in state
+        setFiles((prev) => ({
+          ...prev,
+          [fieldName]: uploadedFile.cdnUrl || "",
+        }));
+        console.log(files);
+        // Set the value in the form
+        setValue(fieldName as any, uploadedFile.cdnUrl || "");
+      } catch (error) {
+        console.error(`Error uploading ${fieldName}:`, error);
+        // Handle error - show notification to user
+        setToast({
+          open: true,
+          message: `Error uploading ${fieldName}. Please try again.`,
+          severity: "error",
+        });
+      } finally {
+        // Clear loading state
+        setIsUploading((prev) => ({
+          ...prev,
+          [fieldName]: false,
+        }));
       }
-    };
+    }
+  };
 
   return (
     <Container maxWidth="lg">
@@ -348,12 +493,17 @@ function TeacherRegisterationForm() {
                     <Controller
                       name="experienceYears"
                       control={control}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange, ...rest } }) => (
                         <TextField
-                          {...field}
+                          {...rest}
                           type="number"
                           label="Years of Experience"
                           fullWidth
+                          value={value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            onChange(val === "" ? undefined : Number(val));
+                          }}
                           inputProps={{ min: 0 }}
                         />
                       )}
@@ -389,12 +539,17 @@ function TeacherRegisterationForm() {
                     <Controller
                       name="subjectId"
                       control={control}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange, ...rest } }) => (
                         <TextField
-                          {...field}
+                          {...rest}
                           type="number"
                           label="Subject ID *"
                           fullWidth
+                          value={value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            onChange(val === "" ? undefined : Number(val));
+                          }}
                           error={!!errors.subjectId}
                           helperText={errors.subjectId?.message}
                         />
@@ -454,16 +609,33 @@ function TeacherRegisterationForm() {
                       component="label"
                       fullWidth
                       sx={{ mt: 1, height: 56, textTransform: "none" }}
+                      disabled={isUploading.photo}
+                      startIcon={
+                        isUploading.photo ? (
+                          <CircularProgress size={24} />
+                        ) : null
+                      }
                     >
-                      Upload Photo
+                      {isUploading.photo
+                        ? "Uploading..."
+                        : files.photo
+                        ? "Change Photo"
+                        : "Upload Photo"}
                       <input
                         id="photo-upload"
                         type="file"
                         accept="image/*"
                         hidden
-                        onChange={handleFileChange("photo")}
+                        onChange={(e) => handleFileChange(e, "photo")}
                       />
                     </Button>
+                    {files.photo && (
+                      <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                        <Typography variant="caption" color="success.main">
+                          Uploaded successfully
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </Grid>
 
@@ -477,16 +649,35 @@ function TeacherRegisterationForm() {
                       component="label"
                       fullWidth
                       sx={{ mt: 1, height: 56, textTransform: "none" }}
+                      disabled={isUploading.verificationDocument}
+                      startIcon={
+                        isUploading.verificationDocument ? (
+                          <CircularProgress size={24} />
+                        ) : null
+                      }
                     >
-                      Upload Document
+                      {isUploading.verificationDocument
+                        ? "Uploading..."
+                        : files.verificationDocument
+                        ? "Change Document"
+                        : "Upload Document"}
                       <input
                         id="verification-doc-upload"
                         type="file"
                         accept=".pdf,.doc,.docx"
                         hidden
-                        onChange={handleFileChange("verificationDocument")}
+                        onChange={(e) =>
+                          handleFileChange(e, "verificationDocument")
+                        }
                       />
                     </Button>
+                    {files.verificationDocument && (
+                      <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                        <Typography variant="caption" color="success.main">
+                          Uploaded successfully
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </Grid>
 
@@ -499,14 +690,24 @@ function TeacherRegisterationForm() {
                       fullWidth
                       sx={{ mt: 1, height: 56, textTransform: "none" }}
                       color={errors.cvPath ? "error" : "primary"}
+                      disabled={isUploading.cvPath}
+                      startIcon={
+                        isUploading.cvPath ? (
+                          <CircularProgress size={24} />
+                        ) : null
+                      }
                     >
-                      Upload CV
+                      {isUploading.cvPath
+                        ? "Uploading..."
+                        : files.cvPath
+                        ? "Change CV"
+                        : "Upload CV"}
                       <input
                         id="cv-upload"
                         type="file"
                         accept=".pdf,.doc,.docx"
                         hidden
-                        onChange={handleFileChange("cvPath")}
+                        onChange={(e) => handleFileChange(e, "cvPath")}
                         required
                       />
                     </Button>
@@ -514,6 +715,13 @@ function TeacherRegisterationForm() {
                       <FormHelperText error>
                         {errors.cvPath.message}
                       </FormHelperText>
+                    )}
+                    {files.cvPath && !errors.cvPath && (
+                      <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                        <Typography variant="caption" color="success.main">
+                          Uploaded successfully
+                        </Typography>
+                      </Box>
                     )}
                   </Box>
                 </Grid>
@@ -526,15 +734,43 @@ function TeacherRegisterationForm() {
                 variant="contained"
                 color="primary"
                 size="large"
+                disabled={
+                  isSubmitting ||
+                  isUploading.cvPath ||
+                  isUploading.photo ||
+                  isUploading.verificationDocument
+                }
+                startIcon={
+                  isSubmitting ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : null
+                }
               >
-                Submit Application
+                {isSubmitting ? "Submitting..." : "Submit Application"}
               </Button>
             </Box>
           </Box>
         </CardContent>
       </Card>
+
+      {/* Toast Notification */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseToast}
+          severity={toast.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
 
-export default TeacherRegisterationForm;
+export default TeacherRegistrationForm;
