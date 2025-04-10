@@ -77,7 +77,7 @@ export const teacherSchema = z.object({
   isVerified: z.boolean().optional(),
   applicationStatus: z.nativeEnum(ApplicationStatus).optional(),
   verificationDocument: z.string().optional(),
-  cvPath: z.string().optional(),
+  cvPath: z.string(),
   role: z.literal("TEACHER").optional(),
   subjectId: z.number({ required_error: "Subject is required" }),
   createdAt: z.date().optional(),
