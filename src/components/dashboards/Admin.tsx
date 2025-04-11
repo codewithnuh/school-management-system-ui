@@ -5,9 +5,7 @@ import Toolbar from "@mui/material/Toolbar";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Outlet } from "react-router";
-import Sidebar, { NavItem } from "../dashboards/Sidebar";
-
-const drawerWidth = 240;
+import Sidebar, { NavItem, SidebarThemeOptions } from "../dashboards/Sidebar";
 
 // Create a dark theme with a glassy effect for the sidebar.
 const darkTheme = createTheme({
@@ -26,6 +24,15 @@ const darkTheme = createTheme({
   },
 });
 
+// Admin-specific sidebar theme options
+const adminSidebarTheme: SidebarThemeOptions = {
+  backgroundColor: "rgba(30, 30, 46, 0.9)",
+  backdropFilter: "blur(10px)",
+  activeItemColor: "rgba(144, 202, 249, 0.2)",
+  drawerWidth: 260,
+  hoverColor: "rgba(144, 202, 249, 0.1)",
+};
+
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -33,9 +40,15 @@ import {
   ClassOutlined,
   Create,
   SettingsApplications,
+  Dashboard,
 } from "@mui/icons-material";
 
 const navItems: NavItem[] = [
+  {
+    label: "Dashboard",
+    path: "/dashboard/admin",
+    icon: <Dashboard />,
+  },
   {
     label: "Applications",
     icon: <SettingsApplications />,
@@ -82,15 +95,18 @@ const Admin: React.FC = () => {
         <CssBaseline />
         {/* Top AppBar */}
 
-        {/* Sidebar */}
+        {/* Enhanced Sidebar with admin-specific options */}
         <Sidebar
           navItems={navItems}
           userName="Admin User"
           userAvatarUrl="" // Provide a valid URL if available
+          title="Admin Dashboard"
+          themeOptions={adminSidebarTheme}
           onLogout={() => {
             // Perform any additional logout logic here
             window.location.href = "/login";
           }}
+          // Additional custom props can be added here
         />
 
         {/* Main Content */}
@@ -99,7 +115,7 @@ const Admin: React.FC = () => {
           sx={{
             flexGrow: 1,
             p: 3,
-            width: { sm: `calc(100% - ${drawerWidth}px)` },
+            width: { sm: `calc(100% - ${adminSidebarTheme.drawerWidth || 240}px)` },
             backgroundColor: darkTheme.palette.background.default,
             minHeight: "100vh",
           }}

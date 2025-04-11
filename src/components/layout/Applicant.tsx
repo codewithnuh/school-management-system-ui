@@ -34,9 +34,9 @@ const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
     "success"
   );
 
-  const { mutate: acceptTeacher, isLoading: isAcceptLoading } =
+  const { mutate: acceptTeacher, isPending: isAcceptLoading } =
     useAcceptTeacherApplication();
-  const { mutate: rejectTeacher, isLoading: isRejectLoading } =
+  const { mutate: rejectTeacher, isPending: isRejectLoading } =
     useRejectTeacherApplication();
 
   const handleOpenDetails = (applicant: Application) => {

@@ -33,6 +33,7 @@ import TimetableGenerator from "./pages/TimetableGenerator.tsx";
 import TimetableView from "./components/timetable/TimetableView.tsx";
 import UserRegistrationForm from "./components/forms/UserRegistrationForm.tsx";
 import SampleUploadForm from "./components/forms/SampleUploadForm.tsx";
+import Teacher from "./components/dashboards/Teacher.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -48,6 +49,14 @@ createRoot(document.getElementById("root")!).render(
             <Route
               path="/register/student"
               element={<UserRegistrationForm />}
+            />
+            <Route
+              path="/dashboard/teachers"
+              element={
+                <RoleGuard allowedRoles={["TEACHER"]}>
+                  <Teacher />
+                </RoleGuard>
+              }
             />
             <Route
               path="/dashboard/admin"
