@@ -61,6 +61,7 @@ const ApplicantList: React.FC<ApplicantListProps> = ({ applicants }) => {
         showSnackbar("Application accepted successfully!", "success");
       },
       onError: (err) => {
+        console.log(err);
         showSnackbar(
           `Error accepting application: ${
             err instanceof Error ? err.message : "Unknown error"

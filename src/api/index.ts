@@ -18,7 +18,7 @@ export const acceptTeacherApplication = async (id: number) => {
     `/teachers/accept-teacher-application?id=${id}`,
     { status: "Accepted" }
   );
-
+  console.log(response);
   return response.data;
 };
 export const acceptStudentApplication = async (id: number) => {

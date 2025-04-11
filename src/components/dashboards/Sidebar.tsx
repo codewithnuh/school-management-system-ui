@@ -1,5 +1,3 @@
-// [src/components/dashboards/Sidebar.tsx](file:///C:\Users\Noor%20Ul%20Hassan\Desktop\Projects\school-management-system-ui\src\components\dashboards\Sidebar.tsx)
-// src/components/dashboard/Sidebar.tsx
 import React, { useState } from "react";
 import {
   Drawer,
@@ -18,7 +16,8 @@ import {
   Avatar,
   Typography,
   IconButton,
-  Collapse, // Import Collapse
+  Collapse,
+  Alert, // Import Collapse
 } from "@mui/material";
 
 import { NavLink } from "react-router";
@@ -28,6 +27,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ExpandLess from "@mui/icons-material/ExpandLess"; // Import ExpandLess
 import ExpandMore from "@mui/icons-material/ExpandMore"; // Import ExpandMore
+import { useLogoutMutation } from "../../services/queries/auth";
 
 export interface NavItem {
   label: string;
@@ -56,14 +56,18 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [openDropdown, setOpenDropdown] = useState<{ [key: string]: boolean }>(
     {}
   ); // State to manage dropdown open state
-
+  const { mutate: logout, isPending, isError } = useLogoutMutation();
   const handleLogoutClick = () => {
     setLogoutDialogOpen(true);
   };
 
   const handleLogoutConfirm = () => {
-    setLogoutDialogOpen(false);
-    onLogout();
+    try {
+      logout();
+      setLogoutDialogOpen(false);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleLogoutCancel = () => {
@@ -227,9 +231,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           <Button onClick={handleLogoutCancel} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleLogoutConfirm} color="primary" autoFocus>
+          <Button
+            onClick={handleLogoutConfirm}
+            disabled={isPending}
+            color="primary"
+            autoFocus
+          >
             Logout
           </Button>
+          {isError && <Alert severity="error">failed</Alert>}
         </DialogActions>
       </Dialog>
     </>
