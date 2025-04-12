@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Toolbar from "@mui/material/Toolbar";
@@ -19,7 +19,8 @@ import {
   School,
   Dashboard,
 } from "@mui/icons-material";
-
+import { useTeachers } from "../../services/queries/teachers";
+import { useUser } from "../../hooks/useUser";
 // Create a teacher-specific theme
 const teacherTheme = createTheme({
   palette: {
@@ -117,6 +118,8 @@ const TeacherInfo: React.FC = () => (
 );
 
 const Teacher: React.FC = () => {
+  const { data: user, isLoading, isError } = useUser();
+  console.log(user?.data.user.firstName);
   return (
     <ThemeProvider theme={teacherTheme}>
       <Box sx={{ display: "flex" }}>
@@ -125,7 +128,7 @@ const Teacher: React.FC = () => {
         {/* Enhanced Sidebar with teacher-specific options */}
         <Sidebar
           navItems={navItems}
-          userName="John Doe"
+          userName={user!.data.user.firstName + " " + user!.data.user.lastName}
           userAvatarUrl="/assets/teacher-avatar.jpg"
           title="Teacher Portal"
           themeOptions={teacherSidebarTheme}
