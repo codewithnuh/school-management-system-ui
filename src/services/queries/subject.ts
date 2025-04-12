@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api";
-
 // Define the Subject type based on the API response
 export interface Subject {
   id: number;
@@ -25,9 +24,7 @@ export interface ApiResponse<T> {
  * @returns Promise with the subjects data
  */
 const fetchSubjects = async (): Promise<Subject[]> => {
-  const response = await axiosInstance.get<ApiResponse<Subject[]>>(
-    "subjects"
-  );
+  const response = await axiosInstance.get<ApiResponse<Subject[]>>("subjects");
 
   return response.data.data;
 };
@@ -52,7 +49,7 @@ export const useSubjects = () => {
  */
 const fetchSubjectById = async (id: number): Promise<Subject> => {
   const response = await axiosInstance.get<ApiResponse<Subject>>(
-    `/api/v1/subjects/${id}`
+    `/subjects/${id}`
   );
   return response.data.data;
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Toolbar from "@mui/material/Toolbar";
@@ -21,6 +21,8 @@ import {
 } from "@mui/icons-material";
 import { useTeachers } from "../../services/queries/teachers";
 import { useUser } from "../../hooks/useUser";
+import { useSubject } from "../../services/queries/subject";
+import { set } from "react-hook-form";
 // Create a teacher-specific theme
 const teacherTheme = createTheme({
   palette: {
@@ -99,18 +101,14 @@ const navItems: NavItem[] = [
 ];
 
 // Custom user info component for teacher
-const TeacherInfo: React.FC = () => (
+const TeacherInfo = ({ subjectName }: { subjectName: string }) => (
   <Box sx={{ mt: 1, textAlign: "center" }}>
     <Chip
-      label="Mathematics"
+      label={subjectName}
       size="small"
       sx={{ m: 0.5, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
     />
-    <Chip
-      label="Science"
-      size="small"
-      sx={{ m: 0.5, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
-    />
+
     <Typography variant="caption" display="block" sx={{ mt: 1 }}>
       Faculty ID: TCH-2023-001
     </Typography>
@@ -119,7 +117,13 @@ const TeacherInfo: React.FC = () => (
 
 const Teacher: React.FC = () => {
   const { data: user, isLoading, isError } = useUser();
+  const [subjectId, setSubjectId] = useState<number | undefined>();
+  const { data: subject } = useSubject(subjectId!);
+
   console.log(user?.data.user.firstName);
+  useEffect(() => {
+    setSubjectId(user!.data.user.subjectId);
+  }, []);
   return (
     <ThemeProvider theme={teacherTheme}>
       <Box sx={{ display: "flex" }}>
@@ -132,7 +136,7 @@ const Teacher: React.FC = () => {
           userAvatarUrl="/assets/teacher-avatar.jpg"
           title="Teacher Portal"
           themeOptions={teacherSidebarTheme}
-          userInfo={<TeacherInfo />}
+          userInfo={<TeacherInfo subjectName={subject?.name || ""} />}
           onLogout={() => {
             // Perform any additional logout logic here
             window.location.href = "/login";
