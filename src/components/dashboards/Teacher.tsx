@@ -19,10 +19,9 @@ import {
   School,
   Dashboard,
 } from "@mui/icons-material";
-import { useTeachers } from "../../services/queries/teachers";
 import { useUser } from "../../hooks/useUser";
 import { useSubject } from "../../services/queries/subject";
-import { set } from "react-hook-form";
+import { useTeacherSections } from "../../services/queries/teachers";
 // Create a teacher-specific theme
 const teacherTheme = createTheme({
   palette: {
@@ -116,11 +115,12 @@ const TeacherInfo = ({ subjectName }: { subjectName: string }) => (
 );
 
 const Teacher: React.FC = () => {
-  const { data: user, isLoading, isError } = useUser();
+  const { data: user } = useUser();
   const [subjectId, setSubjectId] = useState<number | undefined>();
   const { data: subject } = useSubject(subjectId!);
-
-  console.log(user?.data.user.firstName);
+  console.log(user);
+  const { data } = useTeacherSections(user!.data.user.id!, subjectId!);
+  console.log(data);
   useEffect(() => {
     setSubjectId(user!.data.user.subjectId);
   }, []);

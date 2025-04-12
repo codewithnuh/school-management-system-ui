@@ -1,5 +1,8 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { fetchSingleTeacher } from "../../api/axios/teachers";
+import {
+  fetchAllSubjectsOfATeacher,
+  fetchSingleTeacher,
+} from "../../api/axios/teachers";
 import { Teacher } from "../../types/teacher";
 /**
  * Hook for fetching a single teacher
@@ -10,5 +13,12 @@ export const useTeachers = (id: number): UseQueryResult<Teacher, Error> => {
   return useQuery<Teacher, Error>({
     queryKey: ["teacher", id],
     queryFn: () => fetchSingleTeacher(id),
+  });
+};
+
+export const useTeacherSections = (teacherId: number, subjectId: number) => {
+  return useQuery<Teacher, Error>({
+    queryKey: ["teacherSections", teacherId, subjectId],
+    queryFn: () => fetchAllSubjectsOfATeacher(teacherId, subjectId),
   });
 };

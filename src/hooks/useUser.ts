@@ -3,10 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 export interface User {
-  id: string;
   data: {
     role: "ADMIN" | "TEACHER" | "PARENT" | "STUDENT";
     user: {
+      id: number;
       firstName: string;
       lastName: string;
       email: string;
