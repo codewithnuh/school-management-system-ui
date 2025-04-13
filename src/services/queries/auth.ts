@@ -1,5 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { logout } from "../../api/axios/auth";
+import {
+  useMutation,
+  UseMutationResult,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { logout, sendOtp, verifyOtp } from "../../api/axios/auth";
+import { EntityType } from "../../types";
 
 /**
  * Hook for handling user logout with TanStack Query
@@ -18,5 +23,38 @@ export const useLogoutMutation = () => {
       // Optionally clear the entire cache when user logs out
       // queryClient.clear();
     },
+  });
+};
+
+/**
+ * Custom hook for initiating password reset flow by sending OTP
+ * @returns React Query mutation result for the password reset initiation
+ */
+export const useForgotPasswordInitiate = (): UseMutationResult<
+  unknown,
+  Error,
+  { email: string; entityType: EntityType },
+  unknown
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ email, entityType }) => sendOtp(email, entityType),
+    onSuccess: (data) => {
+      // Invalidate and refetch OTP-related queries after successful sending
+      queryClient.invalidateQueries({ queryKey: ["sendOtp"] });
+      return data;
+    },
+  });
+};
+
+/**
+ * Custom hook for handling password reset functionality
+ * @returns A mutation object for resetting password with OTP verification
+ */
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: (params: { otp: string; newPassword: string }) =>
+      verifyOtp(params.otp, params.newPassword),
   });
 };

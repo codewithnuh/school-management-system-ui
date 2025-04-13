@@ -1,5 +1,5 @@
 // Application entity types
-export type EntityType = "TEACHER" | "STUDENT";
+export type EntityType = "TEACHER" | "STUDENT" | "ADMIN";
 export type Gender = "Male" | "Female" | "Other";
 export type ApplicationStatus =
   | "Pending"
