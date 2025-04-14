@@ -34,6 +34,7 @@ import TimetableView from "./components/timetable/TimetableView.tsx";
 import UserRegistrationForm from "./components/forms/UserRegistrationForm.tsx";
 import SampleUploadForm from "./components/forms/SampleUploadForm.tsx";
 import Teacher from "./components/dashboards/Teacher.tsx";
+import MyClasses from "./components/Classes/TeacherClass.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -51,13 +52,24 @@ createRoot(document.getElementById("root")!).render(
               element={<UserRegistrationForm />}
             />
             <Route
-              path="/dashboard/teachers"
+              path="/dashboard/teacher"
               element={
                 <RoleGuard allowedRoles={["TEACHER"]}>
                   <Teacher />
                 </RoleGuard>
               }
-            />
+            >
+              <Route
+                index
+                path="classes"
+                element={
+                  <RoleGuard allowedRoles={["TEACHER"]}>
+                    <MyClasses />
+                  </RoleGuard>
+                }
+              />
+              <Route index element={<Navigate to="classes" replace />} />
+            </Route>
             <Route
               path="/dashboard/admin"
               element={
@@ -81,7 +93,11 @@ createRoot(document.getElementById("root")!).render(
               <Route path="class/create" element={<CreateClassForm />} />
               <Route path="classes/edit/:id" element={<UpdateClassForm />} />
               <Route path="classes" element={<ClassesPage />} />
-              <Route path="settings" element={<div>Setting</div>} />
+              <Route
+                path="timetable/generate"
+                element={<TimetableGenerator />}
+              />
+              <Route path="timetable/view" element={<TimetableView />} />
             </Route>
 
             <Route
@@ -133,20 +149,13 @@ createRoot(document.getElementById("root")!).render(
                 />
               }
             />
-            <Route
-              path="/dashboard/admin/timetable/generate"
-              element={<TimetableGenerator />}
-            />
-            <Route
-              path="/dashboard/admin/timetable/view"
-              element={<TimetableView />}
-            />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        {/* Moved ReactQueryDevtools inside the QueryClientProvider */}
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ThemeProvider>
-    {/* Add dev tools for debugging */}
-    <ReactQueryDevtools initialIsOpen={false} client={queryClient} />
   </StrictMode>
 );

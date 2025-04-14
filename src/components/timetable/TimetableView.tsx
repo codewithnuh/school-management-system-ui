@@ -51,7 +51,7 @@ interface TimetableData {
   timetableEntries: TimetablePeriod[];
   // Add other fields as necessary
 }
-
+main;
 const TimetableView: React.FC = () => {
   // Theme for styling
   const theme = useTheme();

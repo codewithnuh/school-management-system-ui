@@ -1,6 +1,9 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { Section } from "../../api/types/sections";
-import { fetchSectionsOfAClass } from "../../api/axios/sections";
+import {
+  fetchSectionsByTeacherId,
+  fetchSectionsOfAClass,
+} from "../../api/axios/sections";
 
 /**
  * Custom hook to fetch all sections of a specific class.
@@ -20,5 +23,17 @@ export const useFetchAllSectionsOfAClass = (
     enabled: !!classId, // Only fetch if classId is provided
     staleTime: 5 * 60 * 1000, // 5 minutes - data is considered fresh for 5 minutes
     retry: 2, // Retry the request up to 2 times if it fails
+  });
+};
+
+export const useFetchAllSectionsByTeacherId = (
+  teacherId: number,
+  classId: number
+) => {
+  useQuery({
+    queryKey: ["teacherSections"],
+    queryFn: async () => {
+      await fetchSectionsByTeacherId(teacherId, classId);
+    },
   });
 };

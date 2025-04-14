@@ -9,3 +9,13 @@ export const fetchSectionsOfAClass = async (
   );
   return response.data.data;
 };
+
+export const fetchSectionsByTeacherId = async (
+  teacherId: number,
+  classId: number
+) => {
+  const response = await axiosInstance.get(
+    `/sections/teacher/section/${teacherId}/${classId}`
+  );
+  return response.data;
+};

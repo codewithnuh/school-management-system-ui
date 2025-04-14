@@ -21,6 +21,11 @@ import {
   Tooltip,
   useTheme,
   useMediaQuery,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from "@mui/material";
 import {
   Visibility,
@@ -28,11 +33,15 @@ import {
   Email,
   LockReset,
   ArrowBack,
+  Person,
 } from "@mui/icons-material";
 import {
   useForgotPasswordInitiate,
   useResetPassword,
 } from "../../services/queries/auth";
+
+// Define entity type options
+type EntityType = "ADMIN" | "STUDENT" | "TEACHER";
 
 // Enhanced OTP Input component with better UX
 const OtpInput: React.FC<{
@@ -103,6 +112,7 @@ const ForgotPasswordPage: React.FC = () => {
 
   // Form states
   const [email, setEmail] = useState("");
+  const [entityType, setEntityType] = useState<EntityType>("ADMIN");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -113,6 +123,7 @@ const ForgotPasswordPage: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [formErrors, setFormErrors] = useState<{
     email?: string;
+    entityType?: string;
     otp?: string;
     password?: string;
   }>({});
@@ -140,6 +151,18 @@ const ForgotPasswordPage: React.FC = () => {
       return false;
     }
     setFormErrors((prev) => ({ ...prev, email: undefined }));
+    return true;
+  };
+
+  const validateEntityType = (type: string): boolean => {
+    if (!type) {
+      setFormErrors((prev) => ({
+        ...prev,
+        entityType: "User type is required",
+      }));
+      return false;
+    }
+    setFormErrors((prev) => ({ ...prev, entityType: undefined }));
     return true;
   };
 
@@ -191,11 +214,15 @@ const ForgotPasswordPage: React.FC = () => {
   // Form handlers
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateEmail(email)) return;
+    // Validate both email and entity type
+    const isEmailValid = validateEmail(email);
+    const isEntityTypeValid = validateEntityType(entityType);
+
+    if (!isEmailValid || !isEntityTypeValid) return;
 
     try {
       sendOtpMutation.mutate(
-        { email, entityType: "ADMIN" },
+        { email, entityType },
         {
           onSuccess: (_, { email: userEmail }) => {
             setActiveStep(1);
@@ -276,10 +303,10 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   const handleResendOtp = () => {
-    if (!validateEmail(email)) return;
+    if (!validateEmail(email) || !validateEntityType(entityType)) return;
 
     sendOtpMutation.mutate(
-      { email, entityType: "ADMIN" },
+      { email, entityType },
       {
         onSuccess: () => {
           setToast({
@@ -370,8 +397,8 @@ const ForgotPasswordPage: React.FC = () => {
             sx={{ mt: 1, width: "100%" }}
           >
             <Typography variant="body2" color="text.secondary" mb={2}>
-              Enter your registered email address to receive a verification
-              code.
+              Enter your registered email address and select your role to
+              receive a verification code.
             </Typography>
 
             <TextField
@@ -399,6 +426,38 @@ const ForgotPasswordPage: React.FC = () => {
                 ),
               }}
             />
+
+            <FormControl
+              fullWidth
+              margin="normal"
+              error={!!formErrors.entityType}
+              required
+            >
+              <InputLabel id="entity-type-select-label">I am a</InputLabel>
+              <Select
+                labelId="entity-type-select-label"
+                id="entity-type-select"
+                value={entityType}
+                label="I am a"
+                onChange={(e) => {
+                  setEntityType(e.target.value as EntityType);
+                  if (formErrors.entityType) validateEntityType(e.target.value);
+                }}
+                disabled={sendOtpMutation.isPending}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <Person color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="ADMIN">Administrator</MenuItem>
+                <MenuItem value="TEACHER">Teacher</MenuItem>
+                <MenuItem value="STUDENT">Student</MenuItem>
+              </Select>
+              {formErrors.entityType && (
+                <FormHelperText>{formErrors.entityType}</FormHelperText>
+              )}
+            </FormControl>
 
             <Button
               type="submit"

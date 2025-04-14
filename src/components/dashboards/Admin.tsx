@@ -41,7 +41,9 @@ import {
   Create,
   SettingsApplications,
   Dashboard,
+  ViewAgenda,
 } from "@mui/icons-material";
+import { TimeIcon } from "@mui/x-date-pickers/icons";
 
 const navItems: NavItem[] = [
   {
@@ -66,6 +68,22 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    label: "TimeTable",
+    icon: <TimeIcon />,
+    subItems: [
+      {
+        label: "generate",
+        path: "/dashboard/admin/timetable/generate",
+        icon: <SettingsIcon />,
+      },
+      {
+        label: "View",
+        path: "/dashboard/admin/timetable/view",
+        icon: <ViewAgenda />,
+      },
+    ],
+  },
+  {
     label: "Classes",
     icon: <Class />,
     subItems: [
@@ -80,11 +98,6 @@ const navItems: NavItem[] = [
         icon: <ClassOutlined />,
       },
     ],
-  },
-  {
-    label: "Settings",
-    path: "/dashboard/admin/settings",
-    icon: <SettingsIcon />,
   },
 ];
 
@@ -115,7 +128,9 @@ const Admin: React.FC = () => {
           sx={{
             flexGrow: 1,
             p: 3,
-            width: { sm: `calc(100% - ${adminSidebarTheme.drawerWidth || 240}px)` },
+            width: {
+              sm: `calc(100% - ${adminSidebarTheme.drawerWidth || 240}px)`,
+            },
             backgroundColor: darkTheme.palette.background.default,
             minHeight: "100vh",
           }}
