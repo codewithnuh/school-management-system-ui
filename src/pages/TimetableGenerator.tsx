@@ -24,33 +24,72 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useClasses } from "../services/queries/classes";
-import { useGenerateTimeTable } from "../services/queries/timeTable";
-import Link from "@mui/material/Link";
+import {
+  useGenerateTimeTable,
+  useFetchTimeTables,
+} from "../services/queries/timeTable";
+import ViewSectionTimetable from "../components/timetable/ViewSectionTimetable";
+
 // Define interfaces for type safety
 interface Class {
   id: number;
   name: string;
 }
 
+interface Section {
+  id: number;
+  name: string;
+  classId: number;
+}
+
 const TimetableGenerator: React.FC = () => {
   const theme = useTheme();
   const [selectedClass, setSelectedClass] = useState<number | "">("");
+  const [selectedSection, setSelectedSection] = useState<number | "">("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [viewTimetableOpen, setViewTimetableOpen] = useState(false);
 
   // Query for classes
   const { data: classes = [], isLoading: classesLoading } = useClasses();
+
+  // Query for sections based on selected class
+  // Note: This is a placeholder. You should implement a hook to fetch sections for a class
+  const sections: Section[] = React.useMemo(() => {
+    // Mock implementation - replace with actual API call
+    if (!selectedClass) return [];
+    return [
+      { id: 1, name: "A", classId: Number(selectedClass) },
+      { id: 2, name: "B", classId: Number(selectedClass) },
+      { id: 3, name: "C", classId: Number(selectedClass) },
+    ];
+  }, [selectedClass]);
 
   // Query for timetable generation
   const timetableQuery = useGenerateTimeTable(
     selectedClass ? Number(selectedClass) : 0
   );
+
+  // Query for fetching timetable
+  const { data: timetableData } = useFetchTimeTables(
+    selectedClass as number,
+    selectedSection as number
+  );
+
   // Handle class selection
   const handleClassChange = (event: SelectChangeEvent) => {
     const classId = event.target.value;
     setSelectedClass(classId === "" ? "" : Number(classId));
+    setSelectedSection(""); // Reset section when class changes
     setSuccessMessage(null); // Clear any previous success message
+  };
+
+  // Handle section selection
+  const handleSectionChange = (event: SelectChangeEvent) => {
+    const sectionId = event.target.value;
+    setSelectedSection(sectionId === "" ? "" : Number(sectionId));
   };
 
   // Handle timetable generation
@@ -71,6 +110,13 @@ const TimetableGenerator: React.FC = () => {
     }
   };
 
+  // Handle view timetable
+  const handleViewTimetable = () => {
+    if (selectedClass && selectedSection) {
+      setViewTimetableOpen(true);
+    }
+  };
+
   // Clear success message after 5 seconds
   useEffect(() => {
     if (successMessage) {
@@ -81,8 +127,9 @@ const TimetableGenerator: React.FC = () => {
     }
   }, [successMessage]);
 
-  // Find the selected class object for display
+  // Find the selected class and section objects for display
   const selectedClassObj = classes.find((c) => c.id === selectedClass);
+  const selectedSectionObj = sections.find((s) => s.id === selectedSection);
 
   // Check if data is available
   const hasData =
@@ -137,7 +184,7 @@ const TimetableGenerator: React.FC = () => {
 
             <Grid container spacing={3} alignItems="center" sx={{ mt: 1 }}>
               {/* Class Selection */}
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
                 <FormControl
                   fullWidth
                   disabled={classesLoading || isGenerating}
@@ -166,7 +213,40 @@ const TimetableGenerator: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              {/* Section Selection */}
+              <Grid item xs={12} md={4}>
+                <FormControl
+                  fullWidth
+                  disabled={!selectedClass || isGenerating}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    },
+                  }}
+                >
+                  <InputLabel id="section-select-label">Section</InputLabel>
+                  <Select
+                    labelId="section-select-label"
+                    id="section-select"
+                    value={selectedSection.toString()}
+                    label="Section"
+                    onChange={handleSectionChange}
+                  >
+                    <MenuItem value="">
+                      <em>Select a section</em>
+                    </MenuItem>
+                    {sections.map((section) => (
+                      <MenuItem key={section.id} value={section.id.toString()}>
+                        Section {section.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Generate Button */}
+              <Grid item xs={12} md={4}>
                 <Button
                   variant="contained"
                   color="primary"
@@ -196,9 +276,24 @@ const TimetableGenerator: React.FC = () => {
                   {isGenerating ? "Generating..." : "Generate Timetable"}
                 </Button>
               </Grid>
-              <Button>
-                <Link>View Generated TimeTable</Link>
-              </Button>
+
+              {/* View Timetable Button */}
+              <Grid item xs={12}>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  size="large"
+                  onClick={handleViewTimetable}
+                  disabled={!selectedClass || !selectedSection}
+                  startIcon={<VisibilityIcon />}
+                  sx={{
+                    mt: 2,
+                    borderRadius: 2,
+                  }}
+                >
+                  View Timetable
+                </Button>
+              </Grid>
             </Grid>
 
             {hasData && (
@@ -316,14 +411,28 @@ const TimetableGenerator: React.FC = () => {
           >
             <Typography variant="h6" gutterBottom>
               Selected: {selectedClassObj.name}
+              {selectedSectionObj && ` - Section ${selectedSectionObj.name}`}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              Click the Generate Timetable button to create schedules for all
-              sections in this class.
+              {!selectedSectionObj
+                ? "Select a section to view its timetable or generate timetables for all sections."
+                : "Click the View Timetable button to see the detailed schedule."}
             </Typography>
           </Box>
         )}
       </Paper>
+
+      {/* Timetable Viewer Dialog */}
+      {selectedClass && selectedSection && (
+        <ViewSectionTimetable
+          open={viewTimetableOpen}
+          onClose={() => setViewTimetableOpen(false)}
+          classId={selectedClass as number}
+          sectionId={selectedSection as number}
+          className={selectedClassObj?.name || ""}
+          sectionName={selectedSectionObj?.name || ""}
+        />
+      )}
     </Container>
   );
 };

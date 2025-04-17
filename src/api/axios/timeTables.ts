@@ -23,3 +23,7 @@ export const fetchTimeTableOfSections = async (
 };
 
 // /weekly/:classId/:sectionId
+export const fetchTimeTableOfATeacher = async (teacherId: number) => {
+  const response = await axiosInstance.get(`/timetables/teacher/${teacherId}`);
+  return response.data;
+};

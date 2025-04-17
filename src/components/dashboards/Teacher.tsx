@@ -25,7 +25,7 @@ import { useTeacherSections } from "../../services/queries/teachers";
 // Create a teacher-specific theme
 const teacherTheme = createTheme({
   palette: {
-    mode: "light",
+    mode: "dark",
     primary: {
       main: "#1976d2",
     },
@@ -33,15 +33,15 @@ const teacherTheme = createTheme({
       main: "#dc004e",
     },
     background: {
-      default: "#f5f5f5",
-      paper: "#ffffff",
+      default: "black",
+      paper: "black",
     },
   },
 });
 
 // Teacher-specific sidebar theme options
 const teacherSidebarTheme: SidebarThemeOptions = {
-  backgroundColor: "rgba(30, 30, 46, 0.9)",
+  backgroundColor: "black",
   backdropFilter: "blur(10px)",
   activeItemColor: "rgba(144, 202, 249, 0.2)",
   drawerWidth: 260,
