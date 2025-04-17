@@ -14,33 +14,22 @@ import {
   Tabs,
   Tab,
   ThemeProvider,
-  createTheme,
   CssBaseline,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
+import { useUser } from "../../hooks/useUser";
+import { useGetSingleTeacher } from "../../services/queries/teachers";
+import { useClass } from "../../services/queries/classes";
+import { darkTheme } from "../../theme/darkTheme";
 
+// Type definitions
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-// Type definitions based on the provided data structure
 interface Class {
   id: number;
   name: string;
@@ -58,114 +47,77 @@ interface Section {
   classId: number;
   createdAt: string;
   updatedAt: string;
-  sectionId: number | null;
-  examId: number | null;
-  class: Class;
+  sectionId: null | number;
+  examId: null | number;
+  class?: Class;
 }
 
-// Create a dark theme
-const darkTheme = createTheme({
-  palette: {
-    mode: "dark",
-    primary: {
-      main: "#90caf9", // Lighter blue for better visibility on dark background
-    },
-    secondary: {
-      main: "#ce93d8", // Lighter purple for better visibility on dark background
-    },
-    background: {
-      default: "#121212",
-      paper: "#1e1e1e",
-    },
-  },
-});
+// TabPanel component for tab content
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
 
-const MyClasses: React.FC = () => {
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+const TeacherClass: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
+  const { data: userData, isLoading: isUserLoading } = useUser();
+  const {
+    data: teacherData,
+    isLoading: isTeacherLoading,
+    error: teacherError,
+  } = useGetSingleTeacher(userData?.data?.user?.id);
 
-  // Mock user ID (current teacher ID)
-  const userId = 1001;
+  // Process sections with classes
+  const sectionsWithClasses = React.useMemo(() => {
+    if (!teacherData?.data?.sections) return [];
 
-  // Mock data for sections and classes
-  const mockSections: Section[] = [
-    {
-      id: 1,
-      name: "A",
-      classTeacherId: 1001, // Current teacher is class teacher
-      subjectTeachers: { "101": 1001, "102": 1002 }, // Current teacher teaches subject 101
-      classId: 1,
-      createdAt: "2023-01-01",
-      updatedAt: "2023-01-01",
-      sectionId: null,
-      examId: null,
-      class: { id: 1, name: "6th" },
-    },
-    {
-      id: 2,
-      name: "B",
-      classTeacherId: 1002, // Another teacher is class teacher
-      subjectTeachers: { "101": 1001, "102": 1002 }, // Current teacher teaches subject 101
-      classId: 1,
-      createdAt: "2023-01-01",
-      updatedAt: "2023-01-01",
-      sectionId: null,
-      examId: null,
-      class: { id: 1, name: "6th" },
-    },
-    {
-      id: 3,
-      name: "A",
-      classTeacherId: 1001, // Current teacher is class teacher
-      subjectTeachers: { "201": 1001, "202": 1003 }, // Current teacher teaches subject 201
-      classId: 2,
-      createdAt: "2023-01-01",
-      updatedAt: "2023-01-01",
-      sectionId: null,
-      examId: null,
-      class: { id: 2, name: "7th" },
-    },
-    {
-      id: 4,
-      name: "B",
-      classTeacherId: 1003, // Another teacher is class teacher
-      subjectTeachers: { "201": 1004, "202": 1003 }, // Current teacher doesn't teach any subject here
-      classId: 2,
-      createdAt: "2023-01-01",
-      updatedAt: "2023-01-01",
-      sectionId: null,
-      examId: null,
-      class: { id: 2, name: "7th" },
-    },
-    {
-      id: 5,
-      name: "A",
-      classTeacherId: 1004, // Another teacher is class teacher
-      subjectTeachers: { "301": 1001, "302": 1004 }, // Current teacher teaches subject 301
-      classId: 3,
-      createdAt: "2023-01-01",
-      updatedAt: "2023-01-01",
-      sectionId: null,
-      examId: null,
-      class: { id: 3, name: "8th" },
-    },
-  ];
+    return teacherData.data.sections.map((section: Section) => {
+      // Try to fetch class data for each section
+      const { data: classData } = useClass(section.classId);
+
+      return {
+        ...section,
+        class: classData || {
+          id: section.classId,
+          name: `Class ${section.classId}`,
+        },
+      };
+    });
+  }, [teacherData]);
 
   // Extract unique classes from sections data
   const classes = React.useMemo(() => {
+    if (!sectionsWithClasses.length) return [];
+
     const uniqueClasses = new Map<number, Class>();
-    mockSections.forEach((section) => {
-      uniqueClasses.set(section.class.id, section.class);
+    sectionsWithClasses.forEach((section) => {
+      if (section.class) {
+        uniqueClasses.set(section.class.id, section.class);
+      }
     });
 
     return Array.from(uniqueClasses.values());
-  }, []);
+  }, [sectionsWithClasses]);
 
   // Group sections by class
   const sectionsByClass = React.useMemo(() => {
+    if (!sectionsWithClasses.length) return new Map<number, Section[]>();
+
     const groupedSections = new Map<number, Section[]>();
 
-    mockSections.forEach((section) => {
-      const classId = section.class.id;
+    sectionsWithClasses.forEach((section) => {
+      const classId = section.classId;
       if (!groupedSections.has(classId)) {
         groupedSections.set(classId, []);
       }
@@ -173,7 +125,7 @@ const MyClasses: React.FC = () => {
     });
 
     return groupedSections;
-  }, []);
+  }, [sectionsWithClasses]);
 
   // Handle tab change
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -181,36 +133,213 @@ const MyClasses: React.FC = () => {
   };
 
   // Determine if user is class teacher for a section
-  const isClassTeacher = (section: Section) => {
-    return section.classTeacherId === userId;
+  const isClassTeacher = (section: Section): boolean => {
+    return section.classTeacherId === teacherData?.data?.id;
   };
 
   // Determine if user is subject teacher for a section
-  const isSubjectTeacher = (section: Section) => {
-    return Object.values(section.subjectTeachers).includes(userId);
+  const isSubjectTeacher = (section: Section): boolean => {
+    const teacherId = teacherData?.data?.id;
+    return Object.values(section.subjectTeachers).includes(teacherId);
   };
 
-  // Get subject names for which the logged-in teacher teaches
-  const getTeacherSubjects = (section: Section) => {
+  // Get subject IDs for which the logged-in teacher teaches
+  const getTeacherSubjectIds = (section: Section): string[] => {
     const subjects: string[] = [];
-    Object.entries(section.subjectTeachers).forEach(
-      ([subjectId, teacherId]) => {
-        if (teacherId === userId) {
-          // Map of subject IDs to names
-          const subjectNames: { [key: string]: string } = {
-            "101": "Mathematics",
-            "102": "Science",
-            "201": "English",
-            "202": "Social Studies",
-            "301": "Physics",
-            "302": "Chemistry",
-          };
-          subjects.push(subjectNames[subjectId] || `Subject ${subjectId}`);
-        }
+    const teacherId = teacherData?.data?.id;
+
+    Object.entries(section.subjectTeachers).forEach(([subjectId, id]) => {
+      if (id === teacherId) {
+        subjects.push(subjectId);
       }
-    );
+    });
     return subjects;
   };
+
+  // Loading state
+  const isLoading = isUserLoading || isTeacherLoading;
+
+  // Render loading state
+  if (isLoading) {
+    return (
+      <ThemeProvider theme={darkTheme}>
+        <CssBaseline />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "80vh",
+            width: "100%",
+            bgcolor: "background.default",
+          }}
+        >
+          <CircularProgress />
+          <Typography variant="h6" sx={{ ml: 2 }}>
+            Loading class information...
+          </Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  // Render error state
+  if (teacherError) {
+    return (
+      <ThemeProvider theme={darkTheme}>
+        <CssBaseline />
+        <Box
+          sx={{
+            width: "100%",
+            bgcolor: "background.default",
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Failed to load teacher data
+          </Alert>
+          <Typography variant="body1">
+            Please try again later or contact support if the problem persists.
+          </Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  // Render empty state - no sections assigned
+  if (!teacherData?.data?.sections || teacherData.data.sections.length === 0) {
+    return (
+      <ThemeProvider theme={darkTheme}>
+        <CssBaseline />
+        <Box
+          sx={{
+            width: "100%",
+            bgcolor: "background.default",
+            color: "text.primary",
+            p: 3,
+          }}
+        >
+          <Typography variant="h4" component="h1" gutterBottom>
+            My Classes
+          </Typography>
+          <Paper
+            sx={{
+              width: "100%",
+              p: 4,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              You have no sections assigned
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Please contact the administration to get your teaching schedule.
+            </Typography>
+          </Paper>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  // Render section card
+  const renderSectionCard = (section: Section, showSubjectChips = true) => (
+    <ListItem
+      key={section.id}
+      sx={{
+        flexDirection: "column",
+        alignItems: "flex-start",
+        bgcolor: "rgba(255, 255, 255, 0.05)",
+        borderRadius: 1,
+        mb: 1,
+        p: 2,
+      }}
+    >
+      <ListItemText
+        primary={
+          <Typography variant="body1" fontWeight="medium">
+            Section {section.name}
+          </Typography>
+        }
+        secondary={
+          <Box sx={{ mt: 1 }}>
+            {isClassTeacher(section) && showSubjectChips && (
+              <Chip
+                label="Class Teacher"
+                color="primary"
+                size="small"
+                sx={{ mr: 1, mt: 1, fontWeight: "bold" }}
+              />
+            )}
+            {isSubjectTeacher(section) &&
+              showSubjectChips &&
+              getTeacherSubjectIds(section).map((subjectId) => (
+                <Chip
+                  key={subjectId}
+                  label={`Subject ${subjectId}`}
+                  color="secondary"
+                  size="small"
+                  sx={{ mr: 1, mt: 1 }}
+                />
+              ))}
+          </Box>
+        }
+      />
+    </ListItem>
+  );
+
+  // Render class card
+  const renderClassCard = (
+    classItem: Class,
+    sections: Section[],
+    title: string,
+    showSubjectChips = true
+  ) => (
+    <Grid item xs={12} md={6} lg={4} key={classItem.id}>
+      <Card
+        variant="outlined"
+        sx={{
+          height: "100%",
+          bgcolor: "background.paper",
+          borderColor: "divider",
+          borderRadius: 2,
+          transition: "transform 0.2s, box-shadow 0.2s",
+          "&:hover": {
+            transform: "translateY(-4px)",
+            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
+          },
+        }}
+      >
+        <CardContent>
+          <Typography
+            variant="h5"
+            component="h2"
+            gutterBottom
+            color="primary.light"
+          >
+            Class {classItem.name}
+          </Typography>
+          <Divider sx={{ my: 2, bgcolor: "rgba(255, 255, 255, 0.1)" }} />
+
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            color="text.secondary"
+          >
+            {title}
+          </Typography>
+
+          <List>
+            {sections.map((section) =>
+              renderSectionCard(section, showSubjectChips)
+            )}
+          </List>
+        </CardContent>
+      </Card>
+    </Grid>
+  );
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -250,280 +379,51 @@ const MyClasses: React.FC = () => {
             <Tab label="Subject Teacher" />
           </Tabs>
 
+          {/* All Classes Tab */}
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
-              {classes.map((classItem) => (
-                <Grid item xs={12} md={6} lg={4} key={classItem.id}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: "100%",
-                      bgcolor: "background.paper",
-                      borderColor: "divider",
-                      borderRadius: 2,
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
-                      },
-                    }}
-                  >
-                    <CardContent>
-                      <Typography
-                        variant="h5"
-                        component="h2"
-                        gutterBottom
-                        color="primary.light"
-                      >
-                        Class {classItem.name}
-                      </Typography>
-                      <Divider
-                        sx={{ my: 2, bgcolor: "rgba(255, 255, 255, 0.1)" }}
-                      />
-
-                      <Typography
-                        variant="h6"
-                        component="h3"
-                        gutterBottom
-                        color="text.secondary"
-                      >
-                        Sections
-                      </Typography>
-
-                      <List>
-                        {sectionsByClass.get(classItem.id)?.map((section) => (
-                          <ListItem
-                            key={section.id}
-                            sx={{
-                              flexDirection: "column",
-                              alignItems: "flex-start",
-                              bgcolor: "rgba(255, 255, 255, 0.05)",
-                              borderRadius: 1,
-                              mb: 1,
-                              p: 2,
-                            }}
-                          >
-                            <ListItemText
-                              primary={
-                                <Typography variant="body1" fontWeight="medium">
-                                  Section {section.name}
-                                </Typography>
-                              }
-                              secondary={
-                                <Box sx={{ mt: 1 }}>
-                                  {isClassTeacher(section) && (
-                                    <Chip
-                                      label="Class Teacher"
-                                      color="primary"
-                                      size="small"
-                                      sx={{ mr: 1, mt: 1, fontWeight: "bold" }}
-                                    />
-                                  )}
-                                  {isSubjectTeacher(section) &&
-                                    getTeacherSubjects(section).map(
-                                      (subject) => (
-                                        <Chip
-                                          key={subject}
-                                          label={subject}
-                                          color="secondary"
-                                          size="small"
-                                          sx={{ mr: 1, mt: 1 }}
-                                        />
-                                      )
-                                    )}
-                                </Box>
-                              }
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+              {classes.map((classItem) => {
+                const sections = sectionsByClass.get(classItem.id) || [];
+                return renderClassCard(classItem, sections, "Sections");
+              })}
             </Grid>
           </TabPanel>
 
+          {/* Class Teacher Tab */}
           <TabPanel value={tabValue} index={1}>
             <Grid container spacing={3}>
               {classes.map((classItem) => {
-                const classTeacherSections =
-                  sectionsByClass.get(classItem.id)?.filter(isClassTeacher) ||
-                  [];
+                const classTeacherSections = (
+                  sectionsByClass.get(classItem.id) || []
+                ).filter(isClassTeacher);
+
                 if (classTeacherSections.length === 0) return null;
 
-                return (
-                  <Grid item xs={12} md={6} lg={4} key={classItem.id}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        height: "100%",
-                        bgcolor: "background.paper",
-                        borderColor: "divider",
-                        borderRadius: 2,
-                        transition: "transform 0.2s, box-shadow 0.2s",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
-                        },
-                      }}
-                    >
-                      <CardContent>
-                        <Typography
-                          variant="h5"
-                          component="h2"
-                          gutterBottom
-                          color="primary.light"
-                        >
-                          Class {classItem.name}
-                        </Typography>
-                        <Divider
-                          sx={{ my: 2, bgcolor: "rgba(255, 255, 255, 0.1)" }}
-                        />
-
-                        <Typography
-                          variant="h6"
-                          component="h3"
-                          gutterBottom
-                          color="text.secondary"
-                        >
-                          Your Class Teacher Sections
-                        </Typography>
-
-                        <List>
-                          {classTeacherSections.map((section) => (
-                            <ListItem
-                              key={section.id}
-                              sx={{
-                                bgcolor: "rgba(255, 255, 255, 0.05)",
-                                borderRadius: 1,
-                                mb: 1,
-                                p: 2,
-                              }}
-                            >
-                              <ListItemText
-                                primary={
-                                  <Typography
-                                    variant="body1"
-                                    fontWeight="medium"
-                                  >
-                                    Section {section.name}
-                                  </Typography>
-                                }
-                                secondary={
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    Class Teacher Responsibility
-                                  </Typography>
-                                }
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+                return renderClassCard(
+                  classItem,
+                  classTeacherSections,
+                  "Your Class Teacher Sections",
+                  false
                 );
               })}
             </Grid>
           </TabPanel>
 
+          {/* Subject Teacher Tab */}
           <TabPanel value={tabValue} index={2}>
             <Grid container spacing={3}>
               {classes.map((classItem) => {
-                const subjectTeacherSections =
-                  sectionsByClass.get(classItem.id)?.filter(isSubjectTeacher) ||
-                  [];
+                const subjectTeacherSections = (
+                  sectionsByClass.get(classItem.id) || []
+                ).filter(isSubjectTeacher);
+
                 if (subjectTeacherSections.length === 0) return null;
 
-                return (
-                  <Grid item xs={12} md={6} lg={4} key={classItem.id}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        height: "100%",
-                        bgcolor: "background.paper",
-                        borderColor: "divider",
-                        borderRadius: 2,
-                        transition: "transform 0.2s, box-shadow 0.2s",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
-                        },
-                      }}
-                    >
-                      <CardContent>
-                        <Typography
-                          variant="h5"
-                          component="h2"
-                          gutterBottom
-                          color="primary.light"
-                        >
-                          Class {classItem.name}
-                        </Typography>
-                        <Divider
-                          sx={{ my: 2, bgcolor: "rgba(255, 255, 255, 0.1)" }}
-                        />
-
-                        <Typography
-                          variant="h6"
-                          component="h3"
-                          gutterBottom
-                          color="text.secondary"
-                        >
-                          Your Subject Teacher Sections
-                        </Typography>
-
-                        <List>
-                          {subjectTeacherSections.map((section) => (
-                            <ListItem
-                              key={section.id}
-                              sx={{
-                                flexDirection: "column",
-                                alignItems: "flex-start",
-                                bgcolor: "rgba(255, 255, 255, 0.05)",
-                                borderRadius: 1,
-                                mb: 1,
-                                p: 2,
-                              }}
-                            >
-                              <ListItemText
-                                primary={
-                                  <Typography
-                                    variant="body1"
-                                    fontWeight="medium"
-                                  >
-                                    Section {section.name}
-                                  </Typography>
-                                }
-                                secondary={
-                                  <Box sx={{ mt: 1 }}>
-                                    {getTeacherSubjects(section).map(
-                                      (subject) => (
-                                        <Chip
-                                          key={subject}
-                                          label={subject}
-                                          color="secondary"
-                                          size="small"
-                                          sx={{
-                                            mr: 1,
-                                            mt: 0.5,
-                                            fontWeight: "medium",
-                                          }}
-                                        />
-                                      )
-                                    )}
-                                  </Box>
-                                }
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+                return renderClassCard(
+                  classItem,
+                  subjectTeacherSections,
+                  "Your Subject Teacher Sections",
+                  true
                 );
               })}
             </Grid>
@@ -534,4 +434,4 @@ const MyClasses: React.FC = () => {
   );
 };
 
-export default MyClasses;
+export default TeacherClass;

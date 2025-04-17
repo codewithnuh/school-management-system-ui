@@ -22,3 +22,9 @@ export const useTeacherSections = (teacherId: number, subjectId: number) => {
     queryFn: () => fetchAllSubjectsOfATeacher(teacherId, subjectId),
   });
 };
+export const useGetSingleTeacher = (teacherId: number) => {
+  return useQuery({
+    queryKey: ["teacher", teacherId],
+    queryFn: () => fetchSingleTeacher(teacherId),
+  });
+};
