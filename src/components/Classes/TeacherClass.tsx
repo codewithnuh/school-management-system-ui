@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -20,7 +20,8 @@ import {
 } from "@mui/material";
 import { useUser } from "../../hooks/useUser";
 import { useGetSingleTeacher } from "../../services/queries/teachers";
-import { useClass } from "../../services/queries/classes";
+// Import useClasses to fetch all classes
+import { useClasses } from "../../services/queries/classes";
 import { darkTheme } from "../../theme/darkTheme";
 
 // Type definitions
@@ -30,13 +31,20 @@ interface TabPanelProps {
   value: number;
 }
 
+// Define a more complete Class type based on ClassesTable.tsx
 interface Class {
   id: number;
   name: string;
+  description?: string;
+  maxStudents?: number;
+  periodLength?: number;
+  periodsPerDay?: number;
+  workingDays?: string[];
+  // Add other relevant class properties if needed
 }
 
 interface SubjectTeachers {
-  [key: string]: number;
+  [key: string]: number; // Assuming key is subjectId (string) and value is teacherId (number)
 }
 
 interface Section {
@@ -49,10 +57,10 @@ interface Section {
   updatedAt: string;
   sectionId: null | number;
   examId: null | number;
-  class?: Class;
+  class?: Class; // Class data will be added here after processing
 }
 
-// TabPanel component for tab content
+// TabPanel component (remains the same)
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
 
@@ -72,58 +80,86 @@ function TabPanel(props: TabPanelProps) {
 const TeacherClass: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const { data: userData, isLoading: isUserLoading } = useUser();
+
+  // Fetch the specific teacher's data (including their sections)
   const {
     data: teacherData,
     isLoading: isTeacherLoading,
     error: teacherError,
-  } = useGetSingleTeacher(userData?.data?.user?.id);
+  } = useGetSingleTeacher(userData!.data?.user?.id); // Use optional chaining
 
-  // Process sections with classes
-  const sectionsWithClasses = React.useMemo(() => {
-    if (!teacherData?.data?.sections) return [];
+  // --- Fetch ALL classes at the top level ---
+  const { data: allClassesData, isLoading: isLoadingClasses } = useClasses();
+  console.log({ allClassesData });
+  // --- Process sections and merge with class data using useMemo ---
+  const sectionsWithClasses = useMemo(() => {
+    // Wait until both teacher sections and all classes data are loaded
+    if (!teacherData?.data?.sections || !allClassesData) {
+      // console.log("Waiting for data:", { hasTeacherSections: !!teacherData?.data?.sections, hasAllClasses: !!allClassesData });
+      return [];
+    }
 
-    return teacherData.data.sections.map((section: Section) => {
-      // Try to fetch class data for each section
-      const { data: classData } = useClass(section.classId);
+    // Create a Map for efficient class lookup (ID -> Class Object)
+    const classMap = new Map<number, Class>();
+    allClassesData.forEach((cls) => classMap.set(cls.id, cls));
+    // console.log("Class Map created:", classMap);
 
-      return {
-        ...section,
-        class: classData || {
-          id: section.classId,
-          name: `Class ${section.classId}`,
-        },
-      };
-    });
-  }, [teacherData]);
+    // Map teacher's sections and add the corresponding class data
+    const processedSections = teacherData.data.sections.map(
+      (section: Section) => {
+        const classInfo = classMap.get(section.classId);
+        // console.log(`Processing Section ${section.name} (Class ID: ${section.classId}), Found Class:`, classInfo);
+        return {
+          ...section,
+          // Add the found class data, or a fallback if not found
+          class: classInfo || {
+            id: section.classId,
+            name: `Class ${section.classId} (Details Unavailable)`, // Indicate if lookup failed
+          },
+        };
+      }
+    );
+    // console.log("Processed Sections with Classes:", processedSections);
+    return processedSections;
 
-  // Extract unique classes from sections data
-  const classes = React.useMemo(() => {
+    // Add both teacherData and allClassesData as dependencies
+  }, [teacherData, allClassesData]);
+
+  // --- Extract unique classes from the *processed* sections data ---
+  const uniqueClasses = useMemo(() => {
+    // Depend on the processed sectionsWithClasses
     if (!sectionsWithClasses.length) return [];
 
-    const uniqueClasses = new Map<number, Class>();
+    const classMap = new Map<number, Class>();
     sectionsWithClasses.forEach((section) => {
-      if (section.class) {
-        uniqueClasses.set(section.class.id, section.class);
+      // Ensure section.class exists and has an id before adding
+      if (section.class && section.class.id != null) {
+        classMap.set(section.class.id, section.class);
       }
     });
-
-    return Array.from(uniqueClasses.values());
+    // console.log("Unique Classes derived:", Array.from(classMap.values()));
+    return Array.from(classMap.values());
   }, [sectionsWithClasses]);
 
-  // Group sections by class
-  const sectionsByClass = React.useMemo(() => {
+  // --- Group sections by class using the *processed* data ---
+  const sectionsByClass = useMemo(() => {
+    // Depend on the processed sectionsWithClasses
     if (!sectionsWithClasses.length) return new Map<number, Section[]>();
 
     const groupedSections = new Map<number, Section[]>();
 
     sectionsWithClasses.forEach((section) => {
-      const classId = section.classId;
-      if (!groupedSections.has(classId)) {
-        groupedSections.set(classId, []);
+      // Ensure section.class exists before grouping
+      if (section.class && section.class.id != null) {
+        const classId = section.class.id;
+        if (!groupedSections.has(classId)) {
+          groupedSections.set(classId, []);
+        }
+        // Use non-null assertion as we've checked .has()
+        groupedSections.get(classId)!.push(section);
       }
-      groupedSections.get(classId)?.push(section);
     });
-
+    // console.log("Sections Grouped by Class:", groupedSections);
     return groupedSections;
   }, [sectionsWithClasses]);
 
@@ -132,34 +168,42 @@ const TeacherClass: React.FC = () => {
     setTabValue(newValue);
   };
 
-  // Determine if user is class teacher for a section
+  // --- Helper functions to check teacher roles ---
   const isClassTeacher = (section: Section): boolean => {
+    // Use optional chaining for safety
     return section.classTeacherId === teacherData?.data?.id;
   };
 
-  // Determine if user is subject teacher for a section
   const isSubjectTeacher = (section: Section): boolean => {
     const teacherId = teacherData?.data?.id;
+    if (teacherId === undefined || !section.subjectTeachers) return false; // Guard clause
+    // Check if the teacher's ID exists as a value in the subjectTeachers map
     return Object.values(section.subjectTeachers).includes(teacherId);
   };
 
-  // Get subject IDs for which the logged-in teacher teaches
+  // Get subject IDs for which the logged-in teacher teaches in a specific section
   const getTeacherSubjectIds = (section: Section): string[] => {
     const subjects: string[] = [];
     const teacherId = teacherData?.data?.id;
 
+    // Guard clauses
+    if (teacherId === undefined || !section.subjectTeachers) {
+      return [];
+    }
+
     Object.entries(section.subjectTeachers).forEach(([subjectId, id]) => {
       if (id === teacherId) {
-        subjects.push(subjectId);
+        subjects.push(subjectId); // subjectId is the key (string)
       }
     });
     return subjects;
   };
 
-  // Loading state
-  const isLoading = isUserLoading || isTeacherLoading;
+  // --- Combined Loading State ---
+  // Include loading state for all relevant hooks
+  const isLoading = isUserLoading || isTeacherLoading || isLoadingClasses;
 
-  // Render loading state
+  // --- Render Loading State ---
   if (isLoading) {
     return (
       <ThemeProvider theme={darkTheme}>
@@ -175,7 +219,7 @@ const TeacherClass: React.FC = () => {
           }}
         >
           <CircularProgress />
-          <Typography variant="h6" sx={{ ml: 2 }}>
+          <Typography variant="h6" sx={{ ml: 2, color: "text.secondary" }}>
             Loading class information...
           </Typography>
         </Box>
@@ -183,7 +227,8 @@ const TeacherClass: React.FC = () => {
     );
   }
 
-  // Render error state
+  // --- Render Error State ---
+  // Check for teacher data error specifically
   if (teacherError) {
     return (
       <ThemeProvider theme={darkTheme}>
@@ -196,18 +241,20 @@ const TeacherClass: React.FC = () => {
           }}
         >
           <Alert severity="error" sx={{ mb: 2 }}>
-            Failed to load teacher data
+            Failed to load your teaching data: {teacherError.message}
           </Alert>
-          <Typography variant="body1">
-            Please try again later or contact support if the problem persists.
+          <Typography variant="body1" color="text.secondary">
+            Please try refreshing the page or contact support if the problem
+            persists.
           </Typography>
         </Box>
       </ThemeProvider>
     );
   }
 
-  // Render empty state - no sections assigned
-  if (!teacherData?.data?.sections || teacherData.data.sections.length === 0) {
+  // --- Render Empty State (No Sections Assigned) ---
+  // Check after loading and error states, using the final processed data source
+  if (!sectionsWithClasses || sectionsWithClasses.length === 0) {
     return (
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
@@ -229,13 +276,15 @@ const TeacherClass: React.FC = () => {
               bgcolor: "background.paper",
               borderRadius: 2,
               textAlign: "center",
+              mt: 2,
             }}
           >
             <Typography variant="h6" gutterBottom>
-              You have no sections assigned
+              You are not currently assigned to any sections.
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Please contact the administration to get your teaching schedule.
+              If you believe this is an error, please contact the school
+              administration.
             </Typography>
           </Paper>
         </Box>
@@ -243,14 +292,14 @@ const TeacherClass: React.FC = () => {
     );
   }
 
-  // Render section card
+  // --- Render Section Card ---
   const renderSectionCard = (section: Section, showSubjectChips = true) => (
     <ListItem
       key={section.id}
       sx={{
         flexDirection: "column",
         alignItems: "flex-start",
-        bgcolor: "rgba(255, 255, 255, 0.05)",
+        bgcolor: "rgba(255, 255, 255, 0.05)", // Slightly lighter background for contrast
         borderRadius: 1,
         mb: 1,
         p: 2,
@@ -263,24 +312,27 @@ const TeacherClass: React.FC = () => {
           </Typography>
         }
         secondary={
-          <Box sx={{ mt: 1 }}>
+          <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {/* Show Class Teacher chip only if applicable and chips are enabled */}
             {isClassTeacher(section) && showSubjectChips && (
               <Chip
                 label="Class Teacher"
                 color="primary"
                 size="small"
-                sx={{ mr: 1, mt: 1, fontWeight: "bold" }}
+                sx={{ fontWeight: "bold" }}
               />
             )}
+            {/* Show Subject Teacher chips only if applicable and chips are enabled */}
             {isSubjectTeacher(section) &&
               showSubjectChips &&
               getTeacherSubjectIds(section).map((subjectId) => (
                 <Chip
                   key={subjectId}
+                  // TODO: Ideally, fetch subject names based on IDs if available
                   label={`Subject ${subjectId}`}
                   color="secondary"
+                  variant="outlined" // Use outlined for subjects to differentiate
                   size="small"
-                  sx={{ mr: 1, mt: 1 }}
                 />
               ))}
           </Box>
@@ -289,12 +341,12 @@ const TeacherClass: React.FC = () => {
     </ListItem>
   );
 
-  // Render class card
+  // --- Render Class Card ---
   const renderClassCard = (
     classItem: Class,
     sections: Section[],
     title: string,
-    showSubjectChips = true
+    showSubjectChips = true // Control chip visibility per card type
   ) => (
     <Grid item xs={12} md={6} lg={4} key={classItem.id}>
       <Card
@@ -304,6 +356,8 @@ const TeacherClass: React.FC = () => {
           bgcolor: "background.paper",
           borderColor: "divider",
           borderRadius: 2,
+          display: "flex", // Ensure consistent height
+          flexDirection: "column", // Stack content vertically
           transition: "transform 0.2s, box-shadow 0.2s",
           "&:hover": {
             transform: "translateY(-4px)",
@@ -311,36 +365,47 @@ const TeacherClass: React.FC = () => {
           },
         }}
       >
-        <CardContent>
+        <CardContent sx={{ flexGrow: 1 }}>
+          {" "}
+          {/* Allow content to grow */}
           <Typography
             variant="h5"
             component="h2"
             gutterBottom
             color="primary.light"
           >
+            {/* Use the actual class name fetched */}
             Class {classItem.name}
           </Typography>
           <Divider sx={{ my: 2, bgcolor: "rgba(255, 255, 255, 0.1)" }} />
-
           <Typography
-            variant="h6"
+            variant="subtitle1" // Slightly smaller heading for sections
             component="h3"
             gutterBottom
             color="text.secondary"
+            sx={{ mb: 1.5 }} // Add some margin below title
           >
             {title}
           </Typography>
-
-          <List>
-            {sections.map((section) =>
-              renderSectionCard(section, showSubjectChips)
-            )}
-          </List>
+          {sections.length > 0 ? (
+            <List disablePadding>
+              {" "}
+              {/* Remove default padding */}
+              {sections.map((section) =>
+                renderSectionCard(section, showSubjectChips)
+              )}
+            </List>
+          ) : (
+            <Typography variant="body2" color="text.disabled" sx={{ mt: 2 }}>
+              No sections found for this category.
+            </Typography>
+          )}
         </CardContent>
       </Card>
     </Grid>
   );
 
+  // --- Main Render ---
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
@@ -349,20 +414,27 @@ const TeacherClass: React.FC = () => {
           width: "100%",
           bgcolor: "background.default",
           color: "text.primary",
-          p: 3,
+          p: { xs: 1, sm: 2, md: 3 }, // Responsive padding
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
-          My Classes
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{ mb: 3 }} // Add margin below title
+        >
+          My Classes & Sections
         </Typography>
 
         <Paper
+          elevation={3} // Add subtle elevation
           sx={{
             width: "100%",
             mb: 2,
             bgcolor: "background.paper",
             borderRadius: 2,
-            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.25)",
+            overflow: "hidden", // Ensure tabs fit nicely
+            // boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.25)", // Keep shadow if desired
           }}
         >
           <Tabs
@@ -370,63 +442,129 @@ const TeacherClass: React.FC = () => {
             onChange={handleTabChange}
             indicatorColor="primary"
             textColor="primary"
-            variant="scrollable"
+            variant="scrollable" // Good for potentially many tabs or smaller screens
             scrollButtons="auto"
+            aria-label="Teacher class sections tabs"
             sx={{ borderBottom: 1, borderColor: "divider" }}
           >
-            <Tab label="All Classes" />
-            <Tab label="Class Teacher" />
-            <Tab label="Subject Teacher" />
+            <Tab
+              label="All My Sections"
+              id="tab-0"
+              aria-controls="tabpanel-0"
+            />
+            <Tab
+              label="As Class Teacher"
+              id="tab-1"
+              aria-controls="tabpanel-1"
+            />
+            <Tab
+              label="As Subject Teacher"
+              id="tab-2"
+              aria-controls="tabpanel-2"
+            />
           </Tabs>
 
-          {/* All Classes Tab */}
+          {/* --- All Classes Tab --- */}
           <TabPanel value={tabValue} index={0}>
-            <Grid container spacing={3}>
-              {classes.map((classItem) => {
-                const sections = sectionsByClass.get(classItem.id) || [];
-                return renderClassCard(classItem, sections, "Sections");
-              })}
-            </Grid>
+            {uniqueClasses.length > 0 ? (
+              <Grid container spacing={3}>
+                {uniqueClasses.map((classItem) => {
+                  // Get all sections for this class from the grouped map
+                  const sectionsForThisClass =
+                    sectionsByClass.get(classItem.id) || [];
+                  // Only render the card if there are sections for this class
+                  if (sectionsForThisClass.length > 0) {
+                    return renderClassCard(
+                      classItem,
+                      sectionsForThisClass,
+                      "My Sections in this Class",
+                      true // Show all chips in the "All" tab
+                    );
+                  }
+                  return null; // Don't render a card if the teacher has no sections in this class
+                })}
+              </Grid>
+            ) : (
+              // This case should technically be covered by the main empty state,
+              // but added for robustness within the tab.
+              <Typography sx={{ textAlign: "center", p: 3 }}>
+                No classes found based on your assigned sections.
+              </Typography>
+            )}
           </TabPanel>
 
-          {/* Class Teacher Tab */}
+          {/* --- Class Teacher Tab --- */}
           <TabPanel value={tabValue} index={1}>
             <Grid container spacing={3}>
-              {classes.map((classItem) => {
-                const classTeacherSections = (
-                  sectionsByClass.get(classItem.id) || []
-                ).filter(isClassTeacher);
+              {
+                uniqueClasses
+                  .map((classItem) => {
+                    // Filter sections where the teacher is the Class Teacher
+                    const classTeacherSections = (
+                      sectionsByClass.get(classItem.id) || []
+                    ).filter(isClassTeacher);
 
-                if (classTeacherSections.length === 0) return null;
+                    // Return null if no sections match for this class
+                    if (classTeacherSections.length === 0) return null;
 
-                return renderClassCard(
-                  classItem,
-                  classTeacherSections,
-                  "Your Class Teacher Sections",
-                  false
-                );
-              })}
+                    // Render the card for this class with only the relevant sections
+                    return renderClassCard(
+                      classItem,
+                      classTeacherSections,
+                      "Sections where you are Class Teacher",
+                      false // Typically don't need subject chips when viewing by Class Teacher role
+                    );
+                  })
+                  .filter(Boolean) /* Remove null entries */
+              }
             </Grid>
+            {/* Add empty state specifically for this tab */}
+            {uniqueClasses.every(
+              (classItem) =>
+                !(sectionsByClass.get(classItem.id) || []).some(isClassTeacher)
+            ) && (
+              <Typography sx={{ textAlign: "center", p: 3 }}>
+                You are not assigned as a Class Teacher for any section.
+              </Typography>
+            )}
           </TabPanel>
 
-          {/* Subject Teacher Tab */}
+          {/* --- Subject Teacher Tab --- */}
           <TabPanel value={tabValue} index={2}>
             <Grid container spacing={3}>
-              {classes.map((classItem) => {
-                const subjectTeacherSections = (
-                  sectionsByClass.get(classItem.id) || []
-                ).filter(isSubjectTeacher);
+              {
+                uniqueClasses
+                  .map((classItem) => {
+                    // Filter sections where the teacher is a Subject Teacher
+                    const subjectTeacherSections = (
+                      sectionsByClass.get(classItem.id) || []
+                    ).filter(isSubjectTeacher);
 
-                if (subjectTeacherSections.length === 0) return null;
+                    // Return null if no sections match for this class
+                    if (subjectTeacherSections.length === 0) return null;
 
-                return renderClassCard(
-                  classItem,
-                  subjectTeacherSections,
-                  "Your Subject Teacher Sections",
-                  true
-                );
-              })}
+                    // Render the card for this class with only the relevant sections
+                    return renderClassCard(
+                      classItem,
+                      subjectTeacherSections,
+                      "Sections where you are Subject Teacher",
+                      true // Show subject chips here to indicate which subjects
+                    );
+                  })
+                  .filter(Boolean) /* Remove null entries */
+              }
             </Grid>
+            {/* Add empty state specifically for this tab */}
+            {uniqueClasses.every(
+              (classItem) =>
+                !(sectionsByClass.get(classItem.id) || []).some(
+                  isSubjectTeacher
+                )
+            ) && (
+              <Typography sx={{ textAlign: "center", p: 3 }}>
+                You are not assigned as a Subject Teacher for any section.
+              </Typography>
+            )}
           </TabPanel>
         </Paper>
       </Box>

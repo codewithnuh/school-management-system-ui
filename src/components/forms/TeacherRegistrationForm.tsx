@@ -30,6 +30,8 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -37,6 +39,8 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { uploadDirect } from "@uploadcare/upload-client";
 import { useState } from "react";
 import { useRegisterTeacher } from "../../services/queries/teacherReegisteration";
+import { useSubjects } from "../../services/queries/subject";
+
 // Define the public key for Uploadcare
 const UPLOADCARE_PUBLIC_KEY = "39d5faf5f775c673cb85";
 
@@ -71,7 +75,11 @@ function TeacherRegistrationForm() {
       isVerified: false,
     },
   });
+
+  // Fetch subjects data
+  const { data: subjects = [], isLoading: subjectsLoading } = useSubjects();
   const registerTeacherMutation = useRegisterTeacher();
+
   // State for uploaded file URLs
   const [files, setFiles] = useState<FileUploads>({
     cvPath: "",
@@ -536,25 +544,54 @@ function TeacherRegistrationForm() {
                   </Grid>
 
                   <Grid item xs={12}>
-                    <Controller
-                      name="subjectId"
-                      control={control}
-                      render={({ field: { value, onChange, ...rest } }) => (
-                        <TextField
-                          {...rest}
-                          type="number"
-                          label="Subject ID *"
-                          fullWidth
-                          value={value || ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            onChange(val === "" ? undefined : Number(val));
-                          }}
-                          error={!!errors.subjectId}
-                          helperText={errors.subjectId?.message}
-                        />
+                    <FormControl fullWidth error={!!errors.subjectId}>
+                      <InputLabel id="subject-select-label">
+                        Subject *
+                      </InputLabel>
+                      <Controller
+                        name="subjectId"
+                        control={control}
+                        render={({ field: { value, onChange, ...rest } }) => (
+                          <Select
+                            labelId="subject-select-label"
+                            id="subject-select"
+                            value={value?.toString() || ""}
+                            label="Subject *"
+                            {...rest}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              onChange(val === "" ? undefined : Number(val));
+                            }}
+                            disabled={subjectsLoading}
+                          >
+                            <MenuItem value="">
+                              <em>Select a subject</em>
+                            </MenuItem>
+                            {subjects.map((subject) => (
+                              <MenuItem
+                                key={subject.id}
+                                value={subject.id.toString()}
+                              >
+                                {subject.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        )}
+                      />
+                      {errors.subjectId && (
+                        <FormHelperText>
+                          {errors.subjectId.message}
+                        </FormHelperText>
                       )}
-                    />
+                      {subjectsLoading && (
+                        <Box display="flex" alignItems="center" mt={1}>
+                          <CircularProgress size={16} />
+                          <Typography variant="caption" sx={{ ml: 1 }}>
+                            Loading subjects...
+                          </Typography>
+                        </Box>
+                      )}
+                    </FormControl>
                   </Grid>
 
                   <Grid item xs={12}>

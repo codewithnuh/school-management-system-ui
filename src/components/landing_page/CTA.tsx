@@ -119,6 +119,7 @@ const CTA = () => {
 
   return (
     <MotionBox
+      id="about"
       ref={containerRef}
       className="cta"
       sx={{

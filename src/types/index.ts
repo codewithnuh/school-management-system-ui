@@ -33,6 +33,8 @@ export interface Application {
   isVerified: boolean;
   applicationStatus: ApplicationStatus;
   role: Role;
+  cvPath: string | null;
+  verificationDocument: string | null;
   isRegistered?: boolean;
   subjectId: number;
   createdAt: string;

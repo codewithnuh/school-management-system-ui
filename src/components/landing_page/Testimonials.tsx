@@ -57,14 +57,15 @@ const TestimonialCard = ({ testimonial, index, isActive }) => {
 
   return (
     <MotionGrid
+      id="testimonial"
       ref={cardRef}
       size={8}
       key={index}
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{
-        duration: 0.6,
-        delay: index * 0.2,
+        duration: 0.2,
+        delay: index * 0.1,
         ease: "easeOut",
       }}
       exit={{ opacity: 0, y: 30 }}

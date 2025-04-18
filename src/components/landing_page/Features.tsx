@@ -48,8 +48,8 @@ const Features = () => {
       transition: {
         when: "beforeChildren",
         staggerChildren: 0.2,
-        delayChildren: 0.3,
-        duration: 0.5,
+        delayChildren: 0.1,
+        duration: 0.2,
       },
     },
   };
@@ -140,6 +140,7 @@ const Features = () => {
 
   return (
     <MotionBox
+      id="features"
       component={motion.section}
       ref={sectionRef}
       sx={{

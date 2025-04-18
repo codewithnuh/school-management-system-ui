@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import MobileMenu from "./MobileNav";
 import Container from "@mui/material/Container";
 import { Link } from "react-router";
+import { navItems } from "../../constant";
 const Header = () => {
   return (
     <header>
@@ -13,9 +14,9 @@ const Header = () => {
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
             <ul>
               <Stack direction={"row"} spacing={2}>
-                {["Home", "About", "Contact", "Pricing"].map((item, index) => (
+                {navItems.map((item, index) => (
                   <li key={index}>
-                    <a href="/">{item}</a>
+                    <a href={item.link}>{item.label}</a>
                   </li>
                 ))}
               </Stack>

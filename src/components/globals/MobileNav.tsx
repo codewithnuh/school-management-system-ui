@@ -8,9 +8,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import MenuIcon from "@mui/icons-material/Menu";
-
-// Array of navigation items
-const navItems = ["Home", "About", "Contact", "Pricing"];
+import { navItems } from "../../constant";
 
 const MobileMenu: React.FC = () => {
   // State to manage drawer visibility
@@ -48,7 +46,7 @@ const MobileMenu: React.FC = () => {
         {navItems.map((item, index) => (
           <ListItem key={index} disablePadding>
             <ListItemButton>
-              <ListItemText primary={item} />
+              <ListItemText primary={item.label} role="link" />
             </ListItemButton>
           </ListItem>
         ))}

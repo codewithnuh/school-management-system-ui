@@ -9,19 +9,11 @@ import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 
 // Import icons
-import {
-  Assignment,
-  AssignmentTurnedIn,
-  PeopleAlt,
-  Event,
-  MenuBook,
-  Person,
-  School,
-  Dashboard,
-} from "@mui/icons-material";
+import { MenuBook, School, Dashboard } from "@mui/icons-material";
 import { useUser } from "../../hooks/useUser";
 import { useSubject } from "../../services/queries/subject";
 import { useTeacherSections } from "../../services/queries/teachers";
+import { TimeIcon } from "@mui/x-date-pickers/icons";
 // Create a teacher-specific theme
 const teacherTheme = createTheme({
   palette: {
@@ -56,6 +48,11 @@ const navItems: NavItem[] = [
     icon: <Dashboard />,
   },
   {
+    label: "TimeTable",
+    path: "/dashboard/teacher/timetable",
+    icon: <TimeIcon />,
+  },
+  {
     label: "Classes",
     icon: <School />,
     subItems: [
@@ -64,38 +61,7 @@ const navItems: NavItem[] = [
         path: "/dashboard/teacher/classes",
         icon: <MenuBook />,
       },
-      {
-        label: "Students",
-        path: "/dashboard/teacher/students",
-        icon: <PeopleAlt />,
-      },
     ],
-  },
-  {
-    label: "Assignments",
-    icon: <Assignment />,
-    subItems: [
-      {
-        label: "Create Assignment",
-        path: "/dashboard/teacher/assignments/create",
-        icon: <Assignment />,
-      },
-      {
-        label: "Grade Submissions",
-        path: "/dashboard/teacher/assignments/grade",
-        icon: <AssignmentTurnedIn />,
-      },
-    ],
-  },
-  {
-    label: "Schedule",
-    path: "/dashboard/teacher/schedule",
-    icon: <Event />,
-  },
-  {
-    label: "Profile",
-    path: "/dashboard/teacher/profile",
-    icon: <Person />,
   },
 ];
 

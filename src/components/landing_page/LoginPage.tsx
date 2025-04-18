@@ -91,6 +91,7 @@ const LoginPage = () => {
     },
     onSuccess: () => {
       // after successfully logging in refetch the user
+      navigate(`/dashboard/${selectedRole!.toLowerCase()}`);
       // because the backend might set the cookies after login
       // this will trigger the use effect up there and navigate to dashboard
       // This will also cause the login button to "disappear" as the component reloads
