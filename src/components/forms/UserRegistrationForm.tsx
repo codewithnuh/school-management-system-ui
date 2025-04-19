@@ -21,6 +21,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import { useStudentRegisteration } from "../../services/queries/studentRegisteration";
+import { useClasses } from "../../services/queries/classes";
 
 // Define form schema using Zod
 const userFormSchema = z.object({
@@ -105,24 +106,11 @@ type AlertState = {
   severity: "success" | "error" | "info" | "warning";
 };
 
-// Mock data for classes and sections
-const CLASSES = [
-  { id: 1, name: "Class 1" },
-  { id: 2, name: "Class 2" },
-  { id: 3, name: "Class 3" },
-  { id: 4, name: "Class 4" },
-  { id: 5, name: "Class 5" },
-];
-
-const SECTIONS = [
-  { id: 1, name: "Section A" },
-  { id: 2, name: "Section B" },
-  { id: 3, name: "Section C" },
-];
-
 const UserRegistrationForm = () => {
   const { mutate, isPending } = useStudentRegisteration();
-
+  const { data, isLoading, error } = useClasses();
+  // Safely access data with fallback
+  const CLASSES = data?.data || [];
   // State for alert snackbar
   const [alert, setAlert] = useState<AlertState>({
     open: false,
@@ -498,34 +486,27 @@ const UserRegistrationForm = () => {
             render={({ field }) => (
               <FormControl fullWidth error={!!errors.classId}>
                 <InputLabel id="class-label">Class *</InputLabel>
-                <Select {...field} labelId="class-label" label="Class *">
-                  {CLASSES.map((classItem) => (
-                    <MenuItem key={classItem.id} value={classItem.id}>
-                      {classItem.name}
-                    </MenuItem>
-                  ))}
+                <Select
+                  {...field}
+                  labelId="class-label"
+                  label="Class *"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <MenuItem value="">Loading classes...</MenuItem>
+                  ) : error ? (
+                    <MenuItem value="">Error loading classes</MenuItem>
+                  ) : CLASSES.length === 0 ? (
+                    <MenuItem value="">No classes available</MenuItem>
+                  ) : (
+                    CLASSES.map((classItem) => (
+                      <MenuItem key={classItem.id} value={classItem.id}>
+                        {classItem.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
                 <FormHelperText>{errors.classId?.message}</FormHelperText>
-              </FormControl>
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="sectionId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.sectionId}>
-                <InputLabel id="section-label">Section *</InputLabel>
-                <Select {...field} labelId="section-label" label="Section *">
-                  {SECTIONS.map((section) => (
-                    <MenuItem key={section.id} value={section.id}>
-                      {section.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{errors.sectionId?.message}</FormHelperText>
               </FormControl>
             )}
           />

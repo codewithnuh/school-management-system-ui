@@ -6,9 +6,9 @@ import { Class, CreateClassFormValues } from "../../types/class";
  */
 
 // Get all classes
-export const fetchClasses = async (): Promise<Class[]> => {
+export const fetchClasses = async () => {
   const response = await axiosInstance.get("/classes");
-  return response.data.data;
+  return response.data;
 };
 
 // Get a single class by ID

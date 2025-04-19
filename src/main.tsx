@@ -180,7 +180,7 @@ createRoot(document.getElementById("root")!).render(
           </Routes>
         </BrowserRouter>
         {/* Moved ReactQueryDevtools inside the QueryClientProvider */}
-        <ReactQueryDevtools initialIsOpen={false} />
+        <ReactQueryDevtools initialIsOpen={true} />
       </QueryClientProvider>
     </ThemeProvider>
   </StrictMode>

@@ -9,15 +9,24 @@ import {
 } from "../../api/axios/classes";
 import { Class, CreateClassFormValues } from "../../types/class";
 
+interface ClassesResponse {
+  data: Class[];
+}
+
 /**
  * Hook for fetching all classes
  */
 export const useClasses = () => {
-  return useQuery<Class[], Error>({
+  return useQuery<ClassesResponse, Error>({
     queryKey: ["classes"],
     queryFn: fetchClasses,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 30 * 60 * 1000, // Keep data in cache for 30 minutes
     retry: 2,
+    onError: (error) => {
+      console.error('Error fetching classes:', error);
+    },
+    placeholderData: { data: [] }, // Provide fallback data in case of error
   });
 };
 
