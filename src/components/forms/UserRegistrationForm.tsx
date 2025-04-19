@@ -85,7 +85,7 @@ const userFormSchema = z.object({
       message: "CNIC must contain only digits",
     }),
   classId: z.number({ required_error: "Class is required" }),
-  sectionId: z.number({ required_error: "Section is required" }),
+  sectionId: z.number({ required_error: "Section is required" }).optional(),
   enrollmentDate: z.string().min(1, { message: "Enrollment date is required" }),
   photo: z.string().optional(),
   transportation: z.string().optional(),

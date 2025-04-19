@@ -31,30 +31,11 @@ export const useGenerateTimeTable = (
 // Assuming WeeklyTimetableResponse["data"] is actually TimetablePeriod[] based on Bruno output
 // If you have a specific type like TimetablePeriod[], use it.
 // Let's assume WeeklyTimetableData represents the array TimetablePeriod[] for clarity
-export const useFetchTimeTables = (
-  classId: number | "",
-  sectionId: number | ""
-): UseQueryResult<WeeklyTimetableData, Error> => {
+export const useFetchTimeTables = (classId: number, sectionId: number) => {
   // Use the correct type for the data array
   return useQuery<WeeklyTimetableData, Error>({
     queryKey: ["timeTable", classId, sectionId], // Include sectionId in the queryKey
-    queryFn: async () => {
-      // Ensure IDs are numbers before fetching
-      if (typeof classId !== "number" || typeof sectionId !== "number") {
-        throw new Error("Both Class ID and Section ID must be selected.");
-        // Or return Promise.resolve([]); // Return empty array if preferred over throwing error
-      }
-      const response = await fetchTimeTableOfSections(classId, sectionId);
-      return response; // Return the data array directly
-    },
-    // Fetch only when both classId and sectionId are valid numbers
-    enabled:
-      typeof classId === "number" &&
-      typeof sectionId === "number" &&
-      classId > 0 &&
-      sectionId > 0,
-    staleTime: 5 * 60 * 1000,
-    retry: 2,
+    queryFn: () => fetchTimeTableOfSections(classId, sectionId),
   });
 };
 

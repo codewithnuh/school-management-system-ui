@@ -15,11 +15,11 @@ export const generateTimeTableOfAClass = async (
 export const fetchTimeTableOfSections = async (
   classId: number,
   sectionId: number
-): Promise<WeeklyTimetableResponse["data"]> => {
+) => {
   const response = await axiosInstance.get<WeeklyTimetableResponse>(
     `/timetables/weekly/${classId}/${sectionId}`
   );
-  return response.data.data;
+  return response.data;
 };
 
 // /weekly/:classId/:sectionId

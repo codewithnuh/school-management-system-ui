@@ -53,7 +53,7 @@ export interface PaginationData {
 export interface ApplicationResponseData extends PaginationData {
   teachers: Application[];
 }
-interface StudentApplicationResponseData extends PaginationData {
+export interface StudentApplicationResponseData extends PaginationData {
   data: Application[];
 }
 // Complete API response
@@ -72,4 +72,41 @@ export interface StudentApplicationResponse {
   message: string;
   statusCode: number;
   timestamp: string;
+}
+
+export interface User {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  dateOfBirth: Date;
+  gender: string;
+  placeOfBirth: string;
+  nationality: string;
+  email: string;
+  phoneNo: string;
+  emergencyContactName: string;
+  emergencyContactNumber: string;
+  address: string;
+  studentId: string;
+  previousSchool?: string;
+  previousGrade?: string;
+  previousMarks?: number;
+  isRegistered: boolean;
+  guardianName: string;
+  guardianCNIC: string;
+  guardianPhone: string;
+  guardianEmail: string;
+  CNIC: string;
+  class: string;
+  enrollmentDate: Date;
+  uuid: string;
+  medicalConditions?: string;
+  allergies?: string;
+  photo?: string;
+  transportation?: string;
+  extracurriculars?: string;
+  healthInsuranceInfo?: string;
+  doctorContact?: string;
+  password?: string;
+  sectionId: number | null;
 }

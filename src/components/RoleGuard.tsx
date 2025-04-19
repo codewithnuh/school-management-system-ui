@@ -4,7 +4,7 @@ import { Navigate } from "react-router";
 import { useUser } from "../hooks/useUser";
 
 interface RoleGuardProps {
-  allowedRoles: Array<"ADMIN" | "TEACHER" | "PARENT" | "STUDENT">;
+  allowedRoles: Array<"ADMIN" | "TEACHER" | "PARENT" | "USER">;
   children: React.ReactElement;
 }
 

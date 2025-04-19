@@ -36,6 +36,8 @@ import SampleUploadForm from "./components/forms/SampleUploadForm.tsx";
 import Teacher from "./components/dashboards/Teacher.tsx";
 import MyClasses from "./components/Classes/TeacherClass.tsx";
 import TeacherTimetable from "./components/timetable/TeacherTimetable.tsx";
+import StudentDashboard from "./components/Student/StudentDashboard.tsx";
+import StudentTimetable from "./components/timetable/StudentTImeTable.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -80,6 +82,20 @@ createRoot(document.getElementById("root")!).render(
               />
               <Route index element={<Navigate to="classes" replace />} />
             </Route>
+            <Route
+              path="/dashboard/user"
+              element={
+                <RoleGuard allowedRoles={["USER"]}>
+                  <StudentDashboard />
+                </RoleGuard>
+              }
+            >
+              <Route
+                path="/dashboard/user/timetable"
+                element={<StudentTimetable />}
+              />
+            </Route>
+
             <Route
               path="/dashboard/admin"
               element={

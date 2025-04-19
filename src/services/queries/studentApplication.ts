@@ -9,7 +9,7 @@ import { StudentApplicationResponse } from "../../types";
 import { queryClient } from "../../utils/queryClient";
 
 export const useStudentApplications = () => {
-  return useQuery<StudentApplicationResponse>({
+  return useQuery({
     queryKey: ["studentApplications"],
     queryFn: getStudentApplications,
   });

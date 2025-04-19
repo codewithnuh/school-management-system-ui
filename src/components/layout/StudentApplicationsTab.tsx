@@ -37,12 +37,12 @@ const StudentApplicationsTab: React.FC = () => {
   const rejectMutation = useRejectStudentApplication();
 
   // Filter out accepted applications
-  const pendingApplications = data?.data.data
-    ? data.data.data.filter(
-        (applicant: Application) => applicant.isRegistered !== true
+  const pendingApplications = data?.data
+    ? data.data.filter(
+        (applicant: Application) => applicant.isRegistered != true
       )
     : [];
-
+  console.log(pendingApplications);
   // State management
   const [openDetailsDialog, setOpenDetailsDialog] = useState<boolean>(false);
   const [selectedApplicant, setSelectedApplicant] =

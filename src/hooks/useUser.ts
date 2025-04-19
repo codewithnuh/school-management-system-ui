@@ -4,13 +4,15 @@ import axios from "axios";
 
 export interface User {
   data: {
-    role: "ADMIN" | "TEACHER" | "PARENT" | "STUDENT";
+    role: "ADMIN" | "TEACHER" | "PARENT" | "USER";
     user: {
       id: number;
       firstName: string;
       lastName: string;
       email: string;
       subjectId: number;
+      classId?:number;
+      sectionId?:number
     };
   };
 

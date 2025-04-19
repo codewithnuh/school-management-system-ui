@@ -27,7 +27,7 @@ import {
 } from "@mui/icons-material";
 import { useUser } from "../../hooks/useUser";
 
-type Role = "ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
+type Role = "ADMIN" | "TEACHER" | "USER" | "PARENT";
 
 interface ApiResponse {
   success: boolean;
@@ -120,7 +120,7 @@ const LoginPage = () => {
   const roleCards = [
     { role: "ADMIN", icon: <AdminIcon /> },
     { role: "TEACHER", icon: <TeacherIcon /> },
-    { role: "STUDENT", icon: <StudentIcon /> },
+    { role: "USER", icon: <StudentIcon /> },
     { role: "PARENT", icon: <ParentIcon /> },
   ];
 
