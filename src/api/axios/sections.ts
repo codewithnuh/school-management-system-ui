@@ -1,13 +1,11 @@
 import { axiosInstance } from "..";
 import { SectionsApiResponse } from "../types/sections";
 
-export const fetchSectionsOfAClass = async (
-  classId: number
-): Promise<SectionsApiResponse["data"]> => {
+export const fetchSectionsOfAClass = async (classId: number) => {
   const response = await axiosInstance.get<SectionsApiResponse>(
-    `/classes/${classId}`
+    `/sections/class/${classId}`
   );
-  return response.data.data;
+  return response.data;
 };
 
 export const fetchSectionsByTeacherId = async (

@@ -15,6 +15,7 @@ export interface Application {
   middleName: string | null;
   lastName: string;
   dateOfBirth: string;
+  classId?: number;
   gender: Gender;
   nationality: string | null;
   email: string;

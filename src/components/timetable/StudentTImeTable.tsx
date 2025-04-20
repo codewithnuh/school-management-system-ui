@@ -20,12 +20,15 @@ import {
   Divider,
   styled,
   useTheme,
+  Avatar,
 } from "@mui/material";
 import {
   Download as DownloadIcon,
   CalendarToday as CalendarTodayIcon,
   School as SchoolIcon,
   Subject as SubjectIcon,
+  Person as PersonIcon,
+  Schedule as ScheduleIcon,
 } from "@mui/icons-material";
 
 // Custom Hooks & Services
@@ -45,25 +48,75 @@ const WEEKDAYS = [
 ] as const;
 type Weekday = (typeof WEEKDAYS)[number];
 
-// Interface for a single timetable entry from the API
+// Updated interface to match the API response structure
+export interface Teacher {
+  id: number;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  photo: string | null;
+  email: string;
+  phoneNo: string;
+  highestQualification: string;
+  specialization: string | null;
+}
+
+export interface Subject {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface Class {
+  id: number;
+  name: string;
+  periodsPerDay: number;
+  workingDays: Weekday[];
+}
+
+export interface Section {
+  id: number;
+  name: string;
+  classId: number;
+}
+
 export interface TimetableEntry {
   id: number;
   dayOfWeek: Weekday;
   periodNumber: number;
-  startTime: string; // e.g., "08:00"
-  endTime: string; // e.g., "08:45"
-  subject: { id: number; name: string; description?: string };
+  startTime: string;
+  endTime: string;
+  subject: Subject;
   class: { id: number; name: string };
   section: { id: number; name: string };
-  // Add teacher info if available and needed for display
-  // teacher?: { id: number; firstName: string; lastName: string };
+  teacher: Teacher;
+}
+
+interface TimetableData {
+  id: number;
+  classId: number;
+  sectionId: number;
+  teacherId: number;
+  periodsPerDay: number;
+  timetableEntries: TimetableEntry[];
+  class: Class;
+  section: Section;
+  teacher: Teacher;
+}
+
+interface TimetableResponse {
+  success: boolean;
+  data: TimetableData;
+  error: string | null;
+  message: string;
+  statusCode: number;
+  timestamp: string;
 }
 
 // --- Styled Components ---
 const TimetableWrapper = styled(Box)(({ theme }) => ({
   width: "100%",
   padding: theme.spacing(2),
-  // Consider adding background color based on theme here if needed
 }));
 
 const TimetableHeader = styled(Box)(({ theme }) => ({
@@ -73,21 +126,42 @@ const TimetableHeader = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
+const TimetableInfo = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  flexWrap: "wrap",
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+}));
+
+const InfoBox = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(1),
+  padding: theme.spacing(1, 2),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor:
+    theme.palette.mode === "dark"
+      ? theme.palette.grey[800]
+      : theme.palette.grey[100],
+}));
+
 const CenteredContent = styled(Box)({
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: 32, // Equivalent to theme.spacing(4) * 8
-  minHeight: "200px", // Ensure it has some height
+  padding: 32,
+  minHeight: "200px",
 });
 
-// --- Utility Functions ---
+const TeacherBox = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(1),
+  marginTop: theme.spacing(1),
+}));
 
-/**
- * Formats a 24-hour time string (HH:mm) to 12-hour format (h:mm a).
- * @param timeString - The time string in "HH:mm" format.
- * @returns The formatted time string (e.g., "8:00 AM").
- */
+// --- Utility Functions ---
 const formatTo12Hour = (timeString: string): string => {
   try {
     const [hours, minutes] = timeString.split(":");
@@ -95,12 +169,17 @@ const formatTo12Hour = (timeString: string): string => {
     return format(date, "h:mm a");
   } catch (error) {
     console.error("Error formatting time:", timeString, error);
-    return timeString; // Return original string on error
+    return timeString;
   }
 };
 
-// --- Main Component ---
+const getTeacherFullName = (teacher: Teacher): string => {
+  return `${teacher.firstName} ${
+    teacher.middleName ? teacher.middleName + " " : ""
+  }${teacher.lastName}`;
+};
 
+// --- Main Component ---
 const StudentTimetable: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -115,28 +194,31 @@ const StudentTimetable: React.FC = () => {
 
   // Extract student info safely
   const studentInfo = userDataResponse?.data?.user;
-  const classId = studentInfo!.classId;
-  const sectionId = studentInfo!.sectionId;
+  const classId = studentInfo?.classId;
+  const sectionId = studentInfo?.sectionId;
 
   // 2. Fetch Timetable Data (only if user data is available)
   const {
-    data: timetableEntries, // Renamed from 'data'
+    data: timetableResponse,
     isLoading: isLoadingTimetable,
     isError: isErrorTimetable,
     error: timetableError,
-  } = useFetchTimeTables(classId, sectionId);
-  console.log({ timetableEntries, classId, sectionId });
-  // 3. Process Timetable Data
-  const { timetableByDay, sortedTimeSlots } = useMemo(() => {
-    // Expecting timetableEntries to be the array directly based on useFetchTimeTables usage
-    const entries = timetableEntries; // Assuming the hook returns the array directly
+  } = useFetchTimeTables(classId!, sectionId!, {
+    enabled: !!classId && !!sectionId,
+  });
 
-    if (!entries || !Array.isArray(entries) || entries.length === 0) {
+  // 3. Process Timetable Data
+  const { timetableByDay, sortedTimeSlots, timetableData } = useMemo(() => {
+    if (!timetableResponse?.success || !timetableResponse.data) {
       return {
         timetableByDay: {} as Record<Weekday, Record<number, TimetableEntry>>,
         sortedTimeSlots: [] as string[],
+        timetableData: null as TimetableData | null,
       };
     }
+
+    const timetableData = timetableResponse.data;
+    const entries = timetableData.timetableEntries || [];
 
     // Initialize map structure: { Monday: {}, Tuesday: {}, ... }
     const timetableMap: Record<Weekday, Record<number, TimetableEntry>> = {};
@@ -151,11 +233,6 @@ const StudentTimetable: React.FC = () => {
       if (timetableMap[entry.dayOfWeek]) {
         timetableMap[entry.dayOfWeek][entry.periodNumber] = entry;
         uniqueTimeSlots.add(`${entry.startTime}-${entry.endTime}`);
-      } else {
-        console.warn(
-          "Timetable entry found for unexpected day:",
-          entry.dayOfWeek
-        );
       }
     });
 
@@ -166,22 +243,25 @@ const StudentTimetable: React.FC = () => {
       return startTimeA.localeCompare(startTimeB);
     });
 
-    return { timetableByDay: timetableMap, sortedTimeSlots: sortedSlots };
-  }, [timetableEntries]); // Dependency is the raw fetched data
+    return {
+      timetableByDay: timetableMap,
+      sortedTimeSlots: sortedSlots,
+      timetableData,
+    };
+  }, [timetableResponse]);
 
   // 4. PDF Export Handler
   const handleExportPDF = useCallback(() => {
-    if (
-      !timetableEntries ||
-      timetableEntries.length === 0 ||
-      !classId ||
-      !sectionId
-    )
-      return;
+    if (!timetableData || timetableData.timetableEntries.length === 0) return;
 
-    // Generate title and filename based on student's class/section
-    const title = `Timetable - Class ${classId} / Section ${sectionId}`; // Use IDs for simplicity, or fetch names if needed
-    const filename = `timetable_class_${classId}_section_${sectionId}.pdf`;
+    // Generate title and filename
+    const className = timetableData.class.name;
+    const sectionName = timetableData.section.name;
+    const title = `Timetable - ${className} / Section ${sectionName}`;
+    const filename = `timetable_${className.replace(
+      /\s+/g,
+      "_"
+    )}_${sectionName}.pdf`;
 
     // Prepare table body for PDF
     const pdfTableBody = [
@@ -200,23 +280,23 @@ const StudentTimetable: React.FC = () => {
       ...WEEKDAYS.map((day) => [
         { text: day, bold: true }, // Day column
         ...sortedTimeSlots.map((slot) => {
-          // Find the entry for this specific day and time slot
           const entry = Object.values(timetableByDay[day] || {}).find(
             (e) => `${e.startTime}-${e.endTime}` === slot
           );
 
           if (!entry) return ""; // Empty cell for free periods
 
+          const teacher = entry.teacher;
+          const teacherName = getTeacherFullName(teacher);
+
           // Format cell content
           return {
             text: [
               { text: `${entry.subject.name}\n`, bold: true },
-              // Add teacher name if available and desired:
-              // { text: `Teacher: ${entry.teacher?.firstName || 'N/A'}\n` },
+              { text: `Teacher: ${teacherName}\n` },
               { text: `Class: ${entry.class.name}\n` },
               { text: `Section: ${entry.section.name}` },
             ],
-            // Add styling if needed (e.g., fontSize, alignment)
           };
         }),
       ]),
@@ -230,10 +310,10 @@ const StudentTimetable: React.FC = () => {
         {
           table: {
             headerRows: 1,
-            widths: ["auto", ...Array(sortedTimeSlots.length).fill("*")], // Adjust widths as needed
+            widths: ["auto", ...Array(sortedTimeSlots.length).fill("*")],
             body: pdfTableBody,
           },
-          layout: "lightHorizontalLines", // Optional: adds nice table lines
+          layout: "lightHorizontalLines",
         },
       ],
       styles: {
@@ -255,10 +335,9 @@ const StudentTimetable: React.FC = () => {
 
     // Generate and download the PDF
     generatePDF(docDefinition, filename);
-  }, [timetableEntries, sortedTimeSlots, timetableByDay, classId, sectionId]); // Dependencies for the callback
+  }, [timetableData, sortedTimeSlots, timetableByDay]);
 
   // --- Render Logic ---
-
   // Handle Loading States
   if (isLoadingUser) {
     return (
@@ -268,6 +347,7 @@ const StudentTimetable: React.FC = () => {
       </CenteredContent>
     );
   }
+
   // Handle User Error State
   if (isErrorUser) {
     return (
@@ -277,6 +357,7 @@ const StudentTimetable: React.FC = () => {
       </Alert>
     );
   }
+
   // Handle Missing User Info
   if (!studentInfo || !classId || !sectionId) {
     return (
@@ -310,7 +391,11 @@ const StudentTimetable: React.FC = () => {
   }
 
   // Handle No Timetable Data Available
-  if (!timetableEntries || timetableEntries.length === 0) {
+  if (
+    !timetableData ||
+    !timetableData.timetableEntries ||
+    timetableData.timetableEntries.length === 0
+  ) {
     return (
       <Alert severity="info" sx={{ m: 2 }}>
         No timetable data is currently available for your class and section.
@@ -329,33 +414,58 @@ const StudentTimetable: React.FC = () => {
           <Typography variant="h5" component="h2">
             My Timetable
           </Typography>
-          {/* Optionally display class/section:
-           <Typography variant="h6" component="span" sx={{ ml: 1, color: 'text.secondary' }}>
-             (Class {classId} - Section {sectionId})
-           </Typography>
-          */}
         </Box>
         <Button
           variant="contained"
           color="primary"
           startIcon={<DownloadIcon />}
           onClick={handleExportPDF}
-          disabled={!timetableEntries || timetableEntries.length === 0} // Disable if no data
         >
           Export PDF
         </Button>
       </TimetableHeader>
 
+      <TimetableInfo>
+        <InfoBox>
+          <SchoolIcon fontSize="small" />
+          <Typography variant="body1">
+            <strong>Class:</strong> {timetableData.class.name}
+          </Typography>
+        </InfoBox>
+
+        <InfoBox>
+          <SubjectIcon fontSize="small" />
+          <Typography variant="body1">
+            <strong>Section:</strong> {timetableData.section.name}
+          </Typography>
+        </InfoBox>
+
+        <InfoBox>
+          <PersonIcon fontSize="small" />
+          <Typography variant="body1">
+            <strong>Class Teacher:</strong>{" "}
+            {getTeacherFullName(timetableData.teacher)}
+          </Typography>
+        </InfoBox>
+
+        <InfoBox>
+          <ScheduleIcon fontSize="small" />
+          <Typography variant="body1">
+            <strong>Periods per day:</strong> {timetableData.periodsPerDay}
+          </Typography>
+        </InfoBox>
+      </TimetableInfo>
+
       <Divider sx={{ mb: 3 }} />
 
       <TableContainer
         component={Paper}
-        elevation={3} // Add some elevation
+        elevation={3}
         sx={{
           backgroundColor: isDarkMode
-            ? theme.palette.background.paper // Use theme background in dark mode
-            : undefined, // Use default Paper background in light mode
-          overflow: "auto", // Ensure horizontal scroll on smaller screens
+            ? theme.palette.background.paper
+            : undefined,
+          overflow: "auto",
         }}
       >
         <Table sx={{ minWidth: 800 }} aria-label="student timetable">
@@ -363,8 +473,8 @@ const StudentTimetable: React.FC = () => {
             <TableRow
               sx={{
                 backgroundColor: isDarkMode
-                  ? theme.palette.grey[800] // Darker header for dark mode
-                  : theme.palette.primary.light, // Lighter primary for light mode
+                  ? theme.palette.grey[800]
+                  : theme.palette.primary.light,
               }}
             >
               {/* Day/Time Header Cell */}
@@ -374,10 +484,10 @@ const StudentTimetable: React.FC = () => {
                   color: isDarkMode
                     ? theme.palette.common.white
                     : theme.palette.primary.contrastText,
-                  position: "sticky", // Make Day/Time sticky
-                  left: 0, // Stick to the left
-                  zIndex: 1, // Ensure it's above other cells
-                  backgroundColor: isDarkMode // Match row background
+                  position: "sticky",
+                  left: 0,
+                  zIndex: 1,
+                  backgroundColor: isDarkMode
                     ? theme.palette.grey[800]
                     : theme.palette.primary.light,
                 }}
@@ -397,7 +507,7 @@ const StudentTimetable: React.FC = () => {
                       color: isDarkMode
                         ? theme.palette.common.white
                         : theme.palette.primary.contrastText,
-                      minWidth: 150, // Ensure columns have reasonable width
+                      minWidth: 180,
                     }}
                   >
                     {`Period ${index + 1}`}
@@ -421,10 +531,10 @@ const StudentTimetable: React.FC = () => {
             {WEEKDAYS.map((day) => (
               <TableRow
                 key={day}
-                hover // Add hover effect
+                hover
                 sx={{
                   "&:nth-of-type(odd)": {
-                    backgroundColor: theme.palette.action.hover, // Subtle alternating row color
+                    backgroundColor: theme.palette.action.hover,
                   },
                 }}
               >
@@ -434,16 +544,14 @@ const StudentTimetable: React.FC = () => {
                   scope="row"
                   sx={{
                     fontWeight: "bold",
-                    position: "sticky", // Make Day cell sticky
-                    left: 0, // Stick to the left
-                    zIndex: 1, // Ensure it's above other cells
-                    // Match alternating row background color:
+                    position: "sticky",
+                    left: 0,
+                    zIndex: 1,
                     backgroundColor:
                       (theme.palette.mode === "dark"
                         ? theme.palette.background.paper
-                        : theme.palette.common.white) + "!important", // Use important to override hover/odd styles
+                        : theme.palette.common.white) + "!important",
                     "&:nth-of-type(odd)": {
-                      // Need to re-apply for odd rows
                       backgroundColor:
                         theme.palette.action.hover + "!important",
                     },
@@ -454,7 +562,6 @@ const StudentTimetable: React.FC = () => {
 
                 {/* Period Data Cells */}
                 {sortedTimeSlots.map((slot, index) => {
-                  // Find the entry for this specific day and time slot
                   const entry = Object.values(timetableByDay[day] || {}).find(
                     (e) => `${e.startTime}-${e.endTime}` === slot
                   );
@@ -463,7 +570,7 @@ const StudentTimetable: React.FC = () => {
                     <TableCell
                       key={`${day}-period-${index}`}
                       align="center"
-                      sx={{ padding: 1.5 }} // Consistent padding
+                      sx={{ padding: 1.5 }}
                     >
                       {entry ? (
                         <Box
@@ -471,45 +578,54 @@ const StudentTimetable: React.FC = () => {
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
-                            gap: 0.5, // Add small gap between elements
+                            gap: 1,
                           }}
                         >
                           <Tooltip
-                            title={
-                              entry.subject.description || entry.subject.name
-                            }
+                            title={entry.subject.description || ""}
                             arrow
+                            placement="top"
                           >
                             <Chip
                               icon={<SubjectIcon fontSize="small" />}
                               label={entry.subject.name}
-                              color="primary" // Use primary color for subject
+                              color="primary"
                               size="small"
                               sx={{ fontWeight: "medium" }}
                             />
                           </Tooltip>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              color: "text.secondary", // Use secondary text color
-                            }}
-                          >
-                            <SchoolIcon fontSize="inherit" sx={{ mr: 0.5 }} />
-                            <Typography variant="caption">
-                              {/* Display Class/Section from entry */}
-                              {`Cls: ${entry.class.name} / Sec: ${entry.section.name}`}
-                            </Typography>
-                          </Box>
-                          {/* Add Teacher info if needed */}
-                          {/*
-                          <Typography variant="caption" color="text.secondary">
-                            Teacher: {entry.teacher?.firstName || 'N/A'}
-                          </Typography>
-                          */}
+
+                          <TeacherBox>
+                            {entry.teacher.photo ? (
+                              <Avatar
+                                src={entry.teacher.photo}
+                                alt={getTeacherFullName(entry.teacher)}
+                                sx={{ width: 24, height: 24 }}
+                              />
+                            ) : (
+                              <PersonIcon fontSize="small" color="action" />
+                            )}
+                            <Tooltip
+                              title={`${getTeacherFullName(entry.teacher)} (${
+                                entry.teacher.highestQualification
+                              }${
+                                entry.teacher.specialization
+                                  ? ` in ${entry.teacher.specialization}`
+                                  : ""
+                              })`}
+                              arrow
+                              placement="top"
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{ fontSize: "0.8rem" }}
+                              >
+                                {getTeacherFullName(entry.teacher)}
+                              </Typography>
+                            </Tooltip>
+                          </TeacherBox>
                         </Box>
                       ) : (
-                        // Display for Free Period
                         <Typography
                           variant="body2"
                           sx={{ color: "text.disabled", fontStyle: "italic" }}

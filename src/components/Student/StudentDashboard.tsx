@@ -13,6 +13,7 @@ import { MenuBook, School, Dashboard } from "@mui/icons-material";
 import { useUser } from "../../hooks/useUser";
 import { useSubject } from "../../services/queries/subject";
 import { useTeacherSections } from "../../services/queries/teachers";
+import { useNavigate } from "react-router";
 import { TimeIcon } from "@mui/x-date-pickers/icons";
 // Create a teacher-specific theme
 const teacherTheme = createTheme({
@@ -82,6 +83,7 @@ const TeacherInfo = ({ subjectName }: { subjectName: string }) => (
 
 const StudentDashboard: React.FC = () => {
   const { data: user } = useUser();
+  const navigate = useNavigate();
   const [subjectId, setSubjectId] = useState<number | undefined>();
   const { data: subject } = useSubject(subjectId!);
   useEffect(() => {
@@ -102,7 +104,7 @@ const StudentDashboard: React.FC = () => {
           userInfo={<TeacherInfo subjectName={subject?.name || ""} />}
           onLogout={() => {
             // Perform any additional logout logic here
-            window.location.href = "/login";
+            navigate("/login");
           }}
         />
 
