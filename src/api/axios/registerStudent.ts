@@ -24,12 +24,6 @@ export const registerStudent = async (formData: UserFormData): Promise<any> => {
         : "",
     };
 
-    // Debug: Log the payload being sent
-    console.log(
-      "Sending registration payload:",
-      JSON.stringify(payload, null, 2)
-    );
-
     // Make the API call
     const response = await axiosInstance.post("/users/register", payload);
     return response.data;

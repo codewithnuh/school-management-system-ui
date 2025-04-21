@@ -44,25 +44,14 @@ const teacherSidebarTheme: SidebarThemeOptions = {
 // Teacher navigation items
 const navItems: NavItem[] = [
   {
-    label: "Dashboard",
-    path: "/dashboard/student",
-    icon: <Dashboard />,
-  },
-  {
     label: "TimeTable",
-    path: "/dashboard/student/timetable",
+    path: "/dashboard/user/timetable",
     icon: <TimeIcon />,
   },
   {
-    label: "Classes",
+    label: "Profile",
     icon: <School />,
-    subItems: [
-      {
-        label: "My Classes",
-        path: "/dashboard/student/profile",
-        icon: <MenuBook />,
-      },
-    ],
+    path: "/dashboard/user/profile",
   },
 ];
 

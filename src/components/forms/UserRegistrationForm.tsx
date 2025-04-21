@@ -109,8 +109,10 @@ type AlertState = {
 const UserRegistrationForm = () => {
   const { mutate, isPending } = useStudentRegisteration();
   const { data, isLoading, error } = useClasses();
+  console.log("data", data);
   // Safely access data with fallback
-  const CLASSES = data?.data || [];
+  const CLASSES = data || [];
+  console.log(CLASSES);
   // State for alert snackbar
   const [alert, setAlert] = useState<AlertState>({
     open: false,
