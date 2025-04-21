@@ -258,7 +258,6 @@ const CTA = () => {
         >
           <Grid size={8}>
             <MotionTypography
-              component={motion.div}
               variants={itemVariants}
               variant="h3"
               component="h3"
@@ -288,7 +287,7 @@ const CTA = () => {
           <Grid size={8}>
             <MotionBox component={motion.div} variants={itemVariants}>
               <MotionTypography
-                component={motion.p}
+                component="p"
                 variant="body1"
                 color="#fff"
                 initial={{ opacity: 0.8 }}

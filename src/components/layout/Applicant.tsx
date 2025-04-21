@@ -178,7 +178,6 @@ const FileViewer = ({
           // For images
           <Box
             sx={{
-              display: "flex",
               justifyContent: "center",
               display: loading || error ? "none" : "flex",
             }}

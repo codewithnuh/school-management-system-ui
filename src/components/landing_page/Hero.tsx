@@ -183,7 +183,6 @@ const Hero = () => {
               </MotionTypography>
 
               <MotionTypography
-                component={motion.div}
                 variants={itemVariants}
                 variant="h3"
                 component="h1"
