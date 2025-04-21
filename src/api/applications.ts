@@ -25,7 +25,7 @@ class TeacherApplicationsApi {
   private client: AxiosInstance;
   private baseUrl: string;
 
-  constructor(baseUrl: string = "http://localhost:3000/api/v1") {
+  constructor(baseUrl: string = "https://sms-api-10.up.railway.app/api/v1") {
     this.baseUrl = baseUrl;
     this.client = axios.create({
       baseURL: this.baseUrl,

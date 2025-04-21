@@ -11,22 +11,19 @@ export interface User {
       lastName: string;
       email: string;
       subjectId: number;
-      classId?:number;
-      sectionId?:number
+      classId?: number;
+      sectionId?: number;
     };
   };
 
   // ...other user properties
 }
-
+const API = import.meta.env.API_BASE_URL + "auth/session";
 const fetchCurrentUser = async (): Promise<User> => {
   try {
-    const response = await axios.get(
-      "http://localhost:3000/api/v1/auth/session",
-      {
-        withCredentials: true,
-      }
-    );
+    const response = await axios.get(API, {
+      withCredentials: true,
+    });
     return response.data;
   } catch (error) {
     console.error(error);
