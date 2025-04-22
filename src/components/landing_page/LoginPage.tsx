@@ -118,7 +118,7 @@ const LoginPage = () => {
         throw new Error("Please select a role");
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, entityType: selectedRole }), // Send entityType
