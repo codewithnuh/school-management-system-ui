@@ -9,4 +9,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    open: true, // This ensures that even with paths like /dashboard, Vite will fallback to index.html
+  },
+  build: {
+    rollupOptions: {
+      input: "index.html",
+    },
+  },
 });
