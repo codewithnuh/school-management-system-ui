@@ -25,7 +25,7 @@ export const registerStudent = async (formData: UserFormData): Promise<any> => {
     };
 
     // Make the API call
-    const response = await axiosInstance.post("/users/register", payload);
+    const response = await axiosInstance.post("users/register", payload);
     return response.data;
   } catch (error: any) {
     // Enhanced error logging

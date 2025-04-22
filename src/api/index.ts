@@ -15,7 +15,7 @@ export const getTeacherApplications = async () => {
 
 export const acceptTeacherApplication = async (id: number) => {
   const response = await axiosInstance.post<ApplicationResponse>(
-    `/teachers/accept-teacher-application?id=${id}`,
+    `teachers/accept-teacher-application?id=${id}`,
     { status: "Accepted" }
   );
   console.log(response);
@@ -23,7 +23,7 @@ export const acceptTeacherApplication = async (id: number) => {
 };
 export const acceptStudentApplication = async (id: number) => {
   const response = await axiosInstance.post<StudentApplicationResponse>(
-    `/users/accept-user?id=${id}`,
+    `users/accept-user?id=${id}`,
     {
       status: "Accepted",
     }
@@ -36,7 +36,7 @@ export const getStudentApplications = async () => {
 };
 export const rejectStudentApplication = async (id: number) => {
   const response = await axiosInstance.post<StudentApplicationResponse>(
-    `/users/reject-user?id=${id}`,
+    `users/reject-user?id=${id}`,
     {
       status: "Rejected",
     }
@@ -45,7 +45,7 @@ export const rejectStudentApplication = async (id: number) => {
 };
 export const rejectTeacherApplication = async (id: number) => {
   const response = await axiosInstance.post<ApplicationResponse>(
-    `/teachers/reject-teacher-application?id=${id}`,
+    `teachers/reject-teacher-application?id=${id}`,
     {
       status: "Rejected",
     }

@@ -10,7 +10,7 @@ export const fetchAllSubjectsOfATeacher = async (
   subjectId: number
 ) => {
   const response = await axiosInstance.get(
-    `/sections/teacher/section/${teacherId}/${subjectId}`
+    `sections/teacher/section/${teacherId}/${subjectId}`
   );
   return response.data;
 };

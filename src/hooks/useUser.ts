@@ -21,10 +21,11 @@ export interface User {
 
 // Fix for environment variables in production
 // Use a fallback if environment variable is not defined
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-                    (window.location.hostname === 'localhost' 
-                      ? 'http://localhost:5000/api/' 
-                      : 'https://your-production-api-url.com/api/');
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:5000/api/"
+    : "https://your-production-api-url.com/api/");
 
 const API = `${API_BASE_URL}auth/session`;
 const fetchCurrentUser = async (): Promise<User> => {
@@ -32,12 +33,12 @@ const fetchCurrentUser = async (): Promise<User> => {
     const response = await axios.get(API, {
       withCredentials: true,
     });
-    
+
     // Validate response data structure
     if (!response.data || !response.data.data) {
       throw new Error("Invalid response format from auth/session endpoint");
     }
-    
+
     return response.data;
   } catch (error) {
     console.error("Failed to fetch user:", error);

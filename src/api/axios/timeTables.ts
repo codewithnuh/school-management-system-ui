@@ -17,13 +17,13 @@ export const fetchTimeTableOfSections = async (
   sectionId: number
 ) => {
   const response = await axiosInstance.get<WeeklyTimetableResponse>(
-    `/timetables/weekly/${classId}/${sectionId}`
+    `timetables/weekly/${classId}/${sectionId}`
   );
   return response.data;
 };
 
 // /weekly/:classId/:sectionId
 export const fetchTimeTableOfATeacher = async (teacherId: number) => {
-  const response = await axiosInstance.get(`/timetables/teacher/${teacherId}`);
+  const response = await axiosInstance.get(`timetables/teacher/${teacherId}`);
   return response.data;
 };

@@ -3,7 +3,7 @@ import { SectionsApiResponse } from "../types/sections";
 
 export const fetchSectionsOfAClass = async (classId: number) => {
   const response = await axiosInstance.get<SectionsApiResponse>(
-    `/sections/class/${classId}`
+    `sections/class/${classId}`
   );
   return response.data;
 };
@@ -13,7 +13,7 @@ export const fetchSectionsByTeacherId = async (
   classId: number
 ) => {
   const response = await axiosInstance.get(
-    `/sections/teacher/section/${teacherId}/${classId}`
+    `sections/teacher/section/${teacherId}/${classId}`
   );
   return response.data;
 };

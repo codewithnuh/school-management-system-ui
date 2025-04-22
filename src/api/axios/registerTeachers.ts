@@ -32,7 +32,7 @@ export const registerTeacher = async (
     );
 
     // Make the API call
-    const response = await axiosInstance.post("/teachers/register", payload);
+    const response = await axiosInstance.post("teachers/register", payload);
     return response.data;
   } catch (error: any) {
     // Enhanced error logging
