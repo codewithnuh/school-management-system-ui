@@ -215,7 +215,7 @@ const LoginPage = () => {
       label: "Teacher",
     },
     {
-      role: "STUDENT" as Role, // Use STUDENT to match entityType
+      role: "USER" as Role, // Use STUDENT to match entityType
       icon: <StudentIcon fontSize="large" />,
       label: "Student",
     },
