@@ -6,16 +6,23 @@ import {
 
 export const generateTimeTableOfAClass = async (
   classId: number
-): Promise<TimetableGenerationResponse["data"]> => {
+): Promise<TimetableGenerationResponse> => {
   const response = await axiosInstance.post<TimetableGenerationResponse>(
-    `/timetables/generate/${classId}`
+    `timetables/generate/${classId}`
   );
-  return response.data.data;
+  return response.data;
 };
+
 export const fetchTimeTableOfSections = async (
   classId: number,
   sectionId: number
-) => {
+): Promise<WeeklyTimetableResponse> => {
+  // Ensure we're using valid IDs
+  if (!classId || !sectionId || isNaN(classId) || isNaN(sectionId)) {
+    throw new Error("Valid class ID and section ID are required");
+  }
+
+  // Add leading slash to URL path to ensure proper routing
   const response = await axiosInstance.get<WeeklyTimetableResponse>(
     `timetables/weekly/${classId}/${sectionId}`
   );

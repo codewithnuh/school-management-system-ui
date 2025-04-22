@@ -11,18 +11,10 @@ import {
  * @param classId - The ID of the class for which to fetch sections.
  * @returns An object containing the query result data, loading state, and error.
  */
-export const useFetchAllSectionsOfAClass = (
-  classId: number
-): UseQueryResult<Section[], Error> => {
-  return useQuery<Section[], Error>({
-    queryKey: ["sections", classId], // Include classId in the query key for better caching and invalidation
-    queryFn: async () => {
-      const response = await fetchSectionsOfAClass(classId);
-      return response;
-    },
-    enabled: !!classId, // Only fetch if classId is provided
-    staleTime: 5 * 60 * 1000, // 5 minutes - data is considered fresh for 5 minutes
-    retry: 2, // Retry the request up to 2 times if it fails
+export const useFetchAllSectionsOfAClass = (classId: number) => {
+  return useQuery({
+    queryKey: ["sections", classId],
+    queryFn: () => fetchSectionsOfAClass(classId),
   });
 };
 

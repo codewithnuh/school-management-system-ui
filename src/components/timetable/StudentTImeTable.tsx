@@ -196,16 +196,14 @@ const StudentTimetable: React.FC = () => {
   const studentInfo = userDataResponse?.data?.user;
   const classId = studentInfo?.classId;
   const sectionId = studentInfo?.sectionId;
-
+  console.log({ studentInfo, classId, sectionId });
   // 2. Fetch Timetable Data (only if user data is available)
   const {
     data: timetableResponse,
     isLoading: isLoadingTimetable,
     isError: isErrorTimetable,
     error: timetableError,
-  } = useFetchTimeTables(classId!, sectionId!, {
-    enabled: !!classId && !!sectionId,
-  });
+  } = useFetchTimeTables(Number(classId!), Number(sectionId!));
 
   // 3. Process Timetable Data
   const { timetableByDay, sortedTimeSlots, timetableData } = useMemo(() => {

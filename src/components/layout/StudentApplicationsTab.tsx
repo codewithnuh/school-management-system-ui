@@ -1,18 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  TableContainer,
-  Paper,
-  Table,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableBody,
-  Button,
   Alert,
-  Snackbar,
   Box,
+  Button,
   CircularProgress,
-  Typography,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,12 +11,24 @@ import {
   DialogTitle,
   FormControl,
   InputLabel,
+  LinearProgress, // Added here
   MenuItem,
+  Paper,
   Select,
+  SelectChangeEvent, // Added here
+  Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from "@mui/material";
+
+// Assuming DetailsDialog is correctly imported and memoized if necessary
 import DetailsDialog from "../common/DetailsDialog";
-// Ensure the Application type includes 'userId'
-import { Application } from "../../types";
+import { Application } from "../../types"; // Ensure this type includes necessary fields like classId
 import {
   useAcceptStudentApplication,
   useRejectStudentApplication,
@@ -34,7 +37,7 @@ import { useStudentApplications } from "../../services/queries/studentApplicatio
 import { useFetchAllSectionsOfAClass } from "../../services/queries/section";
 import { useUpdateStudentById } from "../../services/queries/student";
 
-// Types
+// --- Types ---
 interface ProcessingState {
   [id: number]: {
     accepting: boolean;
@@ -43,7 +46,7 @@ interface ProcessingState {
 }
 
 interface Section {
-  id: string; // Keep as string if API returns string IDs
+  id: string; // Keep as string if API returns string IDs or adjust as needed
   name: string;
 }
 
@@ -53,269 +56,314 @@ interface SnackbarState {
   severity: "success" | "error";
 }
 
+// --- Component ---
 const StudentApplicationsTab: React.FC = () => {
-  // =============== STATE MANAGEMENT ===============
+  // --- State ---
   const [selectedApplicant, setSelectedApplicant] =
     useState<Application | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>({});
   const [openDetailsDialog, setOpenDetailsDialog] = useState<boolean>(false);
   const [openSectionDialog, setOpenSectionDialog] = useState<boolean>(false);
-  const [selectedSectionId, setSelectedSectionId] = useState<string>(""); // Keep as string
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
   const [sections, setSections] = useState<Section[]>([]);
-  const [classId, setClassId] = useState<number | undefined>(undefined); // Initialize as undefined
+  const [classIdForSections, setClassIdForSections] = useState<
+    number | undefined
+  >(undefined);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: "",
     severity: "success",
   });
 
-  // =============== DATA FETCHING ===============
-  const { data, isLoading, isError, error, refetch } = useStudentApplications();
+  // --- Data Fetching (React Query Hooks) ---
+  const {
+    data: applicationsData,
+    isLoading: isLoadingApplications,
+    isError: isApplicationsError,
+    error: applicationsError,
+    refetch: refetchApplications,
+  } = useStudentApplications();
+
   const acceptMutation = useAcceptStudentApplication();
   const rejectMutation = useRejectStudentApplication();
   const updateStudentMutation = useUpdateStudentById();
 
-  // Fetch sections only if classId is defined and the dialog is open
   const {
     data: sectionsData,
-    isLoading: sectionsLoading,
+    isLoading: isLoadingSections,
     isError: isSectionsError,
     error: sectionsError,
-  } = useFetchAllSectionsOfAClass(classId!, {
-    enabled: !!classId && openSectionDialog, // Only fetch when classId is set and dialog is open
+  } = useFetchAllSectionsOfAClass(classIdForSections!, {
+    enabled: !!classIdForSections && openSectionDialog, // Fetch only when needed
   });
 
-  // =============== DERIVED STATE ===============
-  const pendingApplications = data?.data
-    ? data.data.filter(
-        (applicant: Application) => applicant.isRegistered !== true
-      )
-    : [];
+  // --- Derived State ---
+  const pendingApplications = useMemo(() => {
+    return applicationsData?.data
+      ? applicationsData.data.filter(
+          (applicant: Application) => applicant.isRegistered !== true
+        )
+      : [];
+  }, [applicationsData]);
 
-  // =============== EFFECTS ===============
-  // Update sections when data is loaded
+  // --- Effects ---
+
+  // Update sections state when fetched
   useEffect(() => {
-    if (sectionsData) {
-      // Ensure section IDs are strings if needed, or parse if backend expects numbers
-      setSections(sectionsData.data.map((s) => ({ ...s, id: String(s.id) }))); // Example: Ensure ID is string
-      if (
-        snackbar.severity === "error" &&
-        snackbar.message.includes("section")
-      ) {
-        setSnackbar((prev) => ({ ...prev, open: false }));
-      }
+    if (sectionsData?.data) {
+      // Ensure section IDs are strings if the Select component expects strings
+      setSections(sectionsData.data.map((s) => ({ ...s, id: String(s.id) })));
+    } else if (!isLoadingSections) {
+      // Clear sections if data is null/undefined after loading finishes
+      setSections([]);
     }
-  }, [sectionsData, snackbar.message, snackbar.severity]); // Added dependencies
+  }, [sectionsData, isLoadingSections]);
 
-  // Handle errors in section loading
+  // Show error snackbar if fetching sections fails
   useEffect(() => {
     if (isSectionsError && openSectionDialog) {
-      showSnackbar(
-        `Error loading sections: ${
-          sectionsError instanceof Error
-            ? sectionsError.message
-            : "Unknown error"
-        }`,
-        "error"
-      );
+      const message =
+        sectionsError instanceof Error
+          ? sectionsError.message
+          : "Unknown error loading sections";
+      setSnackbar({
+        open: true,
+        message: `Error: ${message}`,
+        severity: "error",
+      });
     }
   }, [isSectionsError, sectionsError, openSectionDialog]);
 
-  // Handle accept mutation status
+  // Handle mutation results (accept/reject)
   useEffect(() => {
-    if (acceptMutation.isSuccess) {
-      // Message moved to handleAcceptWithSection success block
-      setProcessingState({});
-      refetch(); // Refetch data after successful accept
-    } else if (acceptMutation.isError) {
-      showSnackbar(
-        `Error accepting application: ${
+    if (acceptMutation.isSuccess || acceptMutation.isError) {
+      if (acceptMutation.isError) {
+        const message =
           acceptMutation.error instanceof Error
             ? acceptMutation.error.message
-            : "Unknown error"
-        }`,
-        "error"
-      );
+            : "Unknown error accepting application";
+        setSnackbar({
+          open: true,
+          message: `Error: ${message}`,
+          severity: "error",
+        });
+      }
+      // Reset processing state on success or error
       setProcessingState({});
+      // Refetch if mutation succeeded (success message handled in handleAcceptWithSection)
+      if (acceptMutation.isSuccess) refetchApplications();
     }
   }, [
     acceptMutation.isSuccess,
     acceptMutation.isError,
     acceptMutation.error,
-    refetch,
-  ]); // Added refetch
+    refetchApplications,
+  ]);
 
-  // Handle reject mutation status
   useEffect(() => {
-    if (rejectMutation.isSuccess) {
-      showSnackbar("Application rejected successfully!", "success");
-      setProcessingState({});
-      refetch(); // Refetch data after successful reject
-    } else if (rejectMutation.isError) {
-      showSnackbar(
-        `Error rejecting application: ${
+    if (rejectMutation.isSuccess || rejectMutation.isError) {
+      if (rejectMutation.isSuccess) {
+        setSnackbar({
+          open: true,
+          message: "Application rejected successfully!",
+          severity: "success",
+        });
+        refetchApplications();
+      } else {
+        // isError
+        const message =
           rejectMutation.error instanceof Error
             ? rejectMutation.error.message
-            : "Unknown error"
-        }`,
-        "error"
-      );
+            : "Unknown error rejecting application";
+        setSnackbar({
+          open: true,
+          message: `Error: ${message}`,
+          severity: "error",
+        });
+      }
+      // Reset processing state on success or error
       setProcessingState({});
     }
   }, [
     rejectMutation.isSuccess,
     rejectMutation.isError,
     rejectMutation.error,
-    refetch,
-  ]); // Added refetch
+    refetchApplications,
+  ]);
 
-  // =============== EVENT HANDLERS ===============
-  const showSnackbar = (
-    message: string,
-    severity: "success" | "error"
-  ): void => {
-    setSnackbar({ open: true, message, severity });
-  };
+  // --- Event Handlers (Memoized) ---
 
-  const handleSnackbarClose = (
-    _event?: React.SyntheticEvent | Event, // Make event optional
-    reason?: string
-  ): void => {
-    if (reason === "clickaway") return;
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
+  const showSnackbar = useCallback(
+    (message: string, severity: "success" | "error"): void => {
+      setSnackbar({ open: true, message, severity });
+    },
+    [] // No dependencies needed
+  );
 
-  const handleOpenDetails = (applicant: Application): void => {
+  const handleSnackbarClose = useCallback(
+    (_event?: React.SyntheticEvent | Event, reason?: string): void => {
+      if (reason === "clickaway") return;
+      setSnackbar((prev) => ({ ...prev, open: false }));
+    },
+    [] // No dependencies needed
+  );
+
+  const handleOpenDetails = useCallback((applicant: Application): void => {
     setSelectedApplicant(applicant);
     setOpenDetailsDialog(true);
-  };
+  }, []);
 
-  const handleCloseDetailsDialog = (): void => {
+  const handleCloseDetailsDialog = useCallback((): void => {
     setOpenDetailsDialog(false);
     setSelectedApplicant(null);
-  };
+  }, []);
 
-  // Section dialog handlers
-  const handleOpenSectionDialog = (applicant: Application): void => {
-    if (applicant.classId) {
-      setSelectedApplicant(applicant);
-      setClassId(applicant.classId); // Set classId here to trigger section fetching
-      setOpenSectionDialog(true);
-    } else {
-      showSnackbar("Applicant is missing class information.", "error");
-    }
-  };
+  const handleOpenSectionDialog = useCallback(
+    (applicant: Application): void => {
+      if (applicant.classId) {
+        setSelectedApplicant(applicant);
+        setClassIdForSections(applicant.classId); // Trigger section fetching
+        setOpenSectionDialog(true);
+      } else {
+        showSnackbar("Applicant is missing class information.", "error");
+      }
+    },
+    [showSnackbar] // Dependency: showSnackbar
+  );
 
-  const handleCloseSectionDialog = (): void => {
+  const handleCloseSectionDialog = useCallback((): void => {
     setOpenSectionDialog(false);
     setSelectedSectionId("");
-    setSelectedApplicant(null); // Clear selected applicant
-    setClassId(undefined); // Reset classId
-  };
+    setSelectedApplicant(null);
+    setClassIdForSections(undefined); // Reset classId
+    setSections([]); // Clear sections state
+  }, []);
 
-  // Use MUI's SelectChangeEvent type for better type safety
-  const handleSectionChange = (event: SelectChangeEvent<string>): void => {
-    setSelectedSectionId(event.target.value);
-  };
+  const handleSectionChange = useCallback(
+    (event: SelectChangeEvent<string>): void => {
+      setSelectedSectionId(event.target.value);
+    },
+    []
+  );
 
-  // Action handlers
-  const handleAccept = (id: number): void => {
-    const applicant = pendingApplications.find((app) => app.id === id);
-    if (applicant) {
-      handleOpenSectionDialog(applicant);
-    } else {
-      showSnackbar("Could not find applicant information", "error");
-    }
-  };
+  const handleAccept = useCallback(
+    (id: number): void => {
+      const applicant = pendingApplications.find((app) => app.id === id);
+      if (applicant) {
+        handleOpenSectionDialog(applicant);
+      } else {
+        showSnackbar("Could not find applicant information.", "error");
+      }
+    },
+    [pendingApplications, handleOpenSectionDialog, showSnackbar] // Dependencies
+  );
 
-  const handleAcceptWithSection = async (): Promise<void> => {
+  const handleReject = useCallback(
+    (id: number): void => {
+      setProcessingState((prev) => ({
+        ...prev,
+        [id]: { ...(prev[id] || {}), accepting: false, rejecting: true },
+      }));
+      rejectMutation.mutate(id);
+    },
+    [rejectMutation] // Dependency: rejectMutation hook
+  );
+
+  const handleAcceptWithSection = useCallback(async (): Promise<void> => {
     if (!selectedApplicant || !selectedSectionId) {
       showSnackbar(
-        "Applicant information or section selection is missing. Cannot proceed.",
+        "Applicant information or section selection is missing.",
         "error"
       );
       return;
     }
 
-    // Use the applicant's ID if the userId is not available
-    // The backend might be expecting the applicant's ID as the userId
-    // or there might be a relationship where the ID is used to link records
-    const userId = selectedApplicant.id;
-
-    const applicantId = selectedApplicant.id; // Store ID before clearing state
+    // Use applicant ID consistently, backend might map this to a user or student record
+    const applicantId = selectedApplicant.id;
 
     setProcessingState((prev) => ({
       ...prev,
-      [applicantId]: {
-        ...(prev[applicantId] || {}),
-        accepting: true,
-        rejecting: false,
-      },
+      [applicantId]: { accepting: true, rejecting: false },
     }));
 
     try {
-      // First update the student with the section and userId
-      await updateStudentMutation.mutate({
+      // 1. Update student record with section and mark as registered
+      await updateStudentMutation.mutateAsync({
+        // Use mutateAsync to await
         id: applicantId,
         data: {
-          // Ensure the types match what your backend expects (Number vs String)
-          sectionId: Number(selectedSectionId), // Convert if backend expects number
+          // Ensure type matches backend expectation (Number vs String)
+          sectionId: Number(selectedSectionId),
           isRegistered: true,
+          firstName: selectedApplicant?.firstName || "",
+          lastName: selectedApplicant?.lastName || "",
+          dateOfBirth: selectedApplicant?.dateOfBirth
+            ? new Date(selectedApplicant.dateOfBirth)
+            : new Date(),
+          gender: selectedApplicant?.gender || "",
+          email: selectedApplicant?.email || "",
+          phoneNo: selectedApplicant?.phoneNo || "",
+          address: selectedApplicant?.address || "",
+          // Add other required fields from the User type here
         },
       });
 
-      // Then accept the application (this might just update status)
-      await acceptMutation.mutateAsync(applicantId);
+      // 2. Update the application status itself (if needed)
+      await acceptMutation.mutateAsync(applicantId); // Use mutateAsync to await
 
-      // Success message after both mutations succeed
+      // 3. Success feedback and cleanup
       showSnackbar(
         "Student application accepted and section assigned successfully!",
         "success"
       );
       handleCloseSectionDialog(); // Close dialog on success
-      // refetch() will be called by the useEffect hook listening to acceptMutation.isSuccess
+      // Refetch is handled by the useEffect hook listening to acceptMutation
     } catch (error) {
       console.error("Error accepting application with section:", error);
-      // Provide more specific error feedback if possible
-      const updateError = updateStudentMutation.error;
-      const acceptError = acceptMutation.error;
-      let errorMessage = "Error accepting application";
-      if (updateError instanceof Error) {
-        errorMessage += `: Failed to update student - ${updateError.message}`;
-      } else if (acceptError instanceof Error) {
-        errorMessage += `: Failed to accept application - ${acceptError.message}`;
-      } else if (error instanceof Error) {
-        errorMessage += `: ${error.message}`;
-      } else {
-        errorMessage += ": Unknown error";
-      }
-      showSnackbar(errorMessage, "error");
+      // Error feedback (uses state from hooks if available, otherwise generic)
+      const updateErrorMsg =
+        updateStudentMutation.error instanceof Error
+          ? `Update failed: ${updateStudentMutation.error.message}`
+          : "";
+      const acceptErrorMsg =
+        acceptMutation.error instanceof Error
+          ? `Accept failed: ${acceptMutation.error.message}`
+          : "";
+      const generalErrorMsg =
+        error instanceof Error ? error.message : "Unknown error occurred";
 
-      // Reset processing state even on error
+      showSnackbar(
+        `Error accepting application: ${
+          updateErrorMsg || acceptErrorMsg || generalErrorMsg
+        }`,
+        "error"
+      );
+
+      // Reset processing state on error (useEffect will also catch this, but good practice here too)
       setProcessingState((prev) => {
         const newState = { ...prev };
         if (newState[applicantId]) {
           newState[applicantId] = {
             ...newState[applicantId],
-            accepting: false,
+            accepting: false, // Ensure acceptance state is cleared
           };
         }
         return newState;
       });
     }
-    // No finally block needed for resetting state here, as useEffect handles it on success/error
-  };
+    // No finally needed as useEffect handles state cleanup robustly on success/error completion
+  }, [
+    selectedApplicant,
+    selectedSectionId,
+    updateStudentMutation,
+    acceptMutation,
+    showSnackbar,
+    handleCloseSectionDialog,
+    // Note: processingState is *not* needed as dependency, setting it doesn't require the previous value directly here
+  ]);
 
-  const handleReject = (id: number): void => {
-    setProcessingState((prev) => ({
-      ...prev,
-      [id]: { ...(prev[id] || {}), accepting: false, rejecting: true },
-    }));
-    rejectMutation.mutate(id);
-  };
-
-  // =============== RENDER METHODS ===============
-  if (isLoading) {
+  // --- Render Logic: Loading / Error States ---
+  if (isLoadingApplications) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
         <CircularProgress />
@@ -323,29 +371,33 @@ const StudentApplicationsTab: React.FC = () => {
     );
   }
 
-  if (isError) {
+  if (isApplicationsError) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">
           Error loading applications:{" "}
-          {error instanceof Error ? error.message : "Unknown error"}
+          {applicationsError instanceof Error
+            ? applicationsError.message
+            : "Unknown error"}
         </Alert>
-        <Button variant="outlined" onClick={() => refetch()} sx={{ mt: 2 }}>
+        <Button
+          variant="outlined"
+          onClick={() => refetchApplications()}
+          sx={{ mt: 2 }}
+        >
           Retry
         </Button>
       </Box>
     );
   }
 
-  // No need for renderApplicationRow function if mapping directly
-  // const renderApplicationRow = (applicant: Application) => { ... }
-
-  // =============== MAIN RENDER ===============
+  // --- Main Render ---
   return (
     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 500 }} aria-label="student applications table">
+      <Table sx={{ minWidth: 650 }} aria-label="student applications table">
         <TableHead>
           <TableRow>
+            {/* Consider defining headers in an array for easier management */}
             <TableCell>Name</TableCell>
             <TableCell align="right">Email</TableCell>
             <TableCell align="right">Phone</TableCell>
@@ -358,8 +410,7 @@ const StudentApplicationsTab: React.FC = () => {
         <TableBody>
           {pendingApplications.length > 0 ? (
             pendingApplications.map((applicant) => {
-              // Calculate processing state inside the map
-              const isProcessing = processingState[applicant.id] || {
+              const isProcessing = processingState[applicant.id] ?? {
                 accepting: false,
                 rejecting: false,
               };
@@ -369,6 +420,7 @@ const StudentApplicationsTab: React.FC = () => {
               return (
                 <TableRow
                   key={applicant.id}
+                  hover // Add hover effect
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                 >
                   <TableCell component="th" scope="row">
@@ -397,18 +449,20 @@ const StudentApplicationsTab: React.FC = () => {
                         gap: 1,
                       }}
                     >
-                      {" "}
-                      {/* Added gap */}
                       <Button
                         variant="contained"
                         color="success"
                         size="small"
-                        sx={{ minWidth: "80px" }}
+                        sx={{ minWidth: "80px", position: "relative" }} // Added relative for positioning spinner
                         onClick={() => handleAccept(applicant.id)}
                         disabled={isDisabled}
                       >
                         {isProcessing.accepting ? (
-                          <CircularProgress size={20} color="inherit" />
+                          <CircularProgress
+                            size={20}
+                            color="inherit"
+                            sx={{ position: "absolute" }}
+                          /> // Position spinner absolutely inside button
                         ) : (
                           "Accept"
                         )}
@@ -417,12 +471,16 @@ const StudentApplicationsTab: React.FC = () => {
                         variant="contained"
                         color="warning"
                         size="small"
-                        sx={{ minWidth: "80px" }}
+                        sx={{ minWidth: "80px", position: "relative" }}
                         onClick={() => handleReject(applicant.id)}
                         disabled={isDisabled}
                       >
                         {isProcessing.rejecting ? (
-                          <CircularProgress size={20} color="inherit" />
+                          <CircularProgress
+                            size={20}
+                            color="inherit"
+                            sx={{ position: "absolute" }}
+                          />
                         ) : (
                           "Reject"
                         )}
@@ -435,8 +493,8 @@ const StudentApplicationsTab: React.FC = () => {
           ) : (
             <TableRow>
               <TableCell colSpan={7} align="center">
-                <Typography variant="body1">
-                  No pending applications found
+                <Typography variant="body1" sx={{ p: 2 }}>
+                  No pending applications found.
                 </Typography>
               </TableCell>
             </TableRow>
@@ -444,69 +502,90 @@ const StudentApplicationsTab: React.FC = () => {
         </TableBody>
       </Table>
 
-      {/* Dialogs and notifications */}
+      {/* --- Dialogs & Snackbar --- */}
       <DetailsDialog
         open={openDetailsDialog}
         onClose={handleCloseDetailsDialog}
         applicant={selectedApplicant}
-        // Add onViewFile prop if DetailsDialog needs it
-        // onViewFile={(url, type, title) => console.log('View file:', url, type, title)}
+        // Pass necessary props like onViewFile if DetailsDialog requires them
       />
 
-      {/* Section Selection Dialog */}
-      <Dialog open={openSectionDialog} onClose={handleCloseSectionDialog}>
+      <Dialog
+        open={openSectionDialog}
+        onClose={handleCloseSectionDialog}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Assign Section</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Please select a section for student{" "}
-            {selectedApplicant
-              ? `${selectedApplicant.firstName} ${selectedApplicant.lastName}`
-              : ""}{" "}
-            before accepting the application.
+          <DialogContentText sx={{ mb: 2 }}>
+            Select a section for student{" "}
+            <strong>
+              {selectedApplicant
+                ? `${selectedApplicant.firstName} ${selectedApplicant.lastName}`
+                : ""}
+            </strong>
+            .
           </DialogContentText>
-          {isSectionsError &&
-            !sectionsLoading && ( // Show error only if not loading
-              <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-                Error loading sections:{" "}
-                {sectionsError instanceof Error
-                  ? sectionsError.message
-                  : "Unknown error"}
-              </Alert>
-            )}
-          <FormControl fullWidth sx={{ mt: 2 }}>
+
+          {/* Display Error Alert within Dialog Content if sections fail to load */}
+          {isSectionsError && !isLoadingSections && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              Error loading sections:{" "}
+              {sectionsError instanceof Error
+                ? sectionsError.message
+                : "Unknown error"}
+            </Alert>
+          )}
+
+          <FormControl fullWidth variant="outlined">
             <InputLabel id="section-select-label">Section</InputLabel>
             <Select<string> // Explicitly type Select value as string
               labelId="section-select-label"
               value={selectedSectionId}
               label="Section"
-              onChange={handleSectionChange} // Use updated handler
-              disabled={sectionsLoading || sections.length === 0} // Disable if loading or no sections
+              onChange={handleSectionChange}
+              disabled={
+                isLoadingSections || isSectionsError || sections.length === 0
+              }
             >
-              {sectionsLoading && (
+              {/* Loading State */}
+              {isLoadingSections && (
                 <MenuItem disabled value="">
-                  <em>Loading sections...</em>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    <em>Loading sections...</em>
+                  </Box>
                 </MenuItem>
               )}
-              {!sectionsLoading && sections.length === 0 && (
+              {/* Empty/Error State (after loading) */}
+              {!isLoadingSections && sections.length === 0 && (
                 <MenuItem disabled value="">
-                  <em>No sections available for this class</em>
+                  <em>
+                    {isSectionsError
+                      ? "Error loading sections"
+                      : "No sections available"}
+                  </em>
                 </MenuItem>
               )}
-              {!sectionsLoading &&
+              {/* Options */}
+              {!isLoadingSections &&
                 sections.length > 0 &&
                 sections.map((section) => (
                   <MenuItem key={section.id} value={section.id}>
-                    {" "}
-                    {/* Ensure value is string */}
                     {section.name}
                   </MenuItem>
                 ))}
             </Select>
-            {sectionsLoading && <LinearProgress sx={{ mt: 1 }} />}{" "}
-            {/* Optional: Show linear progress */}
           </FormControl>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={handleCloseSectionDialog}
             disabled={
@@ -519,16 +598,20 @@ const StudentApplicationsTab: React.FC = () => {
             onClick={handleAcceptWithSection}
             variant="contained"
             color="primary"
-            // Disable button if no section selected, still loading sections, or mutations are in progress
+            sx={{ minWidth: "140px", position: "relative" }} // Ensure button size consistency
             disabled={
-              !selectedSectionId ||
-              sectionsLoading ||
-              updateStudentMutation.isLoading ||
+              !selectedSectionId || // Must select a section
+              isLoadingSections || // Cannot accept while sections loading
+              updateStudentMutation.isLoading || // Cannot accept during mutations
               acceptMutation.isLoading
             }
           >
             {updateStudentMutation.isLoading || acceptMutation.isLoading ? (
-              <CircularProgress size={24} color="inherit" />
+              <CircularProgress
+                size={24}
+                color="inherit"
+                sx={{ position: "absolute" }}
+              />
             ) : (
               "Accept & Assign"
             )}
@@ -536,17 +619,17 @@ const StudentApplicationsTab: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }} // Position snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }} // Common position
       >
+        {/* Wrapping Alert for onClose prop */}
         <Alert
           onClose={handleSnackbarClose}
           severity={snackbar.severity}
-          variant="filled" // Use filled variant for better visibility
+          variant="filled"
           sx={{ width: "100%" }}
         >
           {snackbar.message}
@@ -555,8 +638,5 @@ const StudentApplicationsTab: React.FC = () => {
     </TableContainer>
   );
 };
-
-// Need to import SelectChangeEvent and LinearProgress from MUI
-import { SelectChangeEvent, LinearProgress } from "@mui/material";
 
 export default StudentApplicationsTab;

@@ -75,6 +75,7 @@ const StudentDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [subjectId, setSubjectId] = useState<number | undefined>();
   const { data: subject } = useSubject(subjectId!);
+
   useEffect(() => {
     setSubjectId(user!.data.user.subjectId);
   }, []);

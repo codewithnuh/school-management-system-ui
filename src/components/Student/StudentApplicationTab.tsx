@@ -88,9 +88,8 @@ const StudentApplicationTab = () => {
       await updateStudentMutation.mutateAsync({
         id: selectedStudent.id,
         data: {
-          sectionId: selectedSectionId,
+          sectionId: Number(selectedSectionId),
           // Include other necessary student fields here
-          status: "active",
         },
       });
 
