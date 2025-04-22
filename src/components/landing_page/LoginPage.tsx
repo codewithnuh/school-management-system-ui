@@ -32,7 +32,7 @@ import {
 import { useUser } from "../../hooks/useUser";
 
 // --- Constants ---
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // --- Types ---
 // Ensure Role type matches the possible entityType values from your backend
