@@ -36,7 +36,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // --- Types ---
 // Ensure Role type matches the possible entityType values from your backend
-type Role = "ADMIN" | "TEACHER" | "STUDENT"; // Changed USER to STUDENT to match entityType
+type Role = "ADMIN" | "TEACHER" | "USER"; // Changed USER to STUDENT to match entityType
 
 interface ApiResponse {
   success: boolean;
@@ -92,7 +92,7 @@ const LoginPage = () => {
           // Redirect teacher to their default page (e.g., classes)
           redirectPath = "/dashboard/teacher/classes";
           break;
-        case "STUDENT":
+        case "USER":
           // *** Redirect student directly to their profile page ***
           redirectPath = "/dashboard/user/profile";
           break;
