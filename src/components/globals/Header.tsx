@@ -18,14 +18,18 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import SchoolIcon from "@mui/icons-material/School"; // Example Logo Icon
 import { navItems } from "../../constant"; // Assuming navItems has { label: string, link: string }
+import { useUser } from "../../hooks/useUser";
 
 const Header = () => {
   const theme = useTheme();
   const location = useLocation(); // Hook to get the current location object
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
+  const { data } = useUser(); // You might use this later for showing user info/logout
 
   // Determine if we are on the home page (root path)
   const isOnHomePage = location.pathname === "/";
+  // Determine if we are on any dashboard page
+  const isOnDashboard = location.pathname.startsWith("/dashboard/");
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -112,27 +116,29 @@ const Header = () => {
             </Box>
           )}
 
-          {/* Login Button (Always Visible on Desktop, conditional on Mobile) */}
-          <Button
-            component={RouterLink}
-            to="/login"
-            variant="contained"
-            size="small"
-            color="primary"
-            sx={{
-              ml: 2, // Margin left for spacing
-              // Show on medium+ screens OR if not on home page on xs screens
-              display: {
-                xs: isOnHomePage ? "none" : "inline-flex",
-                md: "inline-flex",
-              },
-              borderRadius: "20px", // Rounded corners
-              px: 3, // Padding horizontal
-              flexShrink: 0, // Prevent button from shrinking
-            }}
-          >
-            Login
-          </Button>
+          {/* Login Button (Show only if NOT on a dashboard page) */}
+          {!isOnDashboard && (
+            <Button
+              component={RouterLink}
+              to="/login"
+              variant="contained"
+              size="small"
+              color="primary"
+              sx={{
+                ml: 2, // Margin left for spacing
+                // Show on medium+ screens OR if not on home page on xs screens
+                display: {
+                  xs: isOnHomePage ? "none" : "inline-flex",
+                  md: "inline-flex",
+                },
+                borderRadius: "20px", // Rounded corners
+                px: 3, // Padding horizontal
+                flexShrink: 0, // Prevent button from shrinking
+              }}
+            >
+              Login
+            </Button>
+          )}
 
           {/* Mobile Menu Icon & Dropdown (Only on Home Page) */}
           {isOnHomePage && (
@@ -196,17 +202,19 @@ const Header = () => {
                     <Typography textAlign="center">{item.label}</Typography>
                   </MenuItem>
                 ))}
-                {/* Add Login button inside mobile menu as well */}
-                <MenuItem
-                  onClick={handleCloseNavMenu}
-                  component={RouterLink}
-                  to="/login"
-                  sx={{ justifyContent: "center", mt: 1 }}
-                >
-                  <Button variant="contained" color="primary" size="small">
-                    Login
-                  </Button>
-                </MenuItem>
+                {/* Add Login button inside mobile menu as well (only if not on dashboard) */}
+                {!isOnDashboard && (
+                  <MenuItem
+                    onClick={handleCloseNavMenu}
+                    component={RouterLink}
+                    to="/login"
+                    sx={{ justifyContent: "center", mt: 1 }}
+                  >
+                    <Button variant="contained" color="primary" size="small">
+                      Login
+                    </Button>
+                  </MenuItem>
+                )}
               </Menu>
             </Box>
           )}

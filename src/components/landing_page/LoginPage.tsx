@@ -57,7 +57,7 @@ const LoginPage = () => {
     isSuccess: userIsSuccess,
     refetch: refetchUser,
   } = useUser();
-
+  console.log(userResponse);
   // --- State ---
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [email, setEmail] = useState("");
@@ -73,18 +73,15 @@ const LoginPage = () => {
   // Redirect user if already logged in and user data is available
   useEffect(() => {
     // Check if fetching is done, was successful, and user data/entityType exists
-    if (
-      !userIsLoading &&
-      userIsSuccess &&
-      userResponse?.data?.user?.entityType
-    ) {
+    if (!userIsLoading && userIsSuccess && userResponse?.data?.role) {
       // Use entityType as the source of truth for the role
-      const userRole = userResponse.data.user.entityType.toUpperCase() as Role;
+      const userRole = userResponse.data.role;
 
       let redirectPath: string;
 
       switch (userRole) {
         case "ADMIN":
+          console.log("This is admin");
           // Redirect admin to their default page (e.g., teacher applications)
           redirectPath = "/dashboard/admin/applications/teachers";
           break;
