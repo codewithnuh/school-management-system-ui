@@ -1,4 +1,16 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Redirects for Single Page Application
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Environment variables
+[context.production.environment]
+  VITE_API_BASE_URL = "https://sms-api-10.up.railway.app/api/v1/"
+
+[context.development.environment]
+  VITE_API_BASE_URL = "http://localhost:5000/api/"

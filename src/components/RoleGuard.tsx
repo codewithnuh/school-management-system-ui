@@ -13,7 +13,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   children,
 }) => {
   const { data: user, isLoading, isError } = useUser();
-  console.log(user);
+  
   if (isLoading) {
     // Show a loading indicator while fetching
     return <div>Loading...</div>;
@@ -21,6 +21,12 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
 
   // If there's an error or no user is found, assume the user is not authenticated.
   if (isError || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Add a safety check for user.data
+  if (!user.data) {
+    console.error("User data is undefined in RoleGuard");
     return <Navigate to="/login" replace />;
   }
 
