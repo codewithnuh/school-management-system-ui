@@ -52,3 +52,5 @@ export const rejectTeacherApplication = async (id: number) => {
   );
   return response.data;
 };
+
+

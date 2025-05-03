@@ -293,7 +293,7 @@ const ApplicantList: React.FC<ApplicantListProps> = ({
   const unRegisteredTeachers = applicants.filter(
     (applicant) => applicant.applicationStatus !== "Accepted"
   );
-  console.log({ unRegisteredTeachers, applicants });
+ 
 
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [selectedApplicant, setSelectedApplicant] =

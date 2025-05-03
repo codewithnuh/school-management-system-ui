@@ -6,6 +6,7 @@ import Hero from "./components/landing_page/Hero";
 import EmpowerSection from "./components/landing_page/EmpowerSection";
 import Testimonials from "./components/landing_page/Testimonials";
 import Footer from "./components/landing_page/Footer";
+import PricingSection from "./components/landing_page/Pricing";
 const App = () => {
   return (
     <div className="bg-black">
@@ -14,6 +15,7 @@ const App = () => {
       <Features />
       <Features2 />
       <Features3 />
+      <PricingSection />
       <EmpowerSection />
       <Testimonials />
       <Footer />
