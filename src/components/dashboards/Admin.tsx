@@ -3,26 +3,11 @@ import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Toolbar from "@mui/material/Toolbar";
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { Outlet } from "react-router";
 import Sidebar, { NavItem, SidebarThemeOptions } from "../dashboards/Sidebar";
 
-// Create a dark theme with a glassy effect for the sidebar.
-const darkTheme = createTheme({
-  palette: {
-    mode: "dark",
-    background: {
-      default: "#121212",
-      paper: "#1e1e1e",
-    },
-    primary: {
-      main: "#90caf9",
-    },
-    secondary: {
-      main: "#f48fb1",
-    },
-  },
-});
+import { darkTheme } from "../../theme/darkTheme";
 
 // Admin-specific sidebar theme options
 const adminSidebarTheme: SidebarThemeOptions = {

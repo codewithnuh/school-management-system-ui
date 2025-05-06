@@ -10,8 +10,8 @@ import { ThemeProvider } from "@emotion/react";
 import theme from "./themes/theme.ts";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import Header from "./components/globals/Header.tsx";
-import LoginPage from "../src/components/landing_page/LoginPage.tsx";
-
+import SignUp from "./components/landing_page/SignUp.tsx";
+import AdminDashboardHome from "./components/dashboards/AdminDashboardHome.tsx";
 import ForgotPasswordPage from "./components/landing_page/ForgotPassword.tsx";
 import TeacherRegistrationForm from "./components/forms/TeacherRegistrationForm.tsx";
 import SignupForm from "./components/landing_page/SignUp.tsx";
@@ -39,6 +39,11 @@ import TeacherTimetable from "./components/timetable/TeacherTimetable.tsx";
 import StudentDashboard from "./components/Student/StudentDashboard.tsx";
 import StudentTimetable from "./components/timetable/StudentTImeTable.tsx";
 import StudentProfile from "./components/Student/StudentProfile.tsx";
+import Login from "./components/landing_page/Login.tsx";
+import CreateSchool from "./components/forms/SchoolCreation.tsx";
+import ActivationStatusPage from "./components/ActivationStatusPage.tsx";
+// import { AdminDashboardLayout } from "./components/dashboards/AdminDashboardLayout.tsx";
+import DashboardLayout from "./components/layout/DashboardLayout.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -47,7 +52,7 @@ createRoot(document.getElementById("root")!).render(
           <Header />
           <Routes>
             <Route path="/" element={<App />} />
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/sign-up" element={<SignupForm />} />
             <Route path="/sample-upload" element={<SampleUploadForm />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -55,6 +60,22 @@ createRoot(document.getElementById("root")!).render(
               path="/register/student"
               element={<UserRegistrationForm />}
             />
+            <Route
+              path="/dashboard/admin/school/create"
+              element={<CreateSchool />}
+            />
+            <Route
+              path="/dashboard/admin/activate"
+              element={<ActivationStatusPage />}
+            />
+            <Route
+              path="/dashboard/admin/"
+              element={<DashboardLayout role="admin" />}
+            >
+              <Route index element={<AdminDashboardHome />} />
+              <Route path="students" element={<h1>STUDENT PAGE</h1>} />
+              <Route path="timetable" element={<h1>TIMETABLE PAGE</h1>} />
+            </Route>
             <Route
               path="/dashboard/teacher"
               element={
@@ -95,16 +116,8 @@ createRoot(document.getElementById("root")!).render(
               <Route index path="profile" element={<StudentProfile />} />
             </Route>
 
-            <Route
-              path="/dashboard/admin"
-              element={
-                <RoleGuard allowedRoles={["ADMIN"]}>
-                  <Admin />
-                </RoleGuard>
-              }
-            >
+            {/* <Route path="/dashboard/admin" element={<Admin />}>
               <Route
-                index
                 element={<Navigate to="applications/teachers" replace />}
               />
               <Route
@@ -123,7 +136,7 @@ createRoot(document.getElementById("root")!).render(
                 element={<TimetableGenerator />}
               />
               <Route path="timetable/view" element={<TimetableView />} />
-            </Route>
+            </Route> */}
 
             <Route
               path="/register/teacher"

@@ -20,7 +20,7 @@ import {
   AlertTitle,
   Snackbar,
 } from "@mui/material";
-import { useStudentRegisteration } from "../../services/queries/studentRegisteration";
+import { useStudentRegistration } from "../../services/queries/studentRegisteration";
 import { useClasses } from "../../services/queries/classes";
 
 // Define form schema using Zod

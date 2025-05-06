@@ -3,7 +3,7 @@ import { registerStudent } from "../../api/axios/registerStudent";
 import { UserFormData } from "../../components/forms/UserRegistrationForm";
 import { queryClient } from "../../utils/queryClient";
 
-export const useStudentRegisteration = () => {
+export const useStudentRegistration = () => {
   return useMutation({
     mutationFn: (formData: UserFormData) => registerStudent(formData),
     onSuccess: () => {

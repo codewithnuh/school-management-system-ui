@@ -53,6 +53,6 @@ export const useUser = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: false, // Do not retry on error (e.g., unauthenticated)
     // Return empty data instead of error state to avoid cascading errors
-    useErrorBoundary: false,
+    // useErrorBoundary: false,
   });
 };

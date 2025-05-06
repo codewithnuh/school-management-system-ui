@@ -152,6 +152,7 @@ const LoginPage = () => {
       // (e.g., /dashboard/user/profile) once the user state is updated.
     },
     onError: (error: Error) => {
+      console.error(error);
       setSnackbar({
         open: true,
         message:

@@ -18,13 +18,11 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import SchoolIcon from "@mui/icons-material/School"; // Example Logo Icon
 import { navItems } from "../../constant"; // Assuming navItems has { label: string, link: string }
-import { useUser } from "../../hooks/useUser";
 
 const Header = () => {
   const theme = useTheme();
   const location = useLocation(); // Hook to get the current location object
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
-  const { data } = useUser(); // You might use this later for showing user info/logout
 
   // Determine if we are on the home page (root path)
   const isOnHomePage = location.pathname === "/";
@@ -120,7 +118,7 @@ const Header = () => {
           {!isOnDashboard && (
             <Button
               component={RouterLink}
-              to="/login"
+              to="/sign-up"
               variant="contained"
               size="small"
               color="primary"
@@ -136,7 +134,7 @@ const Header = () => {
                 flexShrink: 0, // Prevent button from shrinking
               }}
             >
-              Login
+              SignUp
             </Button>
           )}
 
@@ -207,11 +205,11 @@ const Header = () => {
                   <MenuItem
                     onClick={handleCloseNavMenu}
                     component={RouterLink}
-                    to="/login"
+                    to="/sign-up"
                     sx={{ justifyContent: "center", mt: 1 }}
                   >
                     <Button variant="contained" color="primary" size="small">
-                      Login
+                      SignUp
                     </Button>
                   </MenuItem>
                 )}

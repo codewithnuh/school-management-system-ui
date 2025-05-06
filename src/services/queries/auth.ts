@@ -3,7 +3,14 @@ import {
   UseMutationResult,
   useQueryClient,
 } from "@tanstack/react-query";
-import { logout, sendOtp, verifyOtp } from "../../api/axios/auth";
+import {
+  login,
+  logout,
+  sendOtp,
+  signUp,
+  SignUpFormData,
+  verifyOtp,
+} from "../../api/axios/auth";
 import { EntityType } from "../../types";
 
 /**
@@ -56,5 +63,20 @@ export const useResetPassword = () => {
   return useMutation({
     mutationFn: (params: { otp: string; newPassword: string }) =>
       verifyOtp(params.otp, params.newPassword),
+  });
+};
+
+export const useSignUpMutation = () => {
+  return useMutation({
+    mutationFn: (data: SignUpFormData) => signUp(data),
+  });
+};
+export const useLoginMutation = () => {
+  return useMutation({
+    mutationFn: (data: {
+      email: string;
+      entityType: string;
+      password: string;
+    }) => login(data),
   });
 };

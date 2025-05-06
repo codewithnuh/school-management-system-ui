@@ -22,3 +22,25 @@ export const verifyOtp = async (otp: string, newPassword: string) => {
   });
   return response.data;
 };
+export interface SignUpFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+export const signUp = async (data: SignUpFormData) => {
+  const response = await axiosInstance.post("auth/sign-up", {
+    ...data,
+  });
+  return response.data;
+};
+export const login = async (data: {
+  email: string;
+  entityType: string;
+  password: string;
+}) => {
+  const response = await axiosInstance.post("auth/login", {
+    ...data,
+  });
+  return response.data;
+};

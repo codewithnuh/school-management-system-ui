@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
   Paper,
@@ -9,51 +9,15 @@ import {
   Box,
   styled,
   ThemeProvider,
-  createTheme,
   Snackbar,
   Alert,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { useSignUpMutation } from "../../services/queries/auth";
-import { Link } from "react-router";
-
-// --- Pure dark glassmorphic theme ---
-const darkTheme = createTheme({
-  palette: {
-    mode: "dark",
-    primary: { main: "#2e2e2e" }, // Deep dark neutral
-    background: {
-      default: "#0d0d0d", // Almost black background
-      paper: "rgba(20, 20, 20, 0.9)", // Slightly transparent dark card
-    },
-    text: { primary: "#ffffff" },
-  },
-  components: {
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backdropFilter: "blur(15px)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": {
-              borderColor: "rgba(255, 255, 255, 0.15)",
-            },
-            "&:hover fieldset": {
-              borderColor: "#555", // subtle hover
-            },
-          },
-        },
-      },
-    },
-  },
-});
+import { useLoginMutation } from "../../services/queries/auth";
+import { Link, useNavigate } from "react-router";
+import { darkTheme } from "../../theme/darkTheme";
+import { useUser } from "../../hooks/useUser";
 
 // --- Glass-styled container ---
 const GlassPaper = styled(Paper)(({ theme }) => ({
@@ -65,62 +29,81 @@ const GlassPaper = styled(Paper)(({ theme }) => ({
   backdropFilter: "blur(12px)",
 }));
 
-const SignUp = () => {
+const Login = () => {
+  const { data: userData, isLoading: isUserLoading } = useUser();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    entityType: "ADMIN",
     email: "",
     password: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  // State for toast notification
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error" | "info" | "warning",
   });
 
-  // Handle toast close
-  const handleCloseToast = () => {
-    setToast({ ...toast, open: false });
-  };
-  const SignUpMutation = useSignUpMutation();
+  const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (e) => {
+  const LoginMutation = useLoginMutation();
+
+  // 🔁 Handle redirection only after user data is fetched
+  useEffect(() => {
+    if (!isUserLoading && userData?.data?.role === "ADMIN") {
+      navigate("/dashboard/admin/test");
+    }
+  }, [userData, isUserLoading, navigate]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    SignUpMutation.mutate(formData, {
-      onSuccess(data, variables, context) {
+    LoginMutation.mutate(formData, {
+      onSuccess: () => {
         setToast({
-          message: "Account created successfully",
+          message: "Login successful",
           open: true,
           severity: "success",
         });
         setLoading(false);
       },
-      onError(error) {
-        if (error) {
-          setToast({
-            message: "Failed to create account",
-            open: true,
-            severity: "error",
-          });
-          setLoading(false);
-        }
+      onError: (error) => {
+        console.error("Login error:", error);
+        setToast({
+          message: "Failed to log in",
+          open: true,
+          severity: "error",
+        });
+        setLoading(false);
       },
     });
-    // setTimeout(() => {
-    //   setLoading(false);
-    //   setToastOpen(true);
-    //   console.log("Form submitted:", formData);
-    // }, 1500);
   };
+
+  const handleCloseToast = () => {
+    setToast({ ...toast, open: false });
+  };
+
+  // ⏳ Show loading while we check user status
+  if (isUserLoading) {
+    return (
+      <ThemeProvider theme={darkTheme}>
+        <Box textAlign="center" mt={6}>
+          <Typography>Loading...</Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  // 🔒 Don't show login form if user is already logged in
+  if (userData?.data?.role === "ADMIN") {
+    return null; // Or return a loading spinner until navigation kicks in
+  }
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -128,31 +111,11 @@ const SignUp = () => {
         <Container maxWidth="sm" sx={{ py: 6 }}>
           <GlassPaper>
             <Typography variant="h4" align="center" gutterBottom>
-              Create Your Account
+              Login
             </Typography>
 
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="firstName"
-                    label="First Name"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="lastName"
-                    label="Last Name"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
                 <Grid item xs={12}>
                   <TextField
                     name="email"
@@ -182,7 +145,7 @@ const SignUp = () => {
                   type="submit"
                   variant="contained"
                   color="primary"
-                  disabled={loading}
+                  disabled={loading || LoginMutation.isPending}
                   sx={{
                     px: 5,
                     py: 1.5,
@@ -195,12 +158,15 @@ const SignUp = () => {
                     },
                   }}
                 >
-                  {loading ? "Creating..." : "Register"}
+                  {loading || LoginMutation.isPending
+                    ? "Logging In..."
+                    : "Login"}
                 </Button>
               </Box>
-              <Box display={"flex"} justifyContent={"space-between"} mt={3}>
+
+              <Box display="flex" justifyContent="space-between" mt={3}>
                 <div style={{ opacity: 0 }} />
-                <Link to={"/login"}>Login</Link>
+                <Link to="/register">Don't have an account? Register</Link>
               </Box>
             </form>
           </GlassPaper>
@@ -227,4 +193,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default Login;
