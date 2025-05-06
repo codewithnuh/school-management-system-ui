@@ -6,11 +6,16 @@ import {
   styled,
   ThemeProvider,
   Box,
+  CircularProgress,
+  Alert,
+  Button,
 } from "@mui/material";
 import { darkTheme } from "../../theme/darkTheme";
 import { useGetSchoolAdminId } from "../../services/queries/school";
 import { useUser } from "../../hooks/useUser";
 import { useNavigate } from "react-router";
+import { useEffect } from "react";
+import { Add } from "@mui/icons-material";
 
 // --- Glass-styled container ---
 const GlassCard = styled(Paper)(({ theme }) => ({
@@ -21,26 +26,70 @@ const GlassCard = styled(Paper)(({ theme }) => ({
   border: "1px solid rgba(255, 255, 255, 0.08)",
   backdropFilter: "blur(10px)",
   height: "100%",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "translateY(-4px)",
+    boxShadow: "0 12px 24px rgba(0, 0, 0, 0.5)",
+  },
 }));
 
 const AdminDashboardHome = () => {
   const navigate = useNavigate();
   const { data: userData } = useUser();
-  console.log(userData);
-  const adminId = userData?.data.role == "ADMIN" ? userData.data.user.id : "";
-  if (adminId == "") navigate("/login");
-  console.log(adminId);
-  const { data } = useGetSchoolAdminId(adminId as number, !!adminId);
-  console.log(data);
-  // Mock data (replace with actual data from API later)
-  const schoolData = {
-    name: "Bright Future Academy",
-    brandColor: "#00C9A7",
-    students: 420,
-    teachers: 28,
-    classes: 12,
-    sections: 36,
+
+  // Redirect non-admins
+  const adminId = userData?.data.role === "ADMIN" ? userData.data.user.id : "";
+  useEffect(() => {
+    if (!adminId) {
+      navigate("/login");
+    }
+  }, [adminId, navigate]);
+
+  // Fetch school data
+  const {
+    data: SchoolData,
+    error,
+    isLoading,
+  } = useGetSchoolAdminId(adminId as number, !!adminId);
+
+  // Safely extract school data
+  const school = SchoolData?.data || {
+    name: "Loading...",
+    brandColor: "#ffffff33",
+    students: 0,
+    teachers: 0,
+    classes: 0,
+    sections: 0,
   };
+
+  // Conditional rendering based on loading/error states
+  if (isLoading) {
+    return (
+      <ThemeProvider theme={darkTheme}>
+        <Container maxWidth="lg" sx={{ py: 6, textAlign: "center" }}>
+          <CircularProgress />
+          <Typography variant="h6" mt={2}>
+            Loading school information...
+          </Typography>
+        </Container>
+      </ThemeProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemeProvider theme={darkTheme}>
+        <Container maxWidth="lg" sx={{ py: 6, textAlign: "center" }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Failed to load school data. Please try again later.
+          </Alert>
+          <Button variant="contained" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </Container>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -56,7 +105,7 @@ const AdminDashboardHome = () => {
               <Typography variant="h6" gutterBottom>
                 School Name
               </Typography>
-              <Typography variant="body1">{schoolData.name}</Typography>
+              <Typography variant="body1">{school.name}</Typography>
               <Box mt={2}>
                 <Typography variant="h6" gutterBottom>
                   Brand Color
@@ -66,8 +115,13 @@ const AdminDashboardHome = () => {
                     width: 40,
                     height: 40,
                     borderRadius: "50%",
-                    backgroundColor: schoolData.brandColor,
+                    backgroundColor: school.brandColor,
                     border: "2px solid white",
+                    boxShadow: `0 0 8px ${school.brandColor}`,
+                    transition: "box-shadow 0.3s ease",
+                    "&:hover": {
+                      boxShadow: `0 0 16px ${school.brandColor}`,
+                    },
                   }}
                 />
               </Box>
@@ -80,7 +134,7 @@ const AdminDashboardHome = () => {
               <Typography variant="h6" gutterBottom>
                 Students Enrolled
               </Typography>
-              <Typography variant="h4">{schoolData.students}</Typography>
+              <Typography variant="h4">{school.students}</Typography>
             </GlassCard>
           </Grid>
 
@@ -90,7 +144,14 @@ const AdminDashboardHome = () => {
               <Typography variant="h6" gutterBottom>
                 Teachers
               </Typography>
-              <Typography variant="h4">{schoolData.teachers}</Typography>
+              <Button
+                sx={{
+                  color: "white",
+                  background: "green",
+                }}
+              >
+                <Add /> Teacher
+              </Button>
             </GlassCard>
           </Grid>
 
@@ -100,7 +161,7 @@ const AdminDashboardHome = () => {
               <Typography variant="h6" gutterBottom>
                 Total Classes
               </Typography>
-              <Typography variant="h4">{schoolData.classes}</Typography>
+              <Typography variant="h4">{school.classes}</Typography>
             </GlassCard>
           </Grid>
 
@@ -110,7 +171,7 @@ const AdminDashboardHome = () => {
               <Typography variant="h6" gutterBottom>
                 Total Sections
               </Typography>
-              <Typography variant="h4">{schoolData.sections}</Typography>
+              <Typography variant="h4">{school.sections}</Typography>
             </GlassCard>
           </Grid>
         </Grid>

@@ -44,6 +44,7 @@ import CreateSchool from "./components/forms/SchoolCreation.tsx";
 import ActivationStatusPage from "./components/ActivationStatusPage.tsx";
 // import { AdminDashboardLayout } from "./components/dashboards/AdminDashboardLayout.tsx";
 import DashboardLayout from "./components/layout/DashboardLayout.tsx";
+import TeacherRegistrationPage from "./pages/TeacherRegistrationPage.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -63,6 +64,10 @@ createRoot(document.getElementById("root")!).render(
             <Route
               path="/dashboard/admin/school/create"
               element={<CreateSchool />}
+            />
+            <Route
+              path="/dashboard/admin/test"
+              element={<TeacherRegistrationPage />}
             />
             <Route
               path="/dashboard/admin/activate"

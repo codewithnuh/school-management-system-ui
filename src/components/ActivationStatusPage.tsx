@@ -36,7 +36,7 @@ const ActivationStatusPage = () => {
   console.log(data);
   useEffect(() => {
     if (data?.data?.isSubscriptionActive) {
-      navigate("/dashboard/admin/test");
+      navigate("/dashboard/admin");
     }
   }, [data, navigate]);
 

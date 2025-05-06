@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useStudentRegistration } from "../../services/queries/studentRegisteration";
 import {
   Box,
   Button,
@@ -20,7 +21,6 @@ import {
   AlertTitle,
   Snackbar,
 } from "@mui/material";
-import { useStudentRegistration } from "../../services/queries/studentRegisteration";
 import { useClasses } from "../../services/queries/classes";
 
 // Define form schema using Zod
@@ -87,6 +87,7 @@ const userFormSchema = z.object({
     }),
   classId: z.number({ required_error: "Class is required" }),
   sectionId: z.number({ required_error: "Section is required" }).optional(),
+  schoolId: z.number().optional(),
   enrollmentDate: z.string().min(1, { message: "Enrollment date is required" }),
   photo: z.string().optional(),
   transportation: z.string().optional(),
@@ -107,7 +108,7 @@ type AlertState = {
 };
 
 const UserRegistrationForm = () => {
-  const { mutate, isPending } = useStudentRegisteration();
+  const { mutate, isPending } = useStudentRegistration();
   const { data, isLoading, error } = useClasses();
   console.log("data", data);
   // Safely access data with fallback

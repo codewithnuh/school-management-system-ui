@@ -1,5 +1,4 @@
 "use client";
-
 import type React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +8,6 @@ import {
   ApplicationStatus,
   Gender,
 } from "../../schema";
-
 // Material UI imports
 import {
   TextField,
@@ -38,11 +36,15 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { uploadDirect } from "@uploadcare/upload-client";
 import { useState } from "react";
-import { useRegisterTeacher } from "../../services/queries/teacherReegisteration";
+import { useRegisterTeacher } from "../../services/queries/teacherRegistration";
 import { useSubjects } from "../../services/queries/subject";
 
+// Import your dark theme
+import { darkTheme } from "../../theme/darkTheme";
+import SchoolHeader from "../headers/SchoolHeader";
+
 // Define the public key for Uploadcare
-const UPLOADCARE_PUBLIC_KEY = "39d5faf5f775c673cb85";
+const UPLOADCARE_PUBLIC_KEY = "39d5faf5f775c673cb85"; // Replace with env var in production
 
 // Interface for the file upload states
 interface FileUploads {
@@ -57,6 +59,13 @@ interface FileUploadingStates {
   photo: boolean;
   verificationDocument: boolean;
 }
+
+// Mock school data - replace this with real API call if needed
+const mockSchool = {
+  name: "Green Valley High School",
+  brandColor: "#1e88e5", // Example color
+  logo: "https://example.com/school-logo.png", // Placeholder image
+};
 
 function TeacherRegistrationForm() {
   const {
@@ -106,7 +115,6 @@ function TeacherRegistrationForm() {
     setToast({ ...toast, open: false });
   };
 
-  console.log(files);
   // Handle form submission
   const onSubmit = async (data: TeacherSchemaType) => {
     try {
@@ -117,7 +125,6 @@ function TeacherRegistrationForm() {
         photo: files.photo,
         verificationDocument: files.verificationDocument,
       };
-
       registerTeacherMutation.mutate(fullData, {
         onSuccess: (response) => {
           // Show success toast when registration is successful
@@ -126,7 +133,6 @@ function TeacherRegistrationForm() {
             message: "Teacher registration submitted successfully!",
             severity: "success",
           });
-
           // Reset form after successful submission
           reset();
           setFiles({
@@ -145,22 +151,6 @@ function TeacherRegistrationForm() {
           });
         },
       });
-
-      // Here you would typically send the data to your API
-      // const response = await fetch('/api/teachers', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(fullData),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Failed to submit form');
-      // }
-
-      // const result = await response.json();
-      // Handle successful submission
     } catch (error) {
       console.error("Error submitting form:", error);
       // Handle error - show notification to user
@@ -179,26 +169,22 @@ function TeacherRegistrationForm() {
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-
       try {
         // Set loading state for this specific field
         setIsUploading((prev) => ({
           ...prev,
           [fieldName]: true,
         }));
-
         // Upload file to Uploadcare
         const uploadedFile = await uploadDirect(file, {
           publicKey: UPLOADCARE_PUBLIC_KEY,
           store: "auto",
         });
-
         // Update file URL in state
         setFiles((prev) => ({
           ...prev,
           [fieldName]: uploadedFile.cdnUrl || "",
         }));
-        console.log(files);
         // Set the value in the form
         setValue(fieldName as any, uploadedFile.cdnUrl || "");
       } catch (error) {
@@ -221,10 +207,10 @@ function TeacherRegistrationForm() {
 
   return (
     <Container maxWidth="lg">
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        Teacher Registration
-      </Typography>
+      {/* School Header */}
+      <SchoolHeader school={mockSchool} />
 
+      {/* Registration Form */}
       <Card elevation={3}>
         <CardContent>
           <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -234,7 +220,6 @@ function TeacherRegistrationForm() {
                 <Typography variant="h6" gutterBottom>
                   Personal Information
                 </Typography>
-
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <Controller
@@ -251,7 +236,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="middleName"
@@ -261,7 +245,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="lastName"
@@ -277,7 +260,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <LocalizationProvider dateAdapter={AdapterDateFns}>
                       <Controller
@@ -287,9 +269,7 @@ function TeacherRegistrationForm() {
                           <DatePicker
                             label="Date of Birth *"
                             value={field.value}
-                            onChange={(date) => {
-                              field.onChange(date);
-                            }}
+                            onChange={(date) => field.onChange(date)}
                             slotProps={{
                               textField: {
                                 fullWidth: true,
@@ -302,7 +282,6 @@ function TeacherRegistrationForm() {
                       />
                     </LocalizationProvider>
                   </Grid>
-
                   <Grid item xs={12}>
                     <FormControl error={!!errors.gender} fullWidth>
                       <FormLabel id="gender-label">Gender *</FormLabel>
@@ -338,7 +317,6 @@ function TeacherRegistrationForm() {
                       )}
                     </FormControl>
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="nationality"
@@ -356,7 +334,6 @@ function TeacherRegistrationForm() {
                 <Typography variant="h6" gutterBottom>
                   Contact Information
                 </Typography>
-
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <Controller
@@ -374,7 +351,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="phoneNo"
@@ -390,7 +366,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="address"
@@ -408,7 +383,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="currentAddress"
@@ -424,7 +398,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="cnic"
@@ -440,7 +413,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="password"
@@ -465,7 +437,6 @@ function TeacherRegistrationForm() {
                 <Typography variant="h6" gutterBottom>
                   Professional Information
                 </Typography>
-
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <Controller
@@ -482,7 +453,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="specialization"
@@ -496,7 +466,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="experienceYears"
@@ -517,7 +486,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <LocalizationProvider dateAdapter={AdapterDateFns}>
                       <Controller
@@ -527,9 +495,7 @@ function TeacherRegistrationForm() {
                           <DatePicker
                             label="Joining Date *"
                             value={field.value}
-                            onChange={(date) => {
-                              field.onChange(date);
-                            }}
+                            onChange={(date) => field.onChange(date)}
                             slotProps={{
                               textField: {
                                 fullWidth: true,
@@ -542,7 +508,6 @@ function TeacherRegistrationForm() {
                       />
                     </LocalizationProvider>
                   </Grid>
-
                   <Grid item xs={12}>
                     <FormControl fullWidth error={!!errors.subjectId}>
                       <InputLabel id="subject-select-label">
@@ -593,7 +558,6 @@ function TeacherRegistrationForm() {
                       )}
                     </FormControl>
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="emergencyContactName"
@@ -609,7 +573,6 @@ function TeacherRegistrationForm() {
                       )}
                     />
                   </Grid>
-
                   <Grid item xs={12}>
                     <Controller
                       name="emergencyContactNumber"
@@ -629,12 +592,11 @@ function TeacherRegistrationForm() {
               </Grid>
             </Grid>
 
-            {/* File Uploads */}
+            {/* File Upload Section */}
             <Box mt={4}>
               <Typography variant="h6" gutterBottom>
                 Documents
               </Typography>
-
               <Grid container spacing={3}>
                 <Grid item xs={12} md={4}>
                   <Box>
@@ -675,7 +637,6 @@ function TeacherRegistrationForm() {
                     )}
                   </Box>
                 </Grid>
-
                 <Grid item xs={12} md={4}>
                   <Box>
                     <InputLabel htmlFor="verification-doc-upload">
@@ -717,7 +678,6 @@ function TeacherRegistrationForm() {
                     )}
                   </Box>
                 </Grid>
-
                 <Grid item xs={12} md={4}>
                   <Box>
                     <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
@@ -725,7 +685,11 @@ function TeacherRegistrationForm() {
                       variant="outlined"
                       component="label"
                       fullWidth
-                      sx={{ mt: 1, height: 56, textTransform: "none" }}
+                      sx={{
+                        mt: 1,
+                        height: 56,
+                        textTransform: "none",
+                      }}
                       color={errors.cvPath ? "error" : "primary"}
                       disabled={isUploading.cvPath}
                       startIcon={
@@ -765,6 +729,7 @@ function TeacherRegistrationForm() {
               </Grid>
             </Box>
 
+            {/* Submit Button */}
             <Box mt={4} display="flex" justifyContent="flex-end">
               <Button
                 type="submit"

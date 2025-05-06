@@ -5,7 +5,12 @@ import TeacherRegistrationForm from "../components/forms/TeacherRegistrationForm
 const TeacherRegistrationPage: React.FC = () => {
   return (
     <Container maxWidth="lg">
-      <Box py={4}>
+      <Box
+        py={4}
+        sx={{
+          color: "#fff",
+        }}
+      >
         <Typography variant="h3" component="h1" gutterBottom align="center">
           Teacher Registration
         </Typography>

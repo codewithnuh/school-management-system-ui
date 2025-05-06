@@ -52,7 +52,7 @@ const Login = () => {
   // 🔁 Handle redirection only after user data is fetched
   useEffect(() => {
     if (!isUserLoading && userData?.data?.role === "ADMIN") {
-      navigate("/dashboard/admin/test");
+      navigate("/dashboard/admin/activate");
     }
   }, [userData, isUserLoading, navigate]);
 
