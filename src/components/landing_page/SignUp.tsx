@@ -106,8 +106,9 @@ const SignUp = () => {
       },
       onError(error) {
         if (error) {
+          console.log(error);
           setToast({
-            message: "Failed to create account",
+            message: error.response.data.error,
             open: true,
             severity: "error",
           });

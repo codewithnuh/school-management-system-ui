@@ -129,6 +129,9 @@ const Header = () => {
                   xs: isOnHomePage ? "none" : "inline-flex",
                   md: "inline-flex",
                 },
+                ":hover": {
+                  color: "#fff",
+                },
                 borderRadius: "20px", // Rounded corners
                 px: 3, // Padding horizontal
                 flexShrink: 0, // Prevent button from shrinking

@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import Sidebar from "../globals/Sidebar";
+import Sidebar from "../../globals/Sidebar";
 
 export const AdminDashboardLayout = ({
   children,

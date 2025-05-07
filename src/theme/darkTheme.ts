@@ -1,5 +1,4 @@
 import { createTheme } from "@mui/material";
-
 export const darkTheme = createTheme({
   palette: {
     mode: "dark",
@@ -11,6 +10,22 @@ export const darkTheme = createTheme({
     text: { primary: "#ffffff" },
   },
   components: {
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          color: "white",
+          ":focus": {
+            color: "white",
+          },
+        },
+        focused: {
+          color: "white",
+        },
+        colorSecondary: {
+          color: "white",
+        },
+      },
+    },
     MuiPaper: {
       styleOverrides: {
         root: {

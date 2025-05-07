@@ -10,10 +10,10 @@ import {
   Alert,
   Button,
 } from "@mui/material";
-import { darkTheme } from "../../theme/darkTheme";
-import { useGetSchoolAdminId } from "../../services/queries/school";
-import { useUser } from "../../hooks/useUser";
-import { useNavigate } from "react-router";
+import { darkTheme } from "../../../theme/darkTheme";
+import { useGetSchoolAdminId } from "../../../services/queries/school";
+import { useUser } from "../../../hooks/useUser";
+import { Link, useNavigate } from "react-router";
 import { useEffect } from "react";
 import { Add } from "@mui/icons-material";
 
@@ -93,7 +93,7 @@ const AdminDashboardHome = () => {
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Container maxWidth="lg" sx={{ py: 1 }}>
         <Typography variant="h4" gutterBottom>
           Welcome, Admin
         </Typography>
@@ -150,7 +150,11 @@ const AdminDashboardHome = () => {
                   background: "green",
                 }}
               >
-                <Add /> Teacher
+                <Link to={"/dashboard/admin/teacher/create"}>
+                  <span style={{ display: "flex" }}>
+                    <Add /> Teacher
+                  </span>
+                </Link>
               </Button>
             </GlassCard>
           </Grid>
@@ -172,6 +176,38 @@ const AdminDashboardHome = () => {
                 Total Sections
               </Typography>
               <Typography variant="h4">{school.sections}</Typography>
+            </GlassCard>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <GlassCard>
+              <Typography variant="h6" gutterBottom>
+                Teacher Registration Link
+              </Typography>
+              <Button
+                color="primary"
+                variant="contained"
+                sx={{
+                  background: "green",
+                }}
+              >
+                Generate
+              </Button>
+            </GlassCard>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <GlassCard>
+              <Typography variant="h6" gutterBottom>
+                Student Registration Link
+              </Typography>
+              <Button
+                color="primary"
+                variant="contained"
+                sx={{
+                  background: "green",
+                }}
+              >
+                Generate
+              </Button>
             </GlassCard>
           </Grid>
         </Grid>

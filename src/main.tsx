@@ -11,7 +11,7 @@ import theme from "./themes/theme.ts";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import Header from "./components/globals/Header.tsx";
 import SignUp from "./components/landing_page/SignUp.tsx";
-import AdminDashboardHome from "./components/dashboards/AdminDashboardHome.tsx";
+import AdminDashboardHome from "./components/dashboards/admin/AdminDashboardHome.tsx";
 import ForgotPasswordPage from "./components/landing_page/ForgotPassword.tsx";
 import TeacherRegistrationForm from "./components/forms/TeacherRegistrationForm.tsx";
 import SignupForm from "./components/landing_page/SignUp.tsx";
@@ -21,16 +21,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // Optional dev tools
 import { queryClient } from "./utils/queryClient.ts";
 import { RoleGuard } from "./components/RoleGuard.tsx";
-import Admin from "./components/dashboards/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import ApplicationsTab from "./components/layout/Application.tsx";
-import StudentApplicationsTab from "./components/layout/StudentApplicationsTab.tsx";
-import CreateClassForm from "./components/layout/CreateClassForm.tsx";
-import ClassesPage from "./pages/ClassesPage";
-import UpdateClassForm from "./components/layout/UpdateClassForm.tsx";
-
-import TimetableGenerator from "./pages/TimetableGenerator.tsx";
-import TimetableView from "./components/timetable/TimetableView.tsx";
 import UserRegistrationForm from "./components/forms/UserRegistrationForm.tsx";
 import SampleUploadForm from "./components/forms/SampleUploadForm.tsx";
 import Teacher from "./components/dashboards/Teacher.tsx";
@@ -44,7 +35,9 @@ import CreateSchool from "./components/forms/SchoolCreation.tsx";
 import ActivationStatusPage from "./components/ActivationStatusPage.tsx";
 // import { AdminDashboardLayout } from "./components/dashboards/AdminDashboardLayout.tsx";
 import DashboardLayout from "./components/layout/DashboardLayout.tsx";
-import TeacherRegistrationPage from "./pages/TeacherRegistrationPage.tsx";
+// import TeacherRegistrationPage from "./pages/TeacherRegistrationPage.tsx";
+import TeacherCreation from "./components/forms/TeacherCreation.tsx";
+import AdminDashboardLinks from "./components/dashboards/admin/AdminDashboardLinks.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -65,9 +58,10 @@ createRoot(document.getElementById("root")!).render(
               path="/dashboard/admin/school/create"
               element={<CreateSchool />}
             />
+
             <Route
-              path="/dashboard/admin/test"
-              element={<TeacherRegistrationPage />}
+              path="/dashboard/admin/teacher/create"
+              element={<TeacherCreation />}
             />
             <Route
               path="/dashboard/admin/activate"
@@ -78,6 +72,10 @@ createRoot(document.getElementById("root")!).render(
               element={<DashboardLayout role="admin" />}
             >
               <Route index element={<AdminDashboardHome />} />
+              <Route
+                path="registration-links"
+                element={<AdminDashboardLinks />}
+              />
               <Route path="students" element={<h1>STUDENT PAGE</h1>} />
               <Route path="timetable" element={<h1>TIMETABLE PAGE</h1>} />
             </Route>
