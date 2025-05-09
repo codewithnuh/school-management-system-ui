@@ -36,10 +36,10 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { uploadDirect } from "@uploadcare/upload-client";
 import { useState } from "react";
-import { useRegisterTeacher } from "../../services/queries/teacherRegistration";
 import { useSubjects } from "../../services/queries/subject";
 import { useUser } from "../../hooks/useUser";
 import { useGetSchoolAdminId } from "../../services/queries/school";
+import { useCreateTeacher } from "../../services/queries/teachers";
 // Define the public key for Uploadcare
 const UPLOADCARE_PUBLIC_KEY = import.meta.env
   .VITE_REACT_APP_UPLOADCARE_PUBLIC_KEY; // Replace with env var in production
@@ -67,7 +67,6 @@ const mockSchool = {
 
 function TeacherCreation() {
   const {
-    register,
     handleSubmit,
     control,
     formState: { errors, isSubmitting },
@@ -86,7 +85,7 @@ function TeacherCreation() {
 
   // Fetch subjects data
   const { data: subjects = [], isLoading: subjectsLoading } = useSubjects();
-  const registerTeacherMutation = useRegisterTeacher();
+  const createTeacherMutation = useCreateTeacher();
   const { data: userData } = useUser();
   const adminId = userData?.data.user.id;
   const { data: school } = useGetSchoolAdminId(adminId!, !!adminId);
@@ -128,12 +127,12 @@ function TeacherCreation() {
         photo: files.photo,
         verificationDocument: files.verificationDocument,
       };
-      registerTeacherMutation.mutate(fullData, {
+      createTeacherMutation.mutate(fullData, {
         onSuccess: (response) => {
           // Show success toast when registration is successful
           setToast({
             open: true,
-            message: "Teacher registration submitted successfully!",
+            message: "Teacher created successfully!",
             severity: "success",
           });
           // Reset form after successful submission
@@ -268,7 +267,7 @@ function TeacherCreation() {
                         render={({ field }) => (
                           <DatePicker
                             label="Date of Birth *"
-                            value={field.value}
+                            value={field.value as Date}
                             onChange={(date) => field.onChange(date)}
                             slotProps={{
                               textField: {
@@ -494,7 +493,7 @@ function TeacherCreation() {
                         render={({ field }) => (
                           <DatePicker
                             label="Joining Date *"
-                            value={field.value}
+                            value={field.value as Date}
                             onChange={(date) => field.onChange(date)}
                             slotProps={{
                               textField: {
@@ -747,7 +746,7 @@ function TeacherCreation() {
                   ) : null
                 }
               >
-                {isSubmitting ? "Submitting..." : "Submit Application"}
+                {isSubmitting ? "Creating..." : "Create Teacher"}
               </Button>
             </Box>
           </Box>

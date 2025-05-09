@@ -38,7 +38,7 @@ type SidebarProps = {
 };
 
 const Sidebar = ({ role }: SidebarProps) => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
   const toggleSidebar = () => setOpen(!open);
@@ -71,7 +71,7 @@ const Sidebar = ({ role }: SidebarProps) => {
   const menuItems = [...commonItems, ...(roleItems[role] || [])];
 
   return (
-    <GlassSidebar sx={{ width: open ? 240 : 72 }}>
+    <GlassSidebar sx={{ width: open ? 240 : 82 }}>
       <Box
         display="flex"
         alignItems="center"
