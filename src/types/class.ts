@@ -10,6 +10,7 @@ export interface Class {
   periodLength: number;
   workingDays: string[];
   subjectIds: number[];
+  schoolId: number;
   sections: Section[];
   examId: null | number; // Assuming it can be null or a number
   classId: null | number; // Assuming it can be null or a number
@@ -52,6 +53,7 @@ interface ClassData {
   workingDays?: string[];
   subjectIds?: number[];
   description?: string;
+  schoolId: number;
   createdAt?: string;
   updatedAt?: string;
   examId: null | number; // Assuming it can be null or a number

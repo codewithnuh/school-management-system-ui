@@ -19,6 +19,7 @@ import {
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
   LinkSharp,
+  Class,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router";
 import { useState } from "react";
@@ -55,8 +56,17 @@ const Sidebar = ({ role }: SidebarProps) => {
         icon: <LinkSharp />,
         path: "/dashboard/admin/registration-links",
       },
-      { label: "Teachers", icon: <People />, path: "/admin/teachers" },
-      { label: "Settings", icon: <Settings />, path: "/admin/settings" },
+      {
+        label: "Teachers",
+        icon: <People />,
+        path: "/dashboard/admin/teachers",
+      },
+      { label: "Classes", icon: <Class />, path: "/dashboard/admin/classes" },
+      {
+        label: "Settings",
+        icon: <Settings />,
+        path: "/dashboard/admin/settings",
+      },
     ],
     teacher: [
       { label: "Students", icon: <People />, path: "/teacher/students" },

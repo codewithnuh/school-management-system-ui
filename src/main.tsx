@@ -38,6 +38,7 @@ import DashboardLayout from "./components/layout/DashboardLayout.tsx";
 // import TeacherRegistrationPage from "./pages/TeacherRegistrationPage.tsx";
 import TeacherCreation from "./components/forms/TeacherCreation.tsx";
 import AdminDashboardLinks from "./components/dashboards/admin/AdminDashboardLinks.tsx";
+import CreateClassForm from "./components/layout/CreateClassForm.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -76,6 +77,7 @@ createRoot(document.getElementById("root")!).render(
                 path="registration-links"
                 element={<AdminDashboardLinks />}
               />
+              <Route path="classes" element={<CreateClassForm />} />
               <Route path="students" element={<h1>STUDENT PAGE</h1>} />
               <Route path="timetable" element={<h1>TIMETABLE PAGE</h1>} />
             </Route>
