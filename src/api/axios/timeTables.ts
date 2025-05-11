@@ -6,8 +6,8 @@ import {
 
 export const generateTimeTableOfAClass = async (
   classId: number
-): Promise<TimetableGenerationResponse> => {
-  const response = await axiosInstance.post<TimetableGenerationResponse>(
+) => {
+  const response = await axiosInstance.post(
     `timetables/generate/${classId}`
   );
   return response.data;

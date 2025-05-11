@@ -8,6 +8,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import { motion } from "motion/react";
 import { useRef } from "react";
 import { useGetStudentRegistrationLink } from "../../services/queries/teachers";
+import { useClasses } from "../../services/queries/classes";
 
 // Wrap MUI components with motion
 const MotionBox = motion(Box);
@@ -16,8 +17,7 @@ const MotionButton = motion(Button);
 
 const Hero = () => {
   const constraintsRef = useRef(null);
-  const { data, error } = useGetStudentRegistrationLink();
-  console.log({ data, error });
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },

@@ -9,6 +9,8 @@ import {
   styled,
   Divider,
   Tooltip,
+  Collapse,
+  ListSubheader,
 } from "@mui/material";
 import {
   Home,
@@ -20,9 +22,12 @@ import {
   ChevronLeft as ChevronLeftIcon,
   LinkSharp,
   Class,
+  ExpandMore,
+  ExpandLess,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router";
-import { useState } from "react";
+
+import React, { useState } from "react";
 
 const GlassSidebar = styled(Box)(({ theme }) => ({
   height: "100vh",
@@ -38,47 +43,121 @@ type SidebarProps = {
   role: "admin" | "owner" | "teacher";
 };
 
+// Define menu structure with submenus
+const menuStructure = {
+  common: [
+    { label: "Dashboard", icon: <Home />, path: "/dashboard/admin/" },
+    {
+      label: "Timetable",
+      icon: <CalendarMonth />,
+      submenu: [
+        {
+          label: "View Timetable",
+          path: "/dashboard/admin/timetable/view",
+        },
+      ],
+    },
+  ],
+  admin: [
+    {
+      label: "Registration",
+      path: "/dashboard/admin/registration-links",
+      icon: <LinkSharp />,
+    },
+    {
+      label: "Staff",
+      icon: <People />,
+      submenu: [
+        { label: "Teachers", path: "/dashboard/admin/teachers" },
+        { label: "Students", path: "/dashboard/admin/students" },
+      ],
+    },
+    {
+      label: "School",
+      icon: <School />,
+      submenu: [
+        { label: "Manage Classes", path: "/dashboard/admin/classes" },
+        { label: "Sections", path: "/dashboard/admin/sections" },
+        { label: "Subjects", path: "/dashboard/admin/subjects" },
+      ],
+    },
+    {
+      label: "Settings",
+      icon: <Settings />,
+      path: "/dashboard/admin/settings",
+    },
+  ],
+  teacher: [
+    {
+      label: "Students",
+      icon: <People />,
+      path: "/teacher/students",
+    },
+    {
+      label: "Class",
+      icon: <Class />,
+      submenu: [
+        { label: "View Timetable", path: "/timetable/view" },
+        { label: "Attendance", path: "/teacher/attendance" },
+        { label: "Grades", path: "/teacher/grades" },
+      ],
+    },
+    {
+      label: "Settings",
+      icon: <Settings />,
+      path: "/teacher/settings",
+    },
+  ],
+  owner: [
+    {
+      label: "My Schools",
+      icon: <School />,
+      path: "/owner/schools",
+    },
+    {
+      label: "Staff",
+      icon: <People />,
+      submenu: [
+        { label: "Admins", path: "/owner/staff/admins" },
+        { label: "Teachers", path: "/owner/staff/teachers" },
+      ],
+    },
+    {
+      label: "Settings",
+      icon: <Settings />,
+      path: "/owner/settings",
+    },
+  ],
+};
+
+type MenuItemType = {
+  label: string;
+  icon: React.ReactNode;
+  path?: string;
+  submenu?: Array<{ label: string; path: string }>;
+};
+
 const Sidebar = ({ role }: SidebarProps) => {
   const [open, setOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const toggleSidebar = () => setOpen(!open);
 
-  const commonItems = [
-    { label: "Dashboard", icon: <Home />, path: "/dashboard" },
-    { label: "Timetable", icon: <CalendarMonth />, path: "/timetable" },
-  ];
+  const handleMenuClick = (label: string) => {
+    if (
+      menuStructure[role].find((item) => item.label === label)?.submenu ||
+      menuStructure.common.find((item) => item.label === label)?.submenu
+    ) {
+      setExpandedMenu(expandedMenu === label ? null : label);
+    } else {
+      const path =
+        menuStructure[role].find((item) => item.label === label)?.path ||
+        menuStructure.common.find((item) => item.label === label)?.path;
 
-  const roleItems = {
-    admin: [
-      {
-        label: "Registration Links",
-        icon: <LinkSharp />,
-        path: "/dashboard/admin/registration-links",
-      },
-      {
-        label: "Teachers",
-        icon: <People />,
-        path: "/dashboard/admin/teachers",
-      },
-      { label: "Classes", icon: <Class />, path: "/dashboard/admin/classes" },
-      {
-        label: "Settings",
-        icon: <Settings />,
-        path: "/dashboard/admin/settings",
-      },
-    ],
-    teacher: [
-      { label: "Students", icon: <People />, path: "/teacher/students" },
-      { label: "Settings", icon: <Settings />, path: "/teacher/settings" },
-    ],
-    owner: [
-      { label: "My Schools", icon: <School />, path: "/owner/schools" },
-      { label: "Staff", icon: <People />, path: "/owner/staff" },
-    ],
+      if (path) navigate(path);
+    }
   };
-
-  const menuItems = [...commonItems, ...(roleItems[role] || [])];
 
   return (
     <GlassSidebar sx={{ width: open ? 240 : 82 }}>
@@ -99,23 +178,112 @@ const Sidebar = ({ role }: SidebarProps) => {
         </IconButton>
       </Box>
       <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.1)", mb: 1 }} />
+
       <List>
-        {menuItems.map(({ label, icon, path }) => (
-          <Tooltip key={label} title={!open ? label : ""} placement="right">
-            <ListItemButton onClick={() => navigate(path)} sx={{ px: 2 }}>
-              <ListItemIcon sx={{ color: "#fff", minWidth: 36 }}>
-                {icon}
-              </ListItemIcon>
-              {open && (
-                <ListItemText
-                  primary={label}
-                  primaryTypographyProps={{
-                    sx: { color: "#fff", fontSize: "0.95rem" },
-                  }}
-                />
-              )}
-            </ListItemButton>
-          </Tooltip>
+        {/* Common Items */}
+        {menuStructure.common.map(({ label, icon, path, submenu }) => (
+          <React.Fragment key={label}>
+            <Tooltip title={!open ? label : ""} placement="right">
+              <ListItemButton
+                onClick={() => handleMenuClick(label)}
+                sx={{ px: 2 }}
+              >
+                <ListItemIcon sx={{ color: "#fff", minWidth: 36 }}>
+                  {icon}
+                </ListItemIcon>
+                {open && (
+                  <ListItemText
+                    primary={label}
+                    primaryTypographyProps={{
+                      sx: { color: "#fff", fontSize: "0.95rem" },
+                    }}
+                  />
+                )}
+                {open &&
+                  submenu &&
+                  (expandedMenu === label ? <ExpandLess /> : <ExpandMore />)}
+              </ListItemButton>
+            </Tooltip>
+
+            {/* Submenu */}
+            {submenu && (
+              <Collapse
+                in={open && expandedMenu === label}
+                timeout="auto"
+                unmountOnExit
+              >
+                <List component="div" disablePadding>
+                  {submenu.map((subItem) => (
+                    <ListItemButton
+                      key={subItem.label}
+                      sx={{ pl: 4, pr: 2, py: 0.7 }}
+                      onClick={() => navigate(subItem.path)}
+                    >
+                      <ListItemText
+                        primary={subItem.label}
+                        primaryTypographyProps={{
+                          sx: { color: "#ccc", fontSize: "0.85rem" },
+                        }}
+                      />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </Collapse>
+            )}
+          </React.Fragment>
+        ))}
+
+        {/* Role-Specific Items */}
+        {menuStructure[role].map(({ label, icon, path, submenu }) => (
+          <React.Fragment key={label}>
+            <Tooltip title={!open ? label : ""} placement="right">
+              <ListItemButton
+                onClick={() => handleMenuClick(label)}
+                sx={{ px: 2 }}
+              >
+                <ListItemIcon sx={{ color: "#fff", minWidth: 36 }}>
+                  {icon}
+                </ListItemIcon>
+                {open && (
+                  <ListItemText
+                    primary={label}
+                    primaryTypographyProps={{
+                      sx: { color: "#fff", fontSize: "0.95rem" },
+                    }}
+                  />
+                )}
+                {open &&
+                  submenu &&
+                  (expandedMenu === label ? <ExpandLess /> : <ExpandMore />)}
+              </ListItemButton>
+            </Tooltip>
+
+            {/* Submenu for role-specific items */}
+            {submenu && (
+              <Collapse
+                in={open && expandedMenu === label}
+                timeout="auto"
+                unmountOnExit
+              >
+                <List component="div" disablePadding>
+                  {submenu.map((subItem) => (
+                    <ListItemButton
+                      key={subItem.label}
+                      sx={{ pl: 4, pr: 2, py: 0.7 }}
+                      onClick={() => navigate(subItem.path)}
+                    >
+                      <ListItemText
+                        primary={subItem.label}
+                        primaryTypographyProps={{
+                          sx: { color: "#ccc", fontSize: "0.85rem" },
+                        }}
+                      />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </Collapse>
+            )}
+          </React.Fragment>
         ))}
       </List>
     </GlassSidebar>

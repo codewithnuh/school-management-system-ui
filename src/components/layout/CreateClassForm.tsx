@@ -778,7 +778,7 @@ const CreateClassForm: React.FC = () => {
               color="primary"
               size="large"
               type="submit"
-              onClick={() => handleSubmit()}
+              onClick={handleSubmit(onSubmit)}
               disabled={isSubmitting || isLoadingSubjects || isLoadingTeachers}
               startIcon={
                 isSubmitting ? (

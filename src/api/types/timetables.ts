@@ -107,7 +107,7 @@ interface TimetablePeriod {
   };
 }
 
-interface WeeklyTimetableData {
+export interface WeeklyTimetableData {
   Monday: TimetablePeriod[];
   Tuesday: TimetablePeriod[];
   Wednesday: TimetablePeriod[];

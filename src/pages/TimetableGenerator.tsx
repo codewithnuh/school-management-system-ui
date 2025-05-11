@@ -26,13 +26,22 @@ import {
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import jsPDF from "jspdf"; // Corrected import
 import html2canvas from "html2canvas";
-import { useFetchTimeTables } from "../../services/queries/timeTable";
-import { useClasses as useFetchClasses } from "../../services/queries/classes";
-import { useFetchAllSectionsOfAClass as useFetchSections } from "../../services/queries/section";
-import { TimetablePeriod } from "../../api/types/timetables"; // Import the correct type for periods
+import { useFetchTimeTables } from "../services/queries/timeTable";
+import { useClasses as useFetchClasses } from "../services/queries/classes";
+import { useFetchAllSectionsOfAClass as useFetchSections } from "../services/queries/section";
 
 // Interfaces for type safety
-import { darkTheme } from "../../theme/darkTheme"; // Import the dark theme
+import { darkTheme } from "../theme/darkTheme"; // Import the dark theme
+
+// Define or import the TimetablePeriod type
+interface TimetablePeriod {
+  dayOfWeek: string;
+  periodNumber: number;
+  subject?: { name: string };
+  teacher?: { firstName: string; lastName: string };
+  startTime?: string;
+  endTime?: string;
+}
 
 // Type for the data structure *after* grouping by day
 interface GroupedTimetableData {

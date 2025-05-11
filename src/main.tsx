@@ -24,10 +24,8 @@ import { RoleGuard } from "./components/RoleGuard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import UserRegistrationForm from "./components/forms/UserRegistrationForm.tsx";
 import SampleUploadForm from "./components/forms/SampleUploadForm.tsx";
-import Teacher from "./components/dashboards/Teacher.tsx";
 import MyClasses from "./components/Classes/TeacherClass.tsx";
 import TeacherTimetable from "./components/timetable/TeacherTimetable.tsx";
-import StudentDashboard from "./components/Student/StudentDashboard.tsx";
 import StudentTimetable from "./components/timetable/StudentTImeTable.tsx";
 import StudentProfile from "./components/Student/StudentProfile.tsx";
 import Login from "./components/landing_page/Login.tsx";
@@ -39,6 +37,9 @@ import DashboardLayout from "./components/layout/DashboardLayout.tsx";
 import TeacherCreation from "./components/forms/TeacherCreation.tsx";
 import AdminDashboardLinks from "./components/dashboards/admin/AdminDashboardLinks.tsx";
 import CreateClassForm from "./components/layout/CreateClassForm.tsx";
+import TimetableView from "./components/timetable/TimetableView.tsx";
+import { GenerateTimetableForm } from "./components/dashboards/admin/Timetable.tsx";
+import TimeTableGenerate from "./components/dashboards/admin/TimetableGenerator.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -78,47 +79,12 @@ createRoot(document.getElementById("root")!).render(
                 element={<AdminDashboardLinks />}
               />
               <Route path="classes" element={<CreateClassForm />} />
-              <Route path="students" element={<h1>STUDENT PAGE</h1>} />
+              <Route path="timetables/view" element={<TimetableView />} />
+              <Route
+                path="timetables/generate"
+                element={<TimeTableGenerate />}
+              />
               <Route path="timetable" element={<h1>TIMETABLE PAGE</h1>} />
-            </Route>
-            <Route
-              path="/dashboard/teacher"
-              element={
-                <RoleGuard allowedRoles={["TEACHER"]}>
-                  <Teacher />
-                </RoleGuard>
-              }
-            >
-              <Route
-                index
-                path="classes"
-                element={
-                  <RoleGuard allowedRoles={["TEACHER"]}>
-                    <MyClasses />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                index
-                path="timetable"
-                element={
-                  <RoleGuard allowedRoles={["TEACHER"]}>
-                    <TeacherTimetable teacherId={1} />
-                  </RoleGuard>
-                }
-              />
-              <Route index element={<Navigate to="classes" replace />} />
-            </Route>
-            <Route
-              path="/dashboard/user"
-              element={
-                <RoleGuard allowedRoles={["USER"]}>
-                  <StudentDashboard />
-                </RoleGuard>
-              }
-            >
-              <Route path="timetable" element={<StudentTimetable />} />
-              <Route index path="profile" element={<StudentProfile />} />
             </Route>
 
             {/* <Route path="/dashboard/admin" element={<Admin />}>

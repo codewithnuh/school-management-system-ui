@@ -15,7 +15,7 @@ import { Class, CreateClassFormValues } from "../../types/class";
 export const useClasses = () => {
   return useQuery({
     queryKey: ["classes"],
-    queryFn: fetchClasses,
+    queryFn: () => fetchClasses(),
   });
 };
 

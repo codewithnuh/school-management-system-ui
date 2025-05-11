@@ -23,182 +23,137 @@ import { useTheme } from "@mui/material/styles";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+
+// Queries and Types
 import { useFetchTimeTables } from "../../services/queries/timeTable";
 import { useClasses as useFetchClasses } from "../../services/queries/classes";
 import { useFetchAllSectionsOfAClass as useFetchSections } from "../../services/queries/section";
-import { TimetablePeriod } from "../../api/types/timetables"; // Import the correct type for periods
+import { TimetablePeriod } from "../../api/types/timetables";
 
-// Interfaces for type safety
-// Type for the data structure *after* grouping by day
+// Interfaces
 interface GroupedTimetableData {
   [day: string]: TimetablePeriod[];
 }
 
-// Type for the final formatted row for the table
 interface FormattedRow {
   periodNo: number;
   [day: string]: { subject: string; teacher: string; time: string } | number;
 }
 
-// Add an interface for the timetable response data
-interface TimetableData {
-  id: number;
-  classId: number;
-  sectionId: number;
-  teacherId: number;
-  periodsPerDay: number;
-  timetableEntries: TimetablePeriod[];
-  // Add other fields as necessary
-}
-
 const TimetableView: React.FC = () => {
-  // Theme for styling
   const theme = useTheme();
+  const tableRef = useRef<HTMLDivElement>(null);
 
-  // States for the selected class and section
+  // States
   const [selectedClassId, setSelectedClassId] = useState<number | "">("");
   const [selectedSectionId, setSelectedSectionId] = useState<number | "">("");
   const [showTimetable, setShowTimetable] = useState<boolean>(false);
-  const [availableSections, setAvailableSections] = useState<any[]>([]); // Consider typing this better if possible
-  // Reference for the table to export as PDF
-  const tableRef = useRef<HTMLDivElement>(null);
-  console.log(selectedClassId);
-  // Fetch classes for dropdown
-  const { data: classes, isLoading: isLoadingClasses } = useFetchClasses();
+  const [availableSections, setAvailableSections] = useState<any[]>([]);
 
-  // Fetch sections based on selected class
+  // Fetch data
+  const {
+    data: classesResponse,
+    isLoading: isLoadingClasses,
+    isError: isErrorClasses,
+    error: classesError,
+    refetch: refetchClasses,
+  } = useFetchClasses();
+  console.log(classesResponse);
   const {
     data: classWithSections,
     isLoading: isLoadingSections,
-    isError: isErrorSections, // Renamed for clarity
+    isError: isErrorSections,
+    error: sectionsError,
   } = useFetchSections(selectedClassId as number);
-  console.log(classWithSections);
-  // Extract sections from class data when available
+
+  const {
+    data: timetableData,
+    isLoading: isLoadingTimetable,
+    isError: isErrorTimetable,
+    error: timetableError,
+  } = useFetchTimeTables(
+    selectedClassId as number,
+    selectedSectionId as number
+  );
+  console.log({ timetableData });
+  // Extract classes safely
+  const classes = classesResponse?.data || [];
+
+  // Load sections when class changes
   useEffect(() => {
-    if (
-      classWithSections &&
-      classWithSections?.data &&
-      Array.isArray(classWithSections.data)
-    ) {
+    if (classWithSections && Array.isArray(classWithSections.data)) {
       setAvailableSections(classWithSections.data);
     } else {
       setAvailableSections([]);
     }
   }, [classWithSections]);
 
-  // Fetch timetable data - expecting a TimetableData object now
-  const {
-    data: timetableData, // Renamed to reflect it's potentially a TimetableData object
-    isLoading: isLoadingTimetable,
-    isError: isErrorTimetable, // Track errors from timetable fetch
-    error: timetableError, // Access error details
-  } = useFetchTimeTables(
-    selectedClassId as number,
-    selectedSectionId as number
-  );
-  console.log({ timetableData });
-  // Log data and errors for debugging
-  useEffect(() => {
-    console.log("Raw Timetable Data:", timetableData);
-    if (isErrorTimetable) {
-      console.error("Error fetching timetable:", timetableError);
-    }
-  }, [timetableData, isErrorTimetable, timetableError]);
-
-  // Days of the week
-  const daysOfWeek = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday", // Include Sunday if applicable
-  ];
-
   // Handle class selection change
   const handleClassChange = (event: SelectChangeEvent<number | "">) => {
-    setSelectedClassId(event.target.value as number);
-    setSelectedSectionId("");
-    setShowTimetable(false);
+    const value = event.target.value;
+    setSelectedClassId(value === "" ? "" : Number(value));
+    setSelectedSectionId(""); // Reset section when class changes
+    setShowTimetable(false); // Hide timetable
   };
 
   // Handle section selection change
   const handleSectionChange = (event: SelectChangeEvent<number | "">) => {
-    setSelectedSectionId(event.target.value as number);
+    const value = event.target.value;
+    setSelectedSectionId(value === "" ? "" : Number(value));
     setShowTimetable(false);
   };
 
   // Handle view timetable button click
   const handleViewTimetable = () => {
-    // Validate inputs before proceeding
     if (
       selectedClassId &&
       selectedSectionId &&
       typeof selectedClassId === "number" &&
-      typeof selectedSectionId === "number" &&
-      selectedClassId > 0 &&
-      selectedSectionId > 0
+      typeof selectedSectionId === "number"
     ) {
       setShowTimetable(true);
     } else {
       console.warn("Please select both class and section.");
-      // Optionally show a user message
     }
   };
 
-  // Get timetable entries from the data structure
+  // Get timetable entries from response
   const getTimetableEntries = (): TimetablePeriod[] => {
-    if (!timetableData) return [];
-
-    // Handle nested data structure properly
     if (
+      timetableData &&
       timetableData.data &&
       Array.isArray(timetableData.data.timetableEntries)
     ) {
       return timetableData.data.timetableEntries;
     }
-
-    // Check if the data is directly an array of periods
-    if (Array.isArray(timetableData)) return timetableData;
-
-    // If we have a timetableEntries property (as per TimetableData interface)
-    if (
-      "timetableEntries" in timetableData &&
-      Array.isArray(timetableData.timetableEntries)
-    ) {
-      return timetableData.timetableEntries;
-    }
-
-    console.warn(
-      "Unable to extract timetable entries from response:",
-      timetableData
-    );
     return [];
   };
 
-  // Group raw periods by day
+  // Group periods by day
   const groupPeriodsByDay = (
     periods: TimetablePeriod[] | undefined
   ): GroupedTimetableData => {
-    if (!periods || !Array.isArray(periods)) return {};
-
+    const daysOfWeek = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
     const grouped: GroupedTimetableData = {};
-    daysOfWeek.forEach((day) => (grouped[day] = [])); // Initialize each day with an empty array
+    daysOfWeek.forEach((day) => (grouped[day] = []));
+
+    if (!periods || !Array.isArray(periods)) return grouped;
 
     periods.forEach((period) => {
       if (period && period.dayOfWeek && grouped[period.dayOfWeek]) {
         grouped[period.dayOfWeek].push(period);
-      } else {
-        // Handle unexpected days if necessary
-        console.warn(
-          `Period found for unexpected day or invalid format:`,
-          period
-        );
       }
     });
 
-    // Sort periods within each day by periodNumber
+    // Sort each day by period number
     Object.keys(grouped).forEach((day) => {
       grouped[day].sort((a, b) => a.periodNumber - b.periodNumber);
     });
@@ -206,7 +161,7 @@ const TimetableView: React.FC = () => {
     return grouped;
   };
 
-  // Format grouped data for the table
+  // Format grouped data for table
   const formatGroupedDataForTable = (
     groupedData: GroupedTimetableData
   ): FormattedRow[] => {
@@ -214,37 +169,31 @@ const TimetableView: React.FC = () => {
     let maxPeriod = 0;
 
     Object.keys(groupedData).forEach((day) => {
-      if (daysOfWeek.includes(day)) {
-        groupedData[day].forEach((period) => {
-          const periodNumber = period.periodNumber;
-          maxPeriod = Math.max(maxPeriod, periodNumber); // Track highest period number
+      groupedData[day].forEach((period) => {
+        maxPeriod = Math.max(maxPeriod, period.periodNumber);
+        if (!periodMap.has(period.periodNumber)) {
+          const newRow: FormattedRow = { periodNo: period.periodNumber };
+          Object.keys(groupedData).forEach((d) => {
+            newRow[d] = { subject: "", teacher: "", time: "" };
+          });
+          periodMap.set(period.periodNumber, newRow);
+        }
 
-          if (!periodMap.has(periodNumber)) {
-            const newRow: FormattedRow = { periodNo: periodNumber };
-            // Initialize all days for this new period row
-            daysOfWeek.forEach((d) => {
-              newRow[d] = { subject: "", teacher: "", time: "" };
-            });
-            periodMap.set(periodNumber, newRow);
-          }
-
-          const row = periodMap.get(periodNumber)!;
-          row[day] = {
-            subject: period.subject?.name || "N/A",
-            teacher: period.teacher
-              ? `${period.teacher.firstName} ${period.teacher.lastName}`
-              : "N/A",
-            time: `${period.startTime || "??"} - ${period.endTime || "??"}`,
-          };
-        });
-      }
+        const row = periodMap.get(period.periodNumber)!;
+        row[period.dayOfWeek] = {
+          subject: period.subject?.name || "N/A",
+          teacher: period.teacher
+            ? `${period.teacher.firstName} ${period.teacher.lastName}`
+            : "N/A",
+          time: `${period.startTime || "??"} - ${period.endTime || "??"}`,
+        };
+      });
     });
 
-    // Ensure all periods up to maxPeriod exist, even if empty
     for (let i = 1; i <= maxPeriod; i++) {
       if (!periodMap.has(i)) {
         const newRow: FormattedRow = { periodNo: i };
-        daysOfWeek.forEach((d) => {
+        Object.keys(groupedData).forEach((d) => {
           newRow[d] = { subject: "", teacher: "", time: "" };
         });
         periodMap.set(i, newRow);
@@ -256,64 +205,54 @@ const TimetableView: React.FC = () => {
     );
   };
 
-  // Check if timetable data is available - updated to handle the nested structure
+  // Check if timetable data is available
   const isTimetableDataAvailable = (): boolean => {
     const entries = getTimetableEntries();
     return Array.isArray(entries) && entries.length > 0;
   };
 
-  // Export PDF function (remains largely the same, ensure tableRef content is correct)
+  // Export timetable as PDF
   const exportAsPDF = async () => {
     if (!tableRef.current) return;
-
     try {
       const canvas = await html2canvas(tableRef.current, {
         scale: 2,
-        logging: false,
         useCORS: true,
       });
-
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
       });
 
-      // Get the class and section names
       const className =
-        classes?.find((c) => c.id === selectedClassId)?.name || "Class";
+        classes.find((c) => c.id === selectedClassId)?.name || "Class";
       const sectionName =
-        availableSections?.find((s) => s.id === selectedSectionId)?.name ||
-        "Section"; // Ensure availableSections is populated
+        availableSections.find((s) => s.id === selectedSectionId)?.name ||
+        "Section";
 
-      // Add title
       pdf.setFontSize(16);
       pdf.text(`Timetable: ${className} - ${sectionName}`, 14, 15);
-
-      // Add date
       pdf.setFontSize(10);
       pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
 
-      // Calculate dimensions to maintain aspect ratio
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth() - 28;
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // Add the image
       pdf.addImage(imgData, "PNG", 14, 30, pdfWidth, pdfHeight);
-
-      // Save the PDF
       pdf.save(`Timetable_${className}_${sectionName}.pdf`);
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      // Optionally show an error message to the user
+      alert("Failed to generate PDF.");
     }
   };
 
-  // Group and format the data - using the updated method to get entries
+  // Group and format data
   const timetableEntries = getTimetableEntries();
   const groupedData = groupPeriodsByDay(timetableEntries);
   const formattedData = formatGroupedDataForTable(groupedData);
+  const daysOfWeek = Object.keys(groupedData);
 
   return (
     <Container maxWidth="xl">
@@ -345,17 +284,40 @@ const TimetableView: React.FC = () => {
               label="Class"
               onChange={handleClassChange}
               disabled={isLoadingClasses}
+              displayEmpty
+              sx={{
+                "& .MuiSelect-select": {
+                  display: "flex",
+                  alignItems: "center",
+                },
+              }}
             >
               {isLoadingClasses ? (
-                <MenuItem disabled>Loading classes...</MenuItem>
-              ) : !classes || classes.length === 0 ? (
-                <MenuItem disabled>No classes available</MenuItem>
-              ) : (
-                classes?.map((classItem) => (
+                <MenuItem disabled>
+                  <CircularProgress size={20} sx={{ mr: 1 }} />
+                  Loading classes...
+                </MenuItem>
+              ) : null}
+
+              {isErrorClasses ? (
+                <MenuItem disabled>
+                  Failed to load classes:{" "}
+                  {classesError instanceof Error
+                    ? classesError.message
+                    : "Unknown error"}
+                </MenuItem>
+              ) : null}
+
+              {!isLoadingClasses &&
+                !isErrorClasses &&
+                classes.map((classItem) => (
                   <MenuItem key={classItem.id} value={classItem.id}>
                     {classItem.name}
                   </MenuItem>
-                ))
+                ))}
+
+              {!isLoadingClasses && !isErrorClasses && classes.length === 0 && (
+                <MenuItem disabled>No classes found</MenuItem>
               )}
             </Select>
           </FormControl>
@@ -369,22 +331,24 @@ const TimetableView: React.FC = () => {
               value={selectedSectionId}
               label="Section"
               onChange={handleSectionChange}
-              disabled={
-                !selectedClassId ||
-                isLoadingSections ||
-                (availableSections?.length === 0 && !isErrorSections)
-              }
+              disabled={!selectedClassId || isLoadingSections}
             >
               {!selectedClassId ? (
                 <MenuItem disabled>Select a class first</MenuItem>
               ) : isLoadingSections ? (
-                <MenuItem disabled>Loading sections...</MenuItem>
-              ) : availableSections.length === 0 ? (
                 <MenuItem disabled>
-                  {isErrorSections
-                    ? "Error loading sections"
-                    : "No sections available"}
+                  <CircularProgress size={20} sx={{ mr: 1 }} />
+                  Loading sections...
                 </MenuItem>
+              ) : isErrorSections ? (
+                <MenuItem disabled>
+                  Error loading sections:{" "}
+                  {sectionsError instanceof Error
+                    ? sectionsError.message
+                    : "Unknown error"}
+                </MenuItem>
+              ) : availableSections.length === 0 ? (
+                <MenuItem disabled>No sections found</MenuItem>
               ) : (
                 availableSections.map((section) => (
                   <MenuItem key={section.id} value={section.id}>
@@ -395,14 +359,14 @@ const TimetableView: React.FC = () => {
             </Select>
           </FormControl>
 
-          {/* View Button */}
+          {/* View Timetable Button */}
           <Button
             variant="contained"
             color="primary"
-            onClick={handleViewTimetable} // Keep onClick to set showTimetable flag
+            onClick={handleViewTimetable}
             disabled={
               !selectedClassId || !selectedSectionId || isLoadingTimetable
-            } // Disable if loading or selections missing
+            }
             sx={{ minWidth: "120px", height: "56px" }}
           >
             {isLoadingTimetable ? (
@@ -414,7 +378,7 @@ const TimetableView: React.FC = () => {
         </Box>
 
         {/* Timetable Display */}
-        {showTimetable && ( // Only attempt to show if button was clicked
+        {showTimetable && (
           <Box mt={4}>
             {isLoadingTimetable ? (
               <Box display="flex" justifyContent="center" p={4}>
@@ -433,9 +397,9 @@ const TimetableView: React.FC = () => {
                   timetable.
                 </Typography>
               </Alert>
-            ) : isTimetableDataAvailable() ? ( // Check if raw data arrived
+            ) : isTimetableDataAvailable() ? (
               <>
-                {/* Header and Export Button */}
+                {/* Header + Export Button */}
                 <Box
                   display="flex"
                   justifyContent="space-between"
@@ -443,11 +407,11 @@ const TimetableView: React.FC = () => {
                   mb={2}
                 >
                   <Typography variant="h5" color="primary">
-                    {classes?.find((c) => c.id === selectedClassId)?.name} -{" "}
-                    {
-                      availableSections?.find((s) => s.id === selectedSectionId)
-                        ?.name
-                    }{" "}
+                    {classes.find((c) => c.id === selectedClassId)?.name ||
+                      "Class"}{" "}
+                    -{" "}
+                    {availableSections.find((s) => s.id === selectedSectionId)
+                      ?.name || "Section"}{" "}
                     Timetable
                   </Typography>
                   <Button
@@ -455,7 +419,7 @@ const TimetableView: React.FC = () => {
                     color="secondary"
                     startIcon={<PictureAsPdfIcon />}
                     onClick={exportAsPDF}
-                    disabled={formattedData.length === 0} // Disable if no data to export
+                    disabled={formattedData.length === 0}
                   >
                     Export as PDF
                   </Button>
@@ -466,9 +430,10 @@ const TimetableView: React.FC = () => {
                   <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
                     <Table aria-label="timetable">
                       <TableHead>
-                        {/* ... Table Header Row ... */}
                         <TableRow
-                          sx={{ backgroundColor: theme.palette.primary.main }}
+                          sx={{
+                            backgroundColor: theme.palette.primary.main,
+                          }}
                         >
                           <TableCell
                             sx={{
@@ -494,69 +459,60 @@ const TimetableView: React.FC = () => {
                       </TableHead>
                       <TableBody>
                         {formattedData.length > 0 ? (
-                          formattedData.map(
-                            (
-                              row // Use the finally formatted data
-                            ) => (
-                              <TableRow
-                                key={row.periodNo}
+                          formattedData.map((row) => (
+                            <TableRow
+                              key={row.periodNo}
+                              sx={{
+                                "&:nth-of-type(odd)": {
+                                  backgroundColor: theme.palette.action.hover,
+                                },
+                              }}
+                            >
+                              <TableCell
+                                component="th"
+                                scope="row"
                                 sx={{
-                                  "&:nth-of-type(odd)": {
-                                    backgroundColor: theme.palette.action.hover,
-                                  },
+                                  fontWeight: "bold",
+                                  backgroundColor: theme.palette.primary.light,
+                                  color: theme.palette.primary.contrastText,
                                 }}
                               >
-                                <TableCell
-                                  component="th"
-                                  scope="row"
-                                  sx={{
-                                    fontWeight: "bold",
-                                    backgroundColor:
-                                      theme.palette.primary.light,
-                                    color: theme.palette.primary.contrastText,
-                                  }}
-                                >
-                                  {row.periodNo}
-                                </TableCell>
-                                {daysOfWeek.map((day) => {
-                                  // Type assertion is safe here due to formatting logic
-                                  const dayData = row[day] as {
-                                    subject: string;
-                                    teacher: string;
-                                    time: string;
-                                  };
-                                  return (
-                                    <TableCell
-                                      key={`${row.periodNo}-${day}`}
-                                      align="center"
+                                {row.periodNo}
+                              </TableCell>
+                              {daysOfWeek.map((day) => {
+                                const dayData = row[day] as {
+                                  subject: string;
+                                  teacher: string;
+                                  time: string;
+                                };
+                                return (
+                                  <TableCell
+                                    key={`${row.periodNo}-${day}`}
+                                    align="center"
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight="bold"
                                     >
-                                      <Typography
-                                        variant="body2"
-                                        fontWeight="bold"
-                                      >
-                                        {dayData.subject || "-"}{" "}
-                                        {/* Show dash if empty */}
-                                      </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        display="block"
-                                      >
-                                        {dayData.teacher || "-"}{" "}
-                                        {/* Show dash if empty */}
-                                      </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        color="textSecondary"
-                                      >
-                                        {dayData.time || "-"}{" "}
-                                        {/* Show dash if empty */}
-                                      </Typography>
-                                    </TableCell>
-                                  );
-                                })}
-                              </TableRow>
-                            )
-                          )
+                                      {dayData.subject || "-"}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      display="block"
+                                    >
+                                      {dayData.teacher || "-"}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      {dayData.time || "-"}
+                                    </Typography>
+                                  </TableCell>
+                                );
+                              })}
+                            </TableRow>
+                          ))
                         ) : (
                           <TableRow>
                             <TableCell
@@ -573,13 +529,12 @@ const TimetableView: React.FC = () => {
                 </Box>
               </>
             ) : (
-              // Show appropriate message if no data
               <Paper elevation={1} sx={{ p: 3, textAlign: "center" }}>
-                <Typography variant="h6" color="textSecondary">
+                <Typography variant="h6" color="text.secondary">
                   No timetable data available for the selected class and
                   section.
                 </Typography>
-                <Typography variant="body2" color="textSecondary" mt={1}>
+                <Typography variant="body2" color="text.secondary" mt={1}>
                   Ensure a timetable has been generated and assigned for this
                   section.
                 </Typography>
