@@ -23,14 +23,14 @@ interface SchoolHeaderProps {
 
 const SchoolHeader: React.FC<SchoolHeaderProps> = ({ school }) => {
   const theme = useTheme();
-
+  console.log(school);
   return (
     <Paper
       elevation={3}
       sx={{
         width: "100%",
         maxWidth: 700,
-        margin: "0 auto 2rem",
+        margin: "2rem auto 2rem",
         padding: 3,
         backgroundColor:
           theme.palette.mode === "dark"
@@ -110,10 +110,10 @@ const SchoolHeader: React.FC<SchoolHeaderProps> = ({ school }) => {
               <Chip
                 label="Brand Color"
                 sx={{
-                  backgroundColor: school.brandColor,
+                  backgroundColor: "#0034",
                   color: "#fff",
                   fontWeight: 500,
-                  boxShadow: `0 0 8px ${school.brandColor}aa`,
+
                   transition: "box-shadow 0.3s ease",
                   "&:hover": {
                     boxShadow: `0 0 12px ${school.brandColor}cc`,
@@ -129,8 +129,8 @@ const SchoolHeader: React.FC<SchoolHeaderProps> = ({ school }) => {
                 fontFamily: "monospace",
                 backgroundColor:
                   theme.palette.mode === "dark"
-                    ? "rgba(0,0,0,0.2)"
-                    : "rgba(0,0,0,0.05)",
+                    ? school.brandColor
+                    : school.brandColor,
                 padding: "4px 8px",
                 borderRadius: 1,
               }}

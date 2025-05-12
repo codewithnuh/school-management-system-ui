@@ -38,10 +38,14 @@ import { uploadDirect } from "@uploadcare/upload-client";
 import { useState } from "react";
 import { useRegisterTeacher } from "../../services/queries/teacherRegistration";
 import { useSubjects } from "../../services/queries/subject";
-
+import { useSearchParams } from "react-router";
 // Import your dark theme
 import { darkTheme } from "../../theme/darkTheme";
 import SchoolHeader from "../headers/SchoolHeader";
+import { ThemeProvider } from "@emotion/react";
+import { useGetSchoolById } from "../../services/queries/school";
+import { useGetStudentRegistrationLink } from "../../services/queries/teachers";
+import { useGetRegistrationLinkById } from "../../services/queries/registrationLinks";
 
 // Define the public key for Uploadcare
 const UPLOADCARE_PUBLIC_KEY = "39d5faf5f775c673cb85"; // Replace with env var in production
@@ -61,11 +65,6 @@ interface FileUploadingStates {
 }
 
 // Mock school data - replace this with real API call if needed
-const mockSchool = {
-  name: "Green Valley High School",
-  brandColor: "#1e88e5", // Example color
-  logo: "https://example.com/school-logo.png", // Placeholder image
-};
 
 function TeacherRegistrationForm() {
   const {
@@ -88,6 +87,15 @@ function TeacherRegistrationForm() {
   // Fetch subjects data
   const { data: subjects = [], isLoading: subjectsLoading } = useSubjects();
   const registerTeacherMutation = useRegisterTeacher();
+  const [params] = useSearchParams();
+  const registrationLinkId = params.get("registrationLinkId");
+  console.log(params.get("registrationLinkId"));
+  const { data: registrationLinkData } = useGetRegistrationLinkById(
+    registrationLinkId!
+  );
+  const schoolId = registrationLinkData.data.schoolId;
+  const { data: schoolData } = useGetSchoolById(schoolId);
+  const school = schoolData.data;
 
   // State for uploaded file URLs
   const [files, setFiles] = useState<FileUploads>({
@@ -206,572 +214,576 @@ function TeacherRegistrationForm() {
   };
 
   return (
-    <Container maxWidth="lg">
-      {/* School Header */}
-      <SchoolHeader school={mockSchool} />
+    <ThemeProvider theme={darkTheme}>
+      <Container maxWidth="lg">
+        {/* School Header */}
+        <SchoolHeader school={school} />
 
-      {/* Registration Form */}
-      <Card elevation={3}>
-        <CardContent>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Grid container spacing={4}>
-              {/* Personal Information */}
-              <Grid item xs={12} md={4}>
-                <Typography variant="h6" gutterBottom>
-                  Personal Information
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="firstName"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="First Name *"
-                          fullWidth
-                          error={!!errors.firstName}
-                          helperText={errors.firstName?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="middleName"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField {...field} label="Middle Name" fullWidth />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="lastName"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Last Name *"
-                          fullWidth
-                          error={!!errors.lastName}
-                          helperText={errors.lastName?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+        {/* Registration Form */}
+        <Card elevation={3}>
+          <CardContent>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <Grid container spacing={4}>
+                {/* Personal Information */}
+                <Grid item xs={12} md={4}>
+                  <Typography variant="h6" gutterBottom>
+                    Personal Information
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
                       <Controller
-                        name="dateOfBirth"
+                        name="firstName"
                         control={control}
                         render={({ field }) => (
-                          <DatePicker
-                            label="Date of Birth *"
-                            value={field.value}
-                            onChange={(date) => field.onChange(date)}
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                                error: !!errors.dateOfBirth,
-                                helperText: errors.dateOfBirth?.message,
-                              },
-                            }}
-                          />
-                        )}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <FormControl error={!!errors.gender} fullWidth>
-                      <FormLabel id="gender-label">Gender *</FormLabel>
-                      <Controller
-                        name="gender"
-                        control={control}
-                        render={({ field }) => (
-                          <RadioGroup
+                          <TextField
                             {...field}
-                            aria-labelledby="gender-label"
-                            row
-                          >
-                            <FormControlLabel
-                              value={Gender.Male}
-                              control={<Radio />}
-                              label="Male"
-                            />
-                            <FormControlLabel
-                              value={Gender.Female}
-                              control={<Radio />}
-                              label="Female"
-                            />
-                            <FormControlLabel
-                              value={Gender.Other}
-                              control={<Radio />}
-                              label="Other"
-                            />
-                          </RadioGroup>
-                        )}
-                      />
-                      {errors.gender && (
-                        <FormHelperText>{errors.gender.message}</FormHelperText>
-                      )}
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="nationality"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField {...field} label="Nationality" fullWidth />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-
-              {/* Contact Information */}
-              <Grid item xs={12} md={4}>
-                <Typography variant="h6" gutterBottom>
-                  Contact Information
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="email"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          type="email"
-                          label="Email *"
-                          fullWidth
-                          error={!!errors.email}
-                          helperText={errors.email?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="phoneNo"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Phone Number *"
-                          fullWidth
-                          error={!!errors.phoneNo}
-                          helperText={errors.phoneNo?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="address"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Permanent Address *"
-                          fullWidth
-                          multiline
-                          rows={3}
-                          error={!!errors.address}
-                          helperText={errors.address?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="currentAddress"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Current Address"
-                          fullWidth
-                          multiline
-                          rows={3}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="cnic"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="CNIC *"
-                          fullWidth
-                          error={!!errors.cnic}
-                          helperText={errors.cnic?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="password"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          type="password"
-                          label="Password *"
-                          fullWidth
-                          error={!!errors.password}
-                          helperText={errors.password?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-
-              {/* Professional Information */}
-              <Grid item xs={12} md={4}>
-                <Typography variant="h6" gutterBottom>
-                  Professional Information
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="highestQualification"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Highest Qualification *"
-                          fullWidth
-                          error={!!errors.highestQualification}
-                          helperText={errors.highestQualification?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="specialization"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Specialization"
-                          fullWidth
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="experienceYears"
-                      control={control}
-                      render={({ field: { value, onChange, ...rest } }) => (
-                        <TextField
-                          {...rest}
-                          type="number"
-                          label="Years of Experience"
-                          fullWidth
-                          value={value || ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            onChange(val === "" ? undefined : Number(val));
-                          }}
-                          inputProps={{ min: 0 }}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <Controller
-                        name="joiningDate"
-                        control={control}
-                        render={({ field }) => (
-                          <DatePicker
-                            label="Joining Date *"
-                            value={field.value}
-                            onChange={(date) => field.onChange(date)}
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                                error: !!errors.joiningDate,
-                                helperText: errors.joiningDate?.message,
-                              },
-                            }}
+                            label="First Name *"
+                            fullWidth
+                            error={!!errors.firstName}
+                            helperText={errors.firstName?.message}
                           />
                         )}
                       />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <FormControl fullWidth error={!!errors.subjectId}>
-                      <InputLabel id="subject-select-label">
-                        Subject *
-                      </InputLabel>
+                    </Grid>
+                    <Grid item xs={12}>
                       <Controller
-                        name="subjectId"
+                        name="middleName"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField {...field} label="Middle Name" fullWidth />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="lastName"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Last Name *"
+                            fullWidth
+                            error={!!errors.lastName}
+                            helperText={errors.lastName?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <Controller
+                          name="dateOfBirth"
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              label="Date of Birth *"
+                              value={field.value}
+                              onChange={(date) => field.onChange(date)}
+                              slotProps={{
+                                textField: {
+                                  fullWidth: true,
+                                  error: !!errors.dateOfBirth,
+                                  helperText: errors.dateOfBirth?.message,
+                                },
+                              }}
+                            />
+                          )}
+                        />
+                      </LocalizationProvider>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControl error={!!errors.gender} fullWidth>
+                        <FormLabel id="gender-label">Gender *</FormLabel>
+                        <Controller
+                          name="gender"
+                          control={control}
+                          render={({ field }) => (
+                            <RadioGroup
+                              {...field}
+                              aria-labelledby="gender-label"
+                              row
+                            >
+                              <FormControlLabel
+                                value={Gender.Male}
+                                control={<Radio />}
+                                label="Male"
+                              />
+                              <FormControlLabel
+                                value={Gender.Female}
+                                control={<Radio />}
+                                label="Female"
+                              />
+                              <FormControlLabel
+                                value={Gender.Other}
+                                control={<Radio />}
+                                label="Other"
+                              />
+                            </RadioGroup>
+                          )}
+                        />
+                        {errors.gender && (
+                          <FormHelperText>
+                            {errors.gender.message}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="nationality"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField {...field} label="Nationality" fullWidth />
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+
+                {/* Contact Information */}
+                <Grid item xs={12} md={4}>
+                  <Typography variant="h6" gutterBottom>
+                    Contact Information
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="email"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            type="email"
+                            label="Email *"
+                            fullWidth
+                            error={!!errors.email}
+                            helperText={errors.email?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="phoneNo"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Phone Number *"
+                            fullWidth
+                            error={!!errors.phoneNo}
+                            helperText={errors.phoneNo?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="address"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Permanent Address *"
+                            fullWidth
+                            multiline
+                            rows={3}
+                            error={!!errors.address}
+                            helperText={errors.address?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="currentAddress"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Current Address"
+                            fullWidth
+                            multiline
+                            rows={3}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="cnic"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="CNIC *"
+                            fullWidth
+                            error={!!errors.cnic}
+                            helperText={errors.cnic?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="password"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            type="password"
+                            label="Password *"
+                            fullWidth
+                            error={!!errors.password}
+                            helperText={errors.password?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+
+                {/* Professional Information */}
+                <Grid item xs={12} md={4}>
+                  <Typography variant="h6" gutterBottom>
+                    Professional Information
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="highestQualification"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Highest Qualification *"
+                            fullWidth
+                            error={!!errors.highestQualification}
+                            helperText={errors.highestQualification?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="specialization"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Specialization"
+                            fullWidth
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="experienceYears"
                         control={control}
                         render={({ field: { value, onChange, ...rest } }) => (
-                          <Select
-                            labelId="subject-select-label"
-                            id="subject-select"
-                            value={value?.toString() || ""}
-                            label="Subject *"
+                          <TextField
                             {...rest}
+                            type="number"
+                            label="Years of Experience"
+                            fullWidth
+                            value={value || ""}
                             onChange={(e) => {
                               const val = e.target.value;
                               onChange(val === "" ? undefined : Number(val));
                             }}
-                            disabled={subjectsLoading}
-                          >
-                            <MenuItem value="">
-                              <em>Select a subject</em>
-                            </MenuItem>
-                            {subjects.map((subject) => (
-                              <MenuItem
-                                key={subject.id}
-                                value={subject.id.toString()}
-                              >
-                                {subject.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
+                            inputProps={{ min: 0 }}
+                          />
                         )}
                       />
-                      {errors.subjectId && (
-                        <FormHelperText>
-                          {errors.subjectId.message}
-                        </FormHelperText>
-                      )}
-                      {subjectsLoading && (
-                        <Box display="flex" alignItems="center" mt={1}>
-                          <CircularProgress size={16} />
-                          <Typography variant="caption" sx={{ ml: 1 }}>
-                            Loading subjects...
+                    </Grid>
+                    <Grid item xs={12}>
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <Controller
+                          name="joiningDate"
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              label="Joining Date *"
+                              value={field.value}
+                              onChange={(date) => field.onChange(date)}
+                              slotProps={{
+                                textField: {
+                                  fullWidth: true,
+                                  error: !!errors.joiningDate,
+                                  helperText: errors.joiningDate?.message,
+                                },
+                              }}
+                            />
+                          )}
+                        />
+                      </LocalizationProvider>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth error={!!errors.subjectId}>
+                        <InputLabel id="subject-select-label">
+                          Subject *
+                        </InputLabel>
+                        <Controller
+                          name="subjectId"
+                          control={control}
+                          render={({ field: { value, onChange, ...rest } }) => (
+                            <Select
+                              labelId="subject-select-label"
+                              id="subject-select"
+                              value={value?.toString() || ""}
+                              label="Subject *"
+                              {...rest}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                onChange(val === "" ? undefined : Number(val));
+                              }}
+                              disabled={subjectsLoading}
+                            >
+                              <MenuItem value="">
+                                <em>Select a subject</em>
+                              </MenuItem>
+                              {subjects.map((subject) => (
+                                <MenuItem
+                                  key={subject.id}
+                                  value={subject.id.toString()}
+                                >
+                                  {subject.name}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          )}
+                        />
+                        {errors.subjectId && (
+                          <FormHelperText>
+                            {errors.subjectId.message}
+                          </FormHelperText>
+                        )}
+                        {subjectsLoading && (
+                          <Box display="flex" alignItems="center" mt={1}>
+                            <CircularProgress size={16} />
+                            <Typography variant="caption" sx={{ ml: 1 }}>
+                              Loading subjects...
+                            </Typography>
+                          </Box>
+                        )}
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="emergencyContactName"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Emergency Contact Name *"
+                            fullWidth
+                            error={!!errors.emergencyContactName}
+                            helperText={errors.emergencyContactName?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Controller
+                        name="emergencyContactNumber"
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            label="Emergency Contact Number *"
+                            fullWidth
+                            error={!!errors.emergencyContactNumber}
+                            helperText={errors.emergencyContactNumber?.message}
+                          />
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {/* File Upload Section */}
+              <Box mt={4}>
+                <Typography variant="h6" gutterBottom>
+                  Documents
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Box>
+                      <InputLabel htmlFor="photo-upload">
+                        Profile Photo
+                      </InputLabel>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        sx={{ mt: 1, height: 56, textTransform: "none" }}
+                        disabled={isUploading.photo}
+                        startIcon={
+                          isUploading.photo ? (
+                            <CircularProgress size={24} />
+                          ) : null
+                        }
+                      >
+                        {isUploading.photo
+                          ? "Uploading..."
+                          : files.photo
+                          ? "Change Photo"
+                          : "Upload Photo"}
+                        <input
+                          id="photo-upload"
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          onChange={(e) => handleFileChange(e, "photo")}
+                        />
+                      </Button>
+                      {files.photo && (
+                        <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                          <Typography variant="caption" color="success.main">
+                            Uploaded successfully
                           </Typography>
                         </Box>
                       )}
-                    </FormControl>
+                    </Box>
                   </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="emergencyContactName"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Emergency Contact Name *"
-                          fullWidth
-                          error={!!errors.emergencyContactName}
-                          helperText={errors.emergencyContactName?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Controller
-                      name="emergencyContactNumber"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Emergency Contact Number *"
-                          fullWidth
-                          error={!!errors.emergencyContactNumber}
-                          helperText={errors.emergencyContactNumber?.message}
-                        />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            {/* File Upload Section */}
-            <Box mt={4}>
-              <Typography variant="h6" gutterBottom>
-                Documents
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <InputLabel htmlFor="photo-upload">
-                      Profile Photo
-                    </InputLabel>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth
-                      sx={{ mt: 1, height: 56, textTransform: "none" }}
-                      disabled={isUploading.photo}
-                      startIcon={
-                        isUploading.photo ? (
-                          <CircularProgress size={24} />
-                        ) : null
-                      }
-                    >
-                      {isUploading.photo
-                        ? "Uploading..."
-                        : files.photo
-                        ? "Change Photo"
-                        : "Upload Photo"}
-                      <input
-                        id="photo-upload"
-                        type="file"
-                        accept="image/*"
-                        hidden
-                        onChange={(e) => handleFileChange(e, "photo")}
-                      />
-                    </Button>
-                    {files.photo && (
-                      <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                        <Typography variant="caption" color="success.main">
-                          Uploaded successfully
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <InputLabel htmlFor="verification-doc-upload">
-                      Verification Document
-                    </InputLabel>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth
-                      sx={{ mt: 1, height: 56, textTransform: "none" }}
-                      disabled={isUploading.verificationDocument}
-                      startIcon={
-                        isUploading.verificationDocument ? (
-                          <CircularProgress size={24} />
-                        ) : null
-                      }
-                    >
-                      {isUploading.verificationDocument
-                        ? "Uploading..."
-                        : files.verificationDocument
-                        ? "Change Document"
-                        : "Upload Document"}
-                      <input
-                        id="verification-doc-upload"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        hidden
-                        onChange={(e) =>
-                          handleFileChange(e, "verificationDocument")
+                  <Grid item xs={12} md={4}>
+                    <Box>
+                      <InputLabel htmlFor="verification-doc-upload">
+                        Verification Document
+                      </InputLabel>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        sx={{ mt: 1, height: 56, textTransform: "none" }}
+                        disabled={isUploading.verificationDocument}
+                        startIcon={
+                          isUploading.verificationDocument ? (
+                            <CircularProgress size={24} />
+                          ) : null
                         }
-                      />
-                    </Button>
-                    {files.verificationDocument && (
-                      <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                        <Typography variant="caption" color="success.main">
-                          Uploaded successfully
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
+                      >
+                        {isUploading.verificationDocument
+                          ? "Uploading..."
+                          : files.verificationDocument
+                          ? "Change Document"
+                          : "Upload Document"}
+                        <input
+                          id="verification-doc-upload"
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          hidden
+                          onChange={(e) =>
+                            handleFileChange(e, "verificationDocument")
+                          }
+                        />
+                      </Button>
+                      {files.verificationDocument && (
+                        <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                          <Typography variant="caption" color="success.main">
+                            Uploaded successfully
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box>
+                      <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        sx={{
+                          mt: 1,
+                          height: 56,
+                          textTransform: "none",
+                        }}
+                        color={errors.cvPath ? "error" : "primary"}
+                        disabled={isUploading.cvPath}
+                        startIcon={
+                          isUploading.cvPath ? (
+                            <CircularProgress size={24} />
+                          ) : null
+                        }
+                      >
+                        {isUploading.cvPath
+                          ? "Uploading..."
+                          : files.cvPath
+                          ? "Change CV"
+                          : "Upload CV"}
+                        <input
+                          id="cv-upload"
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          hidden
+                          onChange={(e) => handleFileChange(e, "cvPath")}
+                          required
+                        />
+                      </Button>
+                      {errors.cvPath && (
+                        <FormHelperText error>
+                          {errors.cvPath.message}
+                        </FormHelperText>
+                      )}
+                      {files.cvPath && !errors.cvPath && (
+                        <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                          <Typography variant="caption" color="success.main">
+                            Uploaded successfully
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box>
-                    <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth
-                      sx={{
-                        mt: 1,
-                        height: 56,
-                        textTransform: "none",
-                      }}
-                      color={errors.cvPath ? "error" : "primary"}
-                      disabled={isUploading.cvPath}
-                      startIcon={
-                        isUploading.cvPath ? (
-                          <CircularProgress size={24} />
-                        ) : null
-                      }
-                    >
-                      {isUploading.cvPath
-                        ? "Uploading..."
-                        : files.cvPath
-                        ? "Change CV"
-                        : "Upload CV"}
-                      <input
-                        id="cv-upload"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        hidden
-                        onChange={(e) => handleFileChange(e, "cvPath")}
-                        required
-                      />
-                    </Button>
-                    {errors.cvPath && (
-                      <FormHelperText error>
-                        {errors.cvPath.message}
-                      </FormHelperText>
-                    )}
-                    {files.cvPath && !errors.cvPath && (
-                      <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                        <Typography variant="caption" color="success.main">
-                          Uploaded successfully
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
+              </Box>
 
-            {/* Submit Button */}
-            <Box mt={4} display="flex" justifyContent="flex-end">
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                size="large"
-                disabled={
-                  isSubmitting ||
-                  isUploading.cvPath ||
-                  isUploading.photo ||
-                  isUploading.verificationDocument
-                }
-                startIcon={
-                  isSubmitting ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : null
-                }
-              >
-                {isSubmitting ? "Submitting..." : "Submit Application"}
-              </Button>
+              {/* Submit Button */}
+              <Box mt={4} display="flex" justifyContent="flex-end">
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  disabled={
+                    isSubmitting ||
+                    isUploading.cvPath ||
+                    isUploading.photo ||
+                    isUploading.verificationDocument
+                  }
+                  startIcon={
+                    isSubmitting ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : null
+                  }
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Application"}
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Toast Notification */}
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={6000}
-        onClose={handleCloseToast}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
+        {/* Toast Notification */}
+        <Snackbar
+          open={toast.open}
+          autoHideDuration={6000}
           onClose={handleCloseToast}
-          severity={toast.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          {toast.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+          <Alert
+            onClose={handleCloseToast}
+            severity={toast.severity}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {toast.message}
+          </Alert>
+        </Snackbar>
+      </Container>
+    </ThemeProvider>
   );
 }
 

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { axiosInstance } from "..";
 import { teacherSchema } from "../../schema/teacher.schema";
-import axios from "axios";
 
 /**
  * Register a new student with the provided form data
