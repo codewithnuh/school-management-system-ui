@@ -35,10 +35,11 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { uploadDirect } from "@uploadcare/upload-client";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRegisterTeacher } from "../../services/queries/teacherRegistration";
 import { useSubjects } from "../../services/queries/subject";
 import { useSearchParams } from "react-router";
+import RefreshIcon from "@mui/icons-material/Refresh";
 // Import your dark theme
 import { darkTheme } from "../../theme/darkTheme";
 import SchoolHeader from "../headers/SchoolHeader";
@@ -47,20 +48,24 @@ import { useGetSchoolById } from "../../services/queries/school";
 import { useGetTeacherRegistrationLinkById } from "../../services/queries/registrationLinks";
 
 // Define the public key for Uploadcare
-const UPLOADCARE_PUBLIC_KEY = "39d5faf5f775c673cb85"; // Replace with env var in production
-
-// Interface for the file upload states
+const UPLOADCARE_PUBLIC_KEY = import.meta.env
+  .VITE_REACT_APP_UPLOADCARE_PUBLIC_KEY; // Replace with env var in production
 interface FileUploads {
   cvPath: string;
   photo: string;
   verificationDocument: string;
 }
 
-// Interface for the loading states during file uploads
 interface FileUploadingStates {
   cvPath: boolean;
   photo: boolean;
   verificationDocument: boolean;
+}
+
+interface FileUploadErrors {
+  cvPath: string | null;
+  photo: string | null;
+  verificationDocument: string | null;
 }
 
 // Mock school data - replace this with real API call if needed
@@ -86,27 +91,36 @@ function TeacherRegistrationForm() {
   // Fetch subjects data
   const { data: subjects = [], isLoading: subjectsLoading } = useSubjects();
   const registerTeacherMutation = useRegisterTeacher();
+  const [uploadErrors, setUploadErrors] = useState<FileUploadErrors>({
+    cvPath: null,
+    photo: null,
+    verificationDocument: null,
+  });
+  // Get and validate the registration link ID parameter
   const [params] = useSearchParams();
   const registrationLinkId = params.get("registrationLinkId");
-  console.log(params.get("registrationLinkId"));
-  // First, fetch registration link
+
+  // First, fetch registration link with improved error handling
   const {
     data: registrationLinkData,
     isLoading: isLoadingRegistrationLink,
     isError: isRegistrationLinkError,
+    error: registrationLinkError,
   } = useGetTeacherRegistrationLinkById(registrationLinkId || "");
 
-  // Get schoolId from registrationLinkData
-  console.log(isRegistrationLinkError, registrationLinkData);
-  const schoolId = registrationLinkData?.data?.schoolId;
+  // Get schoolId from registrationLinkData with safe access
+  const schoolId = registrationLinkData?.data?.schoolId?.toString();
 
-  // Then fetch school based on that
+  // Then fetch school based on that schoolId
   const {
     data: schoolData,
     isLoading: isLoadingSchool,
     isError: isSchoolError,
-  } = useGetSchoolById(schoolId?.toString() || "");
-  const school = schoolData.data;
+    error: schoolError,
+  } = useGetSchoolById(schoolId || "");
+
+  // Safely access school data with fallback
+  const school = schoolData?.data || null;
 
   // State for uploaded file URLs
   const [files, setFiles] = useState<FileUploads>({
@@ -141,6 +155,7 @@ function TeacherRegistrationForm() {
       const fullData = {
         ...data,
         cvPath: files.cvPath,
+        schoolId: parseInt(schoolId as string),
         photo: files.photo,
         verificationDocument: files.verificationDocument,
       };
@@ -181,39 +196,88 @@ function TeacherRegistrationForm() {
     }
   };
 
+  // Helper function to show toast notifications
+  const showToast = useCallback(
+    (message: string, severity: "success" | "error" | "info" | "warning") => {
+      setToast({
+        open: true,
+        message,
+        severity,
+      });
+    },
+    []
+  );
+
   // Handle file upload
-  const handleFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    fieldName: keyof FileUploads
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+  const handleFileChange = useCallback(
+    async (
+      e: React.ChangeEvent<HTMLInputElement>,
+      fieldName: keyof FileUploads
+    ) => {
+      // Clear previous errors
+      setUploadErrors((prev) => ({ ...prev, [fieldName]: null }));
+
+      const files = e.target.files;
+      if (!files || files.length === 0) {
+        return;
+      }
+
+      const file = files[0];
+
+      // Validate file
+      const isValid = validateFile(file, fieldName);
+      if (!isValid.valid) {
+        setUploadErrors((prev) => ({ ...prev, [fieldName]: isValid.message }));
+        showToast(isValid.message, "error");
+        return;
+      }
+
       try {
         // Set loading state for this specific field
         setIsUploading((prev) => ({
           ...prev,
           [fieldName]: true,
         }));
-        // Upload file to Uploadcare
-        const uploadedFile = await uploadDirect(file, {
-          publicKey: UPLOADCARE_PUBLIC_KEY,
-          store: "auto",
-        });
+
+        // Upload file to Uploadcare with timeout and retries
+        const uploadedFile = await uploadWithRetry(file);
+
+        if (!uploadedFile || !uploadedFile.cdnUrl) {
+          throw new Error("Upload failed - no URL received");
+        }
+
         // Update file URL in state
         setFiles((prev) => ({
           ...prev,
           [fieldName]: uploadedFile.cdnUrl || "",
         }));
+
         // Set the value in the form
         setValue(fieldName as any, uploadedFile.cdnUrl || "");
-      } catch (error) {
+
+        // Show success message
+        showToast(
+          `${getFieldDisplayName(fieldName)} uploaded successfully!`,
+          "success"
+        );
+      } catch (error: any) {
         console.error(`Error uploading ${fieldName}:`, error);
+
+        // Set error state
+        setUploadErrors((prev) => ({
+          ...prev,
+          [fieldName]:
+            error.message ||
+            `Error uploading ${getFieldDisplayName(fieldName)}`,
+        }));
+
         // Handle error - show notification to user
-        setToast({
-          open: true,
-          message: `Error uploading ${fieldName}. Please try again.`,
-          severity: "error",
-        });
+        showToast(
+          `Error uploading ${getFieldDisplayName(fieldName)}: ${
+            error.message || "Please try again."
+          }`,
+          "error"
+        );
       } finally {
         // Clear loading state
         setIsUploading((prev) => ({
@@ -221,14 +285,176 @@ function TeacherRegistrationForm() {
           [fieldName]: false,
         }));
       }
+    },
+    [setValue, showToast]
+  );
+  const getFieldDisplayName = (fieldName: keyof FileUploads): string => {
+    switch (fieldName) {
+      case "cvPath":
+        return "CV/Resume";
+      case "photo":
+        return "Profile Photo";
+      case "verificationDocument":
+        return "Verification Document";
+      default:
+        return "File";
     }
   };
+
+  // Helper function to validate files before upload
+  const validateFile = (
+    file: File,
+    fieldName: keyof FileUploads
+  ): { valid: boolean; message: string } => {
+    // Check file size (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        valid: false,
+        message: `File is too large. Maximum size is 10MB.`,
+      };
+    }
+
+    // Validate file type based on field
+    if (fieldName === "photo") {
+      // Only allow image files
+      if (!file.type.startsWith("image/")) {
+        return {
+          valid: false,
+          message: "Please upload an image file (JPEG, PNG, etc.)",
+        };
+      }
+    } else if (fieldName === "cvPath" || fieldName === "verificationDocument") {
+      // Allow PDFs, Word docs, etc.
+      const validTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      if (!validTypes.includes(file.type)) {
+        return {
+          valid: false,
+          message: "Please upload a PDF or Word document",
+        };
+      }
+    }
+
+    return { valid: true, message: "" };
+  };
+
+  // Helper function to upload with retries
+  const uploadWithRetry = async (file: File, maxRetries = 3) => {
+    let retries = 0;
+
+    while (retries < maxRetries) {
+      try {
+        return await uploadDirect(file, {
+          publicKey: UPLOADCARE_PUBLIC_KEY,
+          store: "auto",
+          // Add cancelable Promise for better UX
+
+          // Note: Removed 'onUploading' as it is not a valid property for 'DirectOptions'.
+        });
+      } catch (error) {
+        retries++;
+        console.warn(
+          `Upload attempt ${retries} failed. ${
+            maxRetries - retries
+          } retries left.`
+        );
+
+        if (retries >= maxRetries) {
+          throw error;
+        }
+
+        // Wait before retrying (exponential backoff)
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * Math.pow(2, retries))
+        );
+      }
+    }
+
+    throw new Error("Upload failed after maximum retries");
+  };
+  // Add loading state UI
+  if (isLoadingRegistrationLink || isLoadingSchool) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <CircularProgress />
+          <Typography variant="h6" sx={{ ml: 2 }}>
+            Loading registration information...
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  // Add error state UI
+  if (isRegistrationLinkError || isSchoolError) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <Alert severity="error" sx={{ mb: 2, width: "100%", maxWidth: 600 }}>
+            {isRegistrationLinkError
+              ? `Error loading registration link: ${
+                  registrationLinkError?.message || "Unknown error"
+                }`
+              : `Error loading school information: ${
+                  schoolError?.message || "Unknown error"
+                }`}
+          </Alert>
+          <Button
+            variant="contained"
+            onClick={() => window.location.reload()}
+            startIcon={<RefreshIcon />}
+          >
+            Try Again
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
+  // Validate registration link exists
+  if (!registrationLinkId || !registrationLinkData?.data) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <Alert
+            severity="warning"
+            sx={{ mb: 2, width: "100%", maxWidth: 600 }}
+          >
+            Invalid or expired registration link. Please contact your school
+            administrator.
+          </Alert>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <ThemeProvider theme={darkTheme}>
       <Container maxWidth="lg">
-        {/* School Header */}
-        <SchoolHeader school={school} />
+        {/* School Header - with null check */}
+        {school && <SchoolHeader school={school} />}
 
         {/* Registration Form */}
         <Card elevation={3}>
@@ -620,6 +846,7 @@ function TeacherRegistrationForm() {
                   Documents
                 </Typography>
                 <Grid container spacing={3}>
+                  {/* Profile Photo Upload */}
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="photo-upload">
@@ -631,6 +858,7 @@ function TeacherRegistrationForm() {
                         fullWidth
                         sx={{ mt: 1, height: 56, textTransform: "none" }}
                         disabled={isUploading.photo}
+                        color={uploadErrors.photo ? "error" : "primary"}
                         startIcon={
                           isUploading.photo ? (
                             <CircularProgress size={24} />
@@ -650,7 +878,12 @@ function TeacherRegistrationForm() {
                           onChange={(e) => handleFileChange(e, "photo")}
                         />
                       </Button>
-                      {files.photo && (
+                      {uploadErrors.photo && (
+                        <FormHelperText error>
+                          {uploadErrors.photo}
+                        </FormHelperText>
+                      )}
+                      {files.photo && !uploadErrors.photo && (
                         <Box mt={1} sx={{ wordBreak: "break-all" }}>
                           <Typography variant="caption" color="success.main">
                             Uploaded successfully
@@ -659,6 +892,8 @@ function TeacherRegistrationForm() {
                       )}
                     </Box>
                   </Grid>
+
+                  {/* Verification Document Upload */}
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="verification-doc-upload">
@@ -670,6 +905,11 @@ function TeacherRegistrationForm() {
                         fullWidth
                         sx={{ mt: 1, height: 56, textTransform: "none" }}
                         disabled={isUploading.verificationDocument}
+                        color={
+                          uploadErrors.verificationDocument
+                            ? "error"
+                            : "primary"
+                        }
                         startIcon={
                           isUploading.verificationDocument ? (
                             <CircularProgress size={24} />
@@ -691,15 +931,23 @@ function TeacherRegistrationForm() {
                           }
                         />
                       </Button>
-                      {files.verificationDocument && (
-                        <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                          <Typography variant="caption" color="success.main">
-                            Uploaded successfully
-                          </Typography>
-                        </Box>
+                      {uploadErrors.verificationDocument && (
+                        <FormHelperText error>
+                          {uploadErrors.verificationDocument}
+                        </FormHelperText>
                       )}
+                      {files.verificationDocument &&
+                        !uploadErrors.verificationDocument && (
+                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                            <Typography variant="caption" color="success.main">
+                              Uploaded successfully
+                            </Typography>
+                          </Box>
+                        )}
                     </Box>
                   </Grid>
+
+                  {/* CV/Resume Upload */}
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
@@ -707,13 +955,13 @@ function TeacherRegistrationForm() {
                         variant="outlined"
                         component="label"
                         fullWidth
-                        sx={{
-                          mt: 1,
-                          height: 56,
-                          textTransform: "none",
-                        }}
-                        color={errors.cvPath ? "error" : "primary"}
+                        sx={{ mt: 1, height: 56, textTransform: "none" }}
                         disabled={isUploading.cvPath}
+                        color={
+                          errors.cvPath || uploadErrors.cvPath
+                            ? "error"
+                            : "primary"
+                        }
                         startIcon={
                           isUploading.cvPath ? (
                             <CircularProgress size={24} />
@@ -734,18 +982,201 @@ function TeacherRegistrationForm() {
                           required
                         />
                       </Button>
-                      {errors.cvPath && (
+                      {(errors.cvPath || uploadErrors.cvPath) && (
                         <FormHelperText error>
-                          {errors.cvPath.message}
+                          {errors.cvPath?.message || uploadErrors.cvPath}
                         </FormHelperText>
                       )}
-                      {files.cvPath && !errors.cvPath && (
+                      {files.cvPath &&
+                        !errors.cvPath &&
+                        !uploadErrors.cvPath && (
+                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                            <Typography variant="caption" color="success.main">
+                              Uploaded successfully
+                            </Typography>
+                          </Box>
+                        )}
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Submit Button */}
+              <Box mt={4} display="flex" justifyContent="flex-end">
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  disabled={
+                    isSubmitting ||
+                    isUploading.cvPath ||
+                    isUploading.photo ||
+                    isUploading.verificationDocument
+                  }
+                  startIcon={
+                    isSubmitting ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : null
+                  }
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Application"}
+                </Button>
+              </Box>
+
+              {/* File Upload Section */}
+              <Box mt={4}>
+                <Typography variant="h6" gutterBottom>
+                  Documents
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Box>
+                      <InputLabel htmlFor="photo-upload">
+                        Profile Photo
+                      </InputLabel>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        sx={{ mt: 1, height: 56, textTransform: "none" }}
+                        disabled={isUploading.photo}
+                        color={uploadErrors.photo ? "error" : "primary"}
+                        startIcon={
+                          isUploading.photo ? (
+                            <CircularProgress size={24} />
+                          ) : null
+                        }
+                      >
+                        {isUploading.photo
+                          ? "Uploading..."
+                          : files.photo
+                          ? "Change Photo"
+                          : "Upload Photo"}
+                        <input
+                          id="photo-upload"
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          onChange={(e) => handleFileChange(e, "photo")}
+                        />
+                      </Button>
+                      {uploadErrors.photo && (
+                        <FormHelperText error>
+                          {uploadErrors.photo}
+                        </FormHelperText>
+                      )}
+                      {files.photo && !uploadErrors.photo && (
                         <Box mt={1} sx={{ wordBreak: "break-all" }}>
                           <Typography variant="caption" color="success.main">
                             Uploaded successfully
                           </Typography>
                         </Box>
                       )}
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Box>
+                      <InputLabel htmlFor="verification-doc-upload">
+                        Verification Document
+                      </InputLabel>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        sx={{ mt: 1, height: 56, textTransform: "none" }}
+                        disabled={isUploading.verificationDocument}
+                        color={
+                          uploadErrors.verificationDocument
+                            ? "error"
+                            : "primary"
+                        }
+                        startIcon={
+                          isUploading.verificationDocument ? (
+                            <CircularProgress size={24} />
+                          ) : null
+                        }
+                      >
+                        {isUploading.verificationDocument
+                          ? "Uploading..."
+                          : files.verificationDocument
+                          ? "Change Document"
+                          : "Upload Document"}
+                        <input
+                          id="verification-doc-upload"
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          hidden
+                          onChange={(e) =>
+                            handleFileChange(e, "verificationDocument")
+                          }
+                        />
+                      </Button>
+                      {uploadErrors.verificationDocument && (
+                        <FormHelperText error>
+                          {uploadErrors.verificationDocument}
+                        </FormHelperText>
+                      )}
+                      {files.verificationDocument &&
+                        !uploadErrors.verificationDocument && (
+                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                            <Typography variant="caption" color="success.main">
+                              Uploaded successfully
+                            </Typography>
+                          </Box>
+                        )}
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Box>
+                      <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        sx={{ mt: 1, height: 56, textTransform: "none" }}
+                        disabled={isUploading.cvPath}
+                        color={
+                          errors.cvPath || uploadErrors.cvPath
+                            ? "error"
+                            : "primary"
+                        }
+                        startIcon={
+                          isUploading.cvPath ? (
+                            <CircularProgress size={24} />
+                          ) : null
+                        }
+                      >
+                        {isUploading.cvPath
+                          ? "Uploading..."
+                          : files.cvPath
+                          ? "Change CV"
+                          : "Upload CV"}
+                        <input
+                          id="cv-upload"
+                          type="file"
+                          accept=".pdf"
+                          hidden
+                          onChange={(e) => handleFileChange(e, "cvPath")}
+                          required
+                        />
+                      </Button>
+                      {(errors.cvPath || uploadErrors.cvPath) && (
+                        <FormHelperText error>
+                          {errors.cvPath?.message || uploadErrors.cvPath}
+                        </FormHelperText>
+                      )}
+                      {files.cvPath &&
+                        !errors.cvPath &&
+                        !uploadErrors.cvPath && (
+                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
+                            <Typography variant="caption" color="success.main">
+                              Uploaded successfully
+                            </Typography>
+                          </Box>
+                        )}
                     </Box>
                   </Grid>
                 </Grid>
@@ -776,6 +1207,23 @@ function TeacherRegistrationForm() {
             </Box>
           </CardContent>
         </Card>
+
+        {/* Toast Notification */}
+        <Snackbar
+          open={toast.open}
+          autoHideDuration={6000}
+          onClose={handleCloseToast}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            onClose={handleCloseToast}
+            severity={toast.severity}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {toast.message}
+          </Alert>
+        </Snackbar>
 
         {/* Toast Notification */}
         <Snackbar

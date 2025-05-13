@@ -4,25 +4,43 @@ import {
   getSchool,
   getSchoolByAdminID,
   SchoolFormData,
+  SchoolResponse,
 } from "../../api/axios/schools";
-export const useGetSchoolAdminId = (adminId: number, enabled: boolean) => {
+/**
+ * Custom hook to fetch school by admin ID
+ */
+export const useGetSchoolAdminId = (
+  adminId: number | undefined,
+  enabled = false
+) => {
   return useQuery({
-    queryKey: ["school"],
-    queryFn: () => getSchoolByAdminID(adminId),
-    enabled: enabled,
+    queryKey: ["school", "admin", adminId],
+    queryFn: () => getSchoolByAdminID(adminId || 0),
+    enabled: enabled && !!adminId,
   });
 };
+/**
+ * Custom hook to create a new school
+ */
 export const useCreateSchool = () => {
   return useMutation({
     mutationFn: (formData: SchoolFormData) => createSchool(formData),
   });
 };
-export const useGetSchoolById = (schoolId: string) => {
-  return useQuery({
-    queryKey: ["school", schoolId], // 👈 Include schoolId
-    queryFn: () => getSchool(schoolId),
-    enabled: !!schoolId, // Only fetch if schoolId exists
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
+/**
+ * Custom hook to fetch school by school ID
+ * @param schoolId - The school ID
+ * @returns Query result with enhanced error handling
+ */
+export const useGetSchoolById = (schoolId: string | null | undefined) => {
+  return useQuery<SchoolResponse, Error>({
+    queryKey: ["school", "id", schoolId],
+    queryFn: () => getSchool(schoolId || ""),
+    enabled: !!schoolId && schoolId.length > 0, // Only fetch if schoolId exists and is not empty
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Provide default data structure to prevent undefined errors
+    placeholderData: { data: null },
   });
 };
