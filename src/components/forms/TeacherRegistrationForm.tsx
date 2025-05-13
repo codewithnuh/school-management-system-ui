@@ -44,8 +44,7 @@ import { darkTheme } from "../../theme/darkTheme";
 import SchoolHeader from "../headers/SchoolHeader";
 import { ThemeProvider } from "@emotion/react";
 import { useGetSchoolById } from "../../services/queries/school";
-import { useGetStudentRegistrationLink } from "../../services/queries/teachers";
-import { useGetRegistrationLinkById } from "../../services/queries/registrationLinks";
+import { useGetTeacherRegistrationLinkById } from "../../services/queries/registrationLinks";
 
 // Define the public key for Uploadcare
 const UPLOADCARE_PUBLIC_KEY = "39d5faf5f775c673cb85"; // Replace with env var in production
@@ -90,11 +89,23 @@ function TeacherRegistrationForm() {
   const [params] = useSearchParams();
   const registrationLinkId = params.get("registrationLinkId");
   console.log(params.get("registrationLinkId"));
-  const { data: registrationLinkData } = useGetRegistrationLinkById(
-    registrationLinkId!
-  );
-  const schoolId = registrationLinkData.data.schoolId;
-  const { data: schoolData } = useGetSchoolById(schoolId);
+  // First, fetch registration link
+  const {
+    data: registrationLinkData,
+    isLoading: isLoadingRegistrationLink,
+    isError: isRegistrationLinkError,
+  } = useGetTeacherRegistrationLinkById(registrationLinkId || "");
+
+  // Get schoolId from registrationLinkData
+  console.log(isRegistrationLinkError, registrationLinkData);
+  const schoolId = registrationLinkData?.data?.schoolId;
+
+  // Then fetch school based on that
+  const {
+    data: schoolData,
+    isLoading: isLoadingSchool,
+    isError: isSchoolError,
+  } = useGetSchoolById(schoolId?.toString() || "");
   const school = schoolData.data;
 
   // State for uploaded file URLs

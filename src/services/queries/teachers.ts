@@ -14,6 +14,7 @@ import {
   getTeacherRegistrationLink,
   TeacherData,
 } from "../../api/axios/registerTeachers";
+import { queryClient } from "../../utils/queryClient";
 /**
  * Hook for fetching a single teacher
  * @param id The ID of the teacher to fetch
@@ -49,11 +50,17 @@ export const useCreateTeacher = () => {
 export const useCreateTeacherRegistrationLink = () => {
   return useMutation({
     mutationFn: createTeacherRegistrationLink,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacherRegistrationLink"] });
+    },
   });
 };
 export const useCreateStudentRegistrationLink = () => {
   return useMutation({
     mutationFn: createStudentRegistrationLink,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["studentRegistrationLink"] });
+    },
   });
 };
 export const useGetTeacherRegistrationLink = () => {

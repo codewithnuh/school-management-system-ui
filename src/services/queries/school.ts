@@ -19,7 +19,10 @@ export const useCreateSchool = () => {
 };
 export const useGetSchoolById = (schoolId: string) => {
   return useQuery({
-    queryKey: ["school"],
+    queryKey: ["school", schoolId], // 👈 Include schoolId
     queryFn: () => getSchool(schoolId),
+    enabled: !!schoolId, // Only fetch if schoolId exists
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
   });
 };

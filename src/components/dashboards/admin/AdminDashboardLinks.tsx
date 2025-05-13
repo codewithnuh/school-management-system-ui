@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Typography,
@@ -57,6 +57,7 @@ export default function RegistrationLinksPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
+  // Fetch teacher and student links
   const {
     data: teacherLinkData,
     isLoading: isTeacherLoading,
@@ -64,21 +65,22 @@ export default function RegistrationLinksPage() {
     error: teacherError,
     refetch: teacherLinkRefetch,
   } = useGetTeacherRegistrationLink();
-  console.log({ teacherLinkData });
+
   const {
     data: studentLinkData,
     isLoading: isStudentLoading,
     isError: isStudentError,
     error: studentError,
+    refetch: studentLinkRefetch,
   } = useGetStudentRegistrationLink();
-  console.log(studentLinkData);
 
+  // Mutations
   const createTeacherLinkMutation = useCreateTeacherRegistrationLink();
   const createStudentLinkMutation = useCreateStudentRegistrationLink();
-
   const deleteTeacherLinkMutation = useDeleteTeacherRegistrationLink();
   const deleteStudentLinkMutation = useDeleteStudentRegistrationLink();
 
+  // Toast state
   const [toast, setToast] = useState({
     open: false,
     message: "",
@@ -87,7 +89,7 @@ export default function RegistrationLinksPage() {
 
   const handleCloseToast = () => setToast({ ...toast, open: false });
 
-  // Get adminId and schoolId from context/hooks
+  // Get adminId and schoolId
   const { data: userData } = useUser();
   const adminId = userData?.data.user.id;
 
@@ -109,9 +111,7 @@ export default function RegistrationLinksPage() {
     }
 
     try {
-      createTeacherLinkMutation.mutate();
-      teacherLinkRefetch();
-
+      await createTeacherLinkMutation.mutateAsync();
       showSnackbar("Teacher registration link generated.", "success");
     } catch (err: any) {
       showSnackbar(err.message || "Failed to generate teacher link.", "error");
@@ -124,6 +124,7 @@ export default function RegistrationLinksPage() {
       await createStudentLinkMutation.mutateAsync();
       showSnackbar("Student registration link generated.", "success");
     } catch (err: any) {
+      console.log(err);
       showSnackbar(err.message || "Failed to generate student link.", "error");
     }
   };
@@ -194,6 +195,27 @@ export default function RegistrationLinksPage() {
       severity,
     });
   };
+
+  // UseEffect to refetch both queries when mutations succeed
+  useEffect(() => {
+    if (
+      createTeacherLinkMutation.isSuccess ||
+      createStudentLinkMutation.isSuccess ||
+      deleteTeacherLinkMutation.isSuccess ||
+      deleteStudentLinkMutation.isSuccess
+    ) {
+      // Refetch both links
+      teacherLinkRefetch();
+      studentLinkRefetch();
+    }
+  }, [
+    createTeacherLinkMutation.isSuccess,
+    createStudentLinkMutation.isSuccess,
+    deleteTeacherLinkMutation.isSuccess,
+    deleteStudentLinkMutation.isSuccess,
+    teacherLinkRefetch,
+    studentLinkRefetch,
+  ]);
 
   // --- Render Section Component ---
   const renderRegistrationSection = (
@@ -281,8 +303,15 @@ export default function RegistrationLinksPage() {
                     variant="contained"
                     onClick={onDelete}
                     sx={{ mt: 1 }}
+                    disabled={
+                      deleteTeacherLinkMutation.isPending ||
+                      deleteStudentLinkMutation.isPending
+                    }
                   >
-                    Delete Link
+                    {deleteTeacherLinkMutation.isPending ||
+                    deleteStudentLinkMutation.isPending
+                      ? "Deleting..."
+                      : "Delete Link"}
                   </Button>
                 </Box>
 
