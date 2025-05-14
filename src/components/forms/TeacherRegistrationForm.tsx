@@ -46,6 +46,7 @@ import SchoolHeader from "../headers/SchoolHeader";
 import { ThemeProvider } from "@emotion/react";
 import { useGetSchoolById } from "../../services/queries/school";
 import { useGetTeacherRegistrationLinkById } from "../../services/queries/registrationLinks";
+import { UploadButton } from "../../utils/uploadthing";
 
 // Define the public key for Uploadcare
 const UPLOADCARE_PUBLIC_KEY = import.meta.env
@@ -107,7 +108,7 @@ function TeacherRegistrationForm() {
     isError: isRegistrationLinkError,
     error: registrationLinkError,
   } = useGetTeacherRegistrationLinkById(registrationLinkId || "");
-
+  console.log(registrationLinkData);
   // Get schoolId from registrationLinkData with safe access
   const schoolId = registrationLinkData?.data?.schoolId?.toString();
 
@@ -1203,6 +1204,23 @@ function TeacherRegistrationForm() {
                 >
                   {isSubmitting ? "Submitting..." : "Submit Application"}
                 </Button>
+                <Box>
+                  <InputLabel htmlFor="photo-upload">Profile Photo</InputLabel>
+                  <UploadButton
+                    className="upload-btn"
+                    endpoint={"pdfUploader"}
+                    onUploadBegin={() => console.log("Upload started")}
+                    onUploadError={(error) => {
+                      alert("Upload failed: " + error.message);
+                    }}
+                    onClientUploadComplete={(file) => {
+                      console.log(file, file[0]);
+                      setFiles({ ...files, photo: file[0].url });
+                      console.log({ files });
+                      alert("Upload SuccessFUll");
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
           </CardContent>

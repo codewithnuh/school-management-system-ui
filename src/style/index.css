@@ -98,3 +98,19 @@ header {
   background-color: var(--neutral-color);
   padding: 40px 0;
 }
+
+.upload-btn {
+  padding: 10px 15px;
+  background-color: #3498db; /* A pleasant blue */
+  color: white;
+  width: 200px;
+  height: 40px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.upload-btn:hover {
+  background-color: #2980b9; /* A slightly darker blue on hover */
+}
