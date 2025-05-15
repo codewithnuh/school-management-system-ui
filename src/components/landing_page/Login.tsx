@@ -11,6 +11,7 @@ import {
   ThemeProvider,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -18,6 +19,7 @@ import { useLoginMutation } from "../../services/queries/auth";
 import { Link, useNavigate } from "react-router";
 import { darkTheme } from "../../theme/darkTheme";
 import { useUser } from "../../hooks/useUser";
+import { LoaderIcon } from "react-hot-toast";
 
 // --- Glass-styled container ---
 const GlassPaper = styled(Paper)(({ theme }) => ({
@@ -94,7 +96,10 @@ const Login = () => {
     return (
       <ThemeProvider theme={darkTheme}>
         <Box textAlign="center" mt={6}>
-          <Typography>Loading...</Typography>
+          <Typography>
+            {" "}
+            <CircularProgress size={24} />
+          </Typography>
         </Box>
       </ThemeProvider>
     );

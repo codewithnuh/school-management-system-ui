@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { z } from "zod";
+import { useSearchParams } from "react-router"; // or 'react-router' depending on version
 import { useStudentRegistration } from "../../services/queries/studentRegisteration";
 import {
   Box,
@@ -20,15 +22,17 @@ import {
   Alert,
   AlertTitle,
   Snackbar,
+  Container,
 } from "@mui/material";
+
 import { useClasses } from "../../services/queries/classes";
+import { useGetTeacherRegistrationLinkById } from "../../services/queries/registrationLinks";
+import { useGetSchoolById } from "../../services/queries/school";
+import SchoolHeader from "../headers/SchoolHeader";
 
 // Define form schema using Zod
 const userFormSchema = z.object({
-  // Required fields for backend validation
   entityType: z.literal("STUDENT").default("STUDENT"),
-  studentId: z.string().optional(), // This will be generated during API call
-
   firstName: z.string().min(1, { message: "First name is required" }),
   middleName: z.string().optional(),
   lastName: z.string().min(1, { message: "Last name is required" }),
@@ -40,15 +44,13 @@ const userFormSchema = z.object({
   nationality: z.string().optional(),
   email: z.string().email({ message: "Invalid email address" }),
   phoneNo: z.string().min(10).max(15).regex(/^\d+$/, {
-    message:
-      "Phone number must contain only digits and be between 10-15 characters",
+    message: "Phone number must contain only digits",
   }),
   emergencyContactName: z
     .string()
     .min(1, { message: "Emergency contact name is required" }),
   emergencyContactNumber: z.string().min(10).max(15).regex(/^\d+$/, {
-    message:
-      "Contact number must contain only digits and be between 10-15 characters",
+    message: "Contact number must contain only digits",
   }),
   address: z.string().min(1, { message: "Address is required" }),
   currentAddress: z.string().optional(),
@@ -71,8 +73,7 @@ const userFormSchema = z.object({
     .min(10)
     .max(15)
     .regex(/^\d+$/, {
-      message:
-        "Phone number must contain only digits and be between 10-15 characters",
+      message: "Phone number must contain only digits",
     })
     .optional(),
   guardianEmail: z
@@ -86,7 +87,7 @@ const userFormSchema = z.object({
       message: "CNIC must contain only digits",
     }),
   classId: z.number({ required_error: "Class is required" }),
-  sectionId: z.number({ required_error: "Section is required" }).optional(),
+  sectionId: z.number().optional(),
   schoolId: z.number().optional(),
   enrollmentDate: z.string().min(1, { message: "Enrollment date is required" }),
   photo: z.string().optional(),
@@ -97,10 +98,8 @@ const userFormSchema = z.object({
   healthInsuranceInfo: z.string().optional(),
   doctorContact: z.string().optional(),
 });
-
 export type UserFormData = z.infer<typeof userFormSchema>;
 
-// Types for alert feedback
 type AlertState = {
   open: boolean;
   message: string;
@@ -108,20 +107,50 @@ type AlertState = {
 };
 
 const UserRegistrationForm = () => {
-  const { mutate, isPending } = useStudentRegistration();
-  const { data, isLoading, error } = useClasses();
-  console.log("data", data);
-  // Safely access data with fallback
-  const CLASSES = data || [];
-  console.log(CLASSES);
-  // State for alert snackbar
+  const [params] = useSearchParams();
+  const registrationLinkId = params.get("registrationLinkId");
+
+  const {
+    data: registrationLinkData,
+    isLoading: isLoadingRegistrationLink,
+    isError: isRegistrationLinkError,
+    error: registrationLinkError,
+  } = useGetTeacherRegistrationLinkById(registrationLinkId || "");
+
+  const schoolId = registrationLinkData?.data?.schoolId?.toString();
+
+  const {
+    data: schoolData,
+    isLoading: isLoadingSchool,
+    isError: isSchoolError,
+    error: schoolError,
+  } = useGetSchoolById(schoolId || "");
+
+  const {
+    data: classesData,
+    isLoading: classIsLoading,
+    isError: classIsError,
+    error: classesIsError,
+  } = useClasses();
+
+  // Safely access data
+  const school = schoolData?.data || null;
+
+  // Safely access classes
+  const CLASSES = classesData?.data || [];
+
   const [alert, setAlert] = useState<AlertState>({
     open: false,
     message: "",
     severity: "info",
   });
 
-  // Form setup
+  const handleCloseAlert = () => {
+    setAlert((prev) => ({ ...prev, open: false }));
+  };
+
+  const { mutate, isPending } = useStudentRegistration();
+
   const {
     control,
     handleSubmit,
@@ -131,24 +160,16 @@ const UserRegistrationForm = () => {
     resolver: zodResolver(userFormSchema),
     defaultValues: {
       gender: "Male",
-      entityType: "STUDENT", // Add this line
+      entityType: "STUDENT",
     },
   });
 
-  // Handle closing the alert
-  const handleCloseAlert = () => {
-    setAlert((prev) => ({ ...prev, open: false }));
-  };
-
-  // Handle form submission
   const handleFormSubmit = (data: UserFormData) => {
-    // Ensure required fields are included
     const formData = {
       ...data,
       entityType: "STUDENT",
-      studentId: data.CNIC || `STD-${Date.now()}`, // Use CNIC or generate a temporary ID
+      studentId: data.CNIC || `STD-${Date.now()}`,
     };
-
     mutate(formData, {
       onSuccess: () => {
         setAlert({
@@ -156,7 +177,7 @@ const UserRegistrationForm = () => {
           message: "Student registered successfully!",
           severity: "success",
         });
-        reset(); // Reset form on success
+        reset();
       },
       onError: (error) => {
         setAlert({
@@ -170,628 +191,703 @@ const UserRegistrationForm = () => {
     });
   };
 
-  // Form field groups for better organization
-  const renderBasicInfoFields = () => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Basic Information
-      </Typography>
+  // Show loading state
+  if (isLoadingRegistrationLink || isLoadingSchool) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <CircularProgress />
+          <Typography variant="h6" sx={{ ml: 2 }}>
+            Loading registration information...
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="firstName"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="First Name *"
-                fullWidth
-                error={!!errors.firstName}
-                helperText={errors.firstName?.message}
-              />
-            )}
-          />
-        </Grid>
+  // Show error if registration link or school data failed
+  if (isRegistrationLinkError || isSchoolError) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <Alert severity="error" sx={{ mb: 2, width: "100%", maxWidth: 600 }}>
+            {isRegistrationLinkError
+              ? `Error loading registration link: ${
+                  registrationLinkError?.message || "Unknown error"
+                }`
+              : `Error loading school information: ${
+                  schoolError?.message || "Unknown error"
+                }`}
+          </Alert>
+          <Button
+            variant="contained"
+            onClick={() => window.location.reload()}
+            startIcon={<RefreshIcon />}
+          >
+            Try Again
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
 
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="middleName"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Middle Name"
-                fullWidth
-                error={!!errors.middleName}
-                helperText={errors.middleName?.message}
-              />
-            )}
-          />
-        </Grid>
+  // Show warning if registrationLinkId is missing or invalid
+  if (!registrationLinkId || !registrationLinkData?.data) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <Alert
+            severity="warning"
+            sx={{ mb: 2, width: "100%", maxWidth: 600 }}
+          >
+            Invalid or expired registration link. Please contact your school
+            administrator.
+          </Alert>
+        </Box>
+      </Container>
+    );
+  }
 
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="lastName"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Last Name *"
-                fullWidth
-                error={!!errors.lastName}
-                helperText={errors.lastName?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="dateOfBirth"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Date of Birth *"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.dateOfBirth}
-                helperText={errors.dateOfBirth?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="gender"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.gender}>
-                <InputLabel id="gender-label">Gender *</InputLabel>
-                <Select {...field} labelId="gender-label" label="Gender *">
-                  <MenuItem value="Male">Male</MenuItem>
-                  <MenuItem value="Female">Female</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </Select>
-                <FormHelperText>{errors.gender?.message}</FormHelperText>
-              </FormControl>
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="placeOfBirth"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Place of Birth"
-                fullWidth
-                error={!!errors.placeOfBirth}
-                helperText={errors.placeOfBirth?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="nationality"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Nationality"
-                fullWidth
-                error={!!errors.nationality}
-                helperText={errors.nationality?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Email *"
-                type="email"
-                fullWidth
-                error={!!errors.email}
-                helperText={errors.email?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="phoneNo"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Phone Number *"
-                fullWidth
-                error={!!errors.phoneNo}
-                helperText={errors.phoneNo?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Controller
-            name="address"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Permanent Address *"
-                fullWidth
-                multiline
-                rows={2}
-                error={!!errors.address}
-                helperText={errors.address?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Controller
-            name="currentAddress"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Current Address (if different)"
-                fullWidth
-                multiline
-                rows={2}
-                error={!!errors.currentAddress}
-                helperText={errors.currentAddress?.message}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderGuardianInfoFields = () => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Guardian Information
-      </Typography>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="guardianName"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Guardian Name *"
-                fullWidth
-                error={!!errors.guardianName}
-                helperText={errors.guardianName?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="guardianCNIC"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Guardian CNIC *"
-                fullWidth
-                error={!!errors.guardianCNIC}
-                helperText={errors.guardianCNIC?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="guardianPhone"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Guardian Phone"
-                fullWidth
-                error={!!errors.guardianPhone}
-                helperText={errors.guardianPhone?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="guardianEmail"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Guardian Email"
-                type="email"
-                fullWidth
-                error={!!errors.guardianEmail}
-                helperText={errors.guardianEmail?.message}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderAcademicInfoFields = () => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Academic Information
-      </Typography>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="CNIC"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Student CNIC *"
-                fullWidth
-                error={!!errors.CNIC}
-                helperText={errors.CNIC?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="enrollmentDate"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Enrollment Date *"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.enrollmentDate}
-                helperText={errors.enrollmentDate?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="classId"
-            control={control}
-            render={({ field }) => (
-              <FormControl fullWidth error={!!errors.classId}>
-                <InputLabel id="class-label">Class *</InputLabel>
-                <Select
-                  {...field}
-                  labelId="class-label"
-                  label="Class *"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <MenuItem value="">Loading classes...</MenuItem>
-                  ) : error ? (
-                    <MenuItem value="">Error loading classes</MenuItem>
-                  ) : CLASSES.length === 0 ? (
-                    <MenuItem value="">No classes available</MenuItem>
-                  ) : (
-                    CLASSES.map((classItem) => (
-                      <MenuItem key={classItem.id} value={classItem.id}>
-                        {classItem.name}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-                <FormHelperText>{errors.classId?.message}</FormHelperText>
-              </FormControl>
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="previousSchool"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Previous School"
-                fullWidth
-                error={!!errors.previousSchool}
-                helperText={errors.previousSchool?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="previousGrade"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Previous Grade"
-                fullWidth
-                error={!!errors.previousGrade}
-                helperText={errors.previousGrade?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="previousMarks"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Previous Marks"
-                fullWidth
-                error={!!errors.previousMarks}
-                helperText={errors.previousMarks?.message}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderEmergencyContactFields = () => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Emergency Contact Information
-      </Typography>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="emergencyContactName"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Emergency Contact Name *"
-                fullWidth
-                error={!!errors.emergencyContactName}
-                helperText={errors.emergencyContactName?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="emergencyContactNumber"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Emergency Contact Number *"
-                fullWidth
-                error={!!errors.emergencyContactNumber}
-                helperText={errors.emergencyContactNumber?.message}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderAdditionalInfoFields = () => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Additional Information
-      </Typography>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="transportation"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Transportation Details"
-                fullWidth
-                error={!!errors.transportation}
-                helperText={errors.transportation?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="extracurriculars"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Extracurricular Activities"
-                fullWidth
-                error={!!errors.extracurriculars}
-                helperText={errors.extracurriculars?.message}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderMedicalInfoFields = () => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Medical Information
-      </Typography>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="medicalConditions"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Medical Conditions"
-                fullWidth
-                multiline
-                rows={2}
-                error={!!errors.medicalConditions}
-                helperText={errors.medicalConditions?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="allergies"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Allergies"
-                fullWidth
-                multiline
-                rows={2}
-                error={!!errors.allergies}
-                helperText={errors.allergies?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="healthInsuranceInfo"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Health Insurance Information"
-                fullWidth
-                error={!!errors.healthInsuranceInfo}
-                helperText={errors.healthInsuranceInfo?.message}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="doctorContact"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Doctor Contact"
-                fullWidth
-                error={!!errors.doctorContact}
-                helperText={errors.doctorContact?.message}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderAuthenticationFields = () => (
-    <>
-      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-        Authentication
-      </Typography>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Password"
-                type="password"
-                fullWidth
-                error={!!errors.password}
-                helperText={errors.password?.message}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
+  // Show error if class data failed to load
+  if (classIsError) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <Alert severity="error" sx={{ mb: 2, width: "100%", maxWidth: 600 }}>
+            Failed to load class data:{" "}
+            {classesIsError?.message || "Unknown error"}
+          </Alert>
+          <Button
+            variant="contained"
+            onClick={() => window.location.reload()}
+            startIcon={<RefreshIcon />}
+          >
+            Reload Page
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <>
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        {/* School Header */}
+        {school && <SchoolHeader school={school} />}
+
+        {/* Form */}
         <Box
           component="form"
           onSubmit={handleSubmit(handleFormSubmit)}
           noValidate
         >
-          <Typography variant="h5" component="h2" gutterBottom>
+          <Typography
+            variant="h5"
+            component="h2"
+            textAlign={"center"}
+            gutterBottom
+          >
             Student Registration Form
           </Typography>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          <Typography
+            textAlign={"center"}
+            variant="subtitle2"
+            color="text.secondary"
+            gutterBottom
+          >
             Fields marked with * are required
           </Typography>
+          <Divider sx={{ my: 3 }} />
+
+          {/* Basic Info Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Basic Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="firstName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="First Name *"
+                    fullWidth
+                    error={!!errors.firstName}
+                    helperText={errors.firstName?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="middleName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Middle Name"
+                    fullWidth
+                    error={!!errors.middleName}
+                    helperText={errors.middleName?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="lastName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Last Name *"
+                    fullWidth
+                    error={!!errors.lastName}
+                    helperText={errors.lastName?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="dateOfBirth"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Date of Birth *"
+                    type="date"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    error={!!errors.dateOfBirth}
+                    helperText={errors.dateOfBirth?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="gender"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.gender}>
+                    <InputLabel id="gender-label">Gender *</InputLabel>
+                    <Select {...field} labelId="gender-label" label="Gender *">
+                      <MenuItem value="Male">Male</MenuItem>
+                      <MenuItem value="Female">Female</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                    <FormHelperText>{errors.gender?.message}</FormHelperText>
+                  </FormControl>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="placeOfBirth"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Place of Birth"
+                    fullWidth
+                    error={!!errors.placeOfBirth}
+                    helperText={errors.placeOfBirth?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="nationality"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Nationality"
+                    fullWidth
+                    error={!!errors.nationality}
+                    helperText={errors.nationality?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Email *"
+                    type="email"
+                    fullWidth
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="phoneNo"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Phone Number *"
+                    fullWidth
+                    error={!!errors.phoneNo}
+                    helperText={errors.phoneNo?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Controller
+                name="address"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Permanent Address *"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    error={!!errors.address}
+                    helperText={errors.address?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Controller
+                name="currentAddress"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Current Address (if different)"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    error={!!errors.currentAddress}
+                    helperText={errors.currentAddress?.message}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
 
           <Divider sx={{ my: 3 }} />
 
-          {renderBasicInfoFields()}
+          {/* Guardian Info Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Guardian Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="guardianName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Guardian Name *"
+                    fullWidth
+                    error={!!errors.guardianName}
+                    helperText={errors.guardianName?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="guardianCNIC"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Guardian CNIC *"
+                    fullWidth
+                    error={!!errors.guardianCNIC}
+                    helperText={errors.guardianCNIC?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="guardianPhone"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Guardian Phone"
+                    fullWidth
+                    error={!!errors.guardianPhone}
+                    helperText={errors.guardianPhone?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="guardianEmail"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Guardian Email"
+                    type="email"
+                    fullWidth
+                    error={!!errors.guardianEmail}
+                    helperText={errors.guardianEmail?.message}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+
           <Divider sx={{ my: 3 }} />
 
-          {renderGuardianInfoFields()}
+          {/* Academic Info Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Academic Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="CNIC"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Student CNIC *"
+                    fullWidth
+                    error={!!errors.CNIC}
+                    helperText={errors.CNIC?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="enrollmentDate"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Enrollment Date *"
+                    type="date"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    error={!!errors.enrollmentDate}
+                    helperText={errors.enrollmentDate?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="classId"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.classId}>
+                    <InputLabel id="class-label">Class *</InputLabel>
+                    <Select
+                      {...field}
+                      labelId="class-label"
+                      label="Class *"
+                      disabled={classIsLoading}
+                    >
+                      {classIsLoading ? (
+                        <MenuItem value="">Loading classes...</MenuItem>
+                      ) : classIsError ? (
+                        <MenuItem value="">Failed to load classes</MenuItem>
+                      ) : CLASSES.length === 0 ? (
+                        <MenuItem value="">No classes available</MenuItem>
+                      ) : (
+                        CLASSES.map((classItem) => (
+                          <MenuItem key={classItem.id} value={classItem.id}>
+                            {classItem.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                    <FormHelperText>{errors.classId?.message}</FormHelperText>
+                  </FormControl>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="sectionId"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.sectionId}>
+                    <InputLabel id="section-label">Section</InputLabel>
+                    <Select
+                      {...field}
+                      labelId="section-label"
+                      label="Section"
+                      disabled={classIsLoading}
+                    >
+                      <MenuItem value="">Select a section</MenuItem>
+                    </Select>
+                    <FormHelperText>{errors.sectionId?.message}</FormHelperText>
+                  </FormControl>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="previousSchool"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Previous School"
+                    fullWidth
+                    error={!!errors.previousSchool}
+                    helperText={errors.previousSchool?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="previousGrade"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Previous Grade"
+                    fullWidth
+                    error={!!errors.previousGrade}
+                    helperText={errors.previousGrade?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="previousMarks"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Previous Marks"
+                    fullWidth
+                    error={!!errors.previousMarks}
+                    helperText={errors.previousMarks?.message}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+
           <Divider sx={{ my: 3 }} />
 
-          {renderAcademicInfoFields()}
+          {/* Emergency Contact Info Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Emergency Contact Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="emergencyContactName"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Emergency Contact Name *"
+                    fullWidth
+                    error={!!errors.emergencyContactName}
+                    helperText={errors.emergencyContactName?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="emergencyContactNumber"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Emergency Contact Number *"
+                    fullWidth
+                    error={!!errors.emergencyContactNumber}
+                    helperText={errors.emergencyContactNumber?.message}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+
           <Divider sx={{ my: 3 }} />
 
-          {renderEmergencyContactFields()}
+          {/* Additional Info Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Additional Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="transportation"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Transportation Details"
+                    fullWidth
+                    error={!!errors.transportation}
+                    helperText={errors.transportation?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="extracurriculars"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Extracurricular Activities"
+                    fullWidth
+                    error={!!errors.extracurriculars}
+                    helperText={errors.extracurriculars?.message}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+
           <Divider sx={{ my: 3 }} />
 
-          {renderAdditionalInfoFields()}
+          {/* Medical Info Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Medical Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="medicalConditions"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Medical Conditions"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    error={!!errors.medicalConditions}
+                    helperText={errors.medicalConditions?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="allergies"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Allergies"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    error={!!errors.allergies}
+                    helperText={errors.allergies?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="healthInsuranceInfo"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Health Insurance Information"
+                    fullWidth
+                    error={!!errors.healthInsuranceInfo}
+                    helperText={errors.healthInsuranceInfo?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="doctorContact"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Doctor Contact"
+                    fullWidth
+                    error={!!errors.doctorContact}
+                    helperText={errors.doctorContact?.message}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+
           <Divider sx={{ my: 3 }} />
 
-          {renderMedicalInfoFields()}
-          <Divider sx={{ my: 3 }} />
+          {/* Authentication Info Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Authentication
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Password"
+                    type="password"
+                    fullWidth
+                    error={!!errors.password}
+                    helperText={errors.password?.message}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
 
-          {renderAuthenticationFields()}
-
+          {/* Submit Button */}
           <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
             <Button
               type="submit"
@@ -811,7 +907,7 @@ const UserRegistrationForm = () => {
         </Box>
       </Paper>
 
-      {/* Snackbar for alerts */}
+      {/* Toast Notification */}
       <Snackbar
         open={alert.open}
         autoHideDuration={6000}
@@ -829,7 +925,7 @@ const UserRegistrationForm = () => {
               ? "Success"
               : alert.severity === "error"
               ? "Error"
-              : "Information"}
+              : "Info"}
           </AlertTitle>
           {alert.message}
         </Alert>

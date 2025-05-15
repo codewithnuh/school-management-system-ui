@@ -78,7 +78,8 @@ const ActivationStatusPage = () => {
           </Typography>
 
           <Typography variant="body1" sx={{ mb: 4 }}>
-            Your school has been created, but your account is not yet activated.
+            Your school has been created,but your account is not yet activated.
+            Maybe You haven't clear the payment
             <br />
             Please contact our team on WhatsApp to activate your admin access.
           </Typography>
@@ -96,6 +97,7 @@ const ActivationStatusPage = () => {
               backgroundColor: "#25D366",
               "&:hover": {
                 backgroundColor: "#1EBE57",
+                color: "white",
               },
             }}
           >

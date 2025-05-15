@@ -840,163 +840,119 @@ function TeacherRegistrationForm() {
                   </Grid>
                 </Grid>
               </Grid>
-
               {/* File Upload Section */}
               <Box mt={4}>
                 <Typography variant="h6" gutterBottom>
                   Documents
                 </Typography>
                 <Grid container spacing={3}>
-                  {/* Profile Photo Upload */}
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="photo-upload">
                         Profile Photo
                       </InputLabel>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ mt: 1, height: 56, textTransform: "none" }}
-                        disabled={isUploading.photo}
-                        color={uploadErrors.photo ? "error" : "primary"}
-                        startIcon={
-                          isUploading.photo ? (
-                            <CircularProgress size={24} />
-                          ) : null
-                        }
-                      >
-                        {isUploading.photo
-                          ? "Uploading..."
-                          : files.photo
-                          ? "Change Photo"
-                          : "Upload Photo"}
-                        <input
-                          id="photo-upload"
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          onChange={(e) => handleFileChange(e, "photo")}
-                        />
-                      </Button>
-                      {uploadErrors.photo && (
-                        <FormHelperText error>
-                          {uploadErrors.photo}
-                        </FormHelperText>
-                      )}
-                      {files.photo && !uploadErrors.photo && (
-                        <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                          <Typography variant="caption" color="success.main">
-                            Uploaded successfully
-                          </Typography>
-                        </Box>
-                      )}
+                      <UploadButton
+                        className="upload-btn"
+                        endpoint={"pdfUploader"}
+                        onUploadBegin={() => {
+                          setIsUploading({ ...isUploading, cvPath: true });
+                          showToast("FIle is being uploaded", "info");
+                        }}
+                        onUploadError={(error) => {
+                          setToast({
+                            ...toast,
+                            message: error.message,
+                            severity: "error",
+                          });
+                          showToast(error.message, "error");
+                        }}
+                        onClientUploadComplete={(file) => {
+                          console.log(file, file[0]);
+                          setFiles({
+                            ...files,
+                            photo: file[0].url,
+                          });
+                          setToast({
+                            ...toast,
+                            message: "Photo uploaded Successfully",
+                            severity: "success",
+                          });
+                          showToast("Photo Uploaded Successfully", "success");
+                        }}
+                      />
                     </Box>
                   </Grid>
 
-                  {/* Verification Document Upload */}
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="verification-doc-upload">
                         Verification Document
                       </InputLabel>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ mt: 1, height: 56, textTransform: "none" }}
-                        disabled={isUploading.verificationDocument}
-                        color={
-                          uploadErrors.verificationDocument
-                            ? "error"
-                            : "primary"
-                        }
-                        startIcon={
-                          isUploading.verificationDocument ? (
-                            <CircularProgress size={24} />
-                          ) : null
-                        }
-                      >
-                        {isUploading.verificationDocument
-                          ? "Uploading..."
-                          : files.verificationDocument
-                          ? "Change Document"
-                          : "Upload Document"}
-                        <input
-                          id="verification-doc-upload"
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          hidden
-                          onChange={(e) =>
-                            handleFileChange(e, "verificationDocument")
-                          }
-                        />
-                      </Button>
-                      {uploadErrors.verificationDocument && (
-                        <FormHelperText error>
-                          {uploadErrors.verificationDocument}
-                        </FormHelperText>
-                      )}
-                      {files.verificationDocument &&
-                        !uploadErrors.verificationDocument && (
-                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                            <Typography variant="caption" color="success.main">
-                              Uploaded successfully
-                            </Typography>
-                          </Box>
-                        )}
+                      <UploadButton
+                        className="upload-btn"
+                        endpoint={"pdfUploader"}
+                        onUploadBegin={() => {
+                          setIsUploading({ ...isUploading, cvPath: true });
+                          showToast("FIle is being uploaded", "info");
+                        }}
+                        onUploadError={(error) => {
+                          setToast({
+                            ...toast,
+                            message: error.message,
+                            severity: "error",
+                          });
+                          showToast(error.message, "error");
+                        }}
+                        onClientUploadComplete={(file) => {
+                          console.log(file, file[0]);
+                          setFiles({
+                            ...files,
+                            verificationDocument: file[0].url,
+                          });
+                          setToast({
+                            ...toast,
+                            message:
+                              "Verification Document uploaded Successfully",
+                            severity: "success",
+                          });
+                          showToast(
+                            "Verification Document Uploaded Successfully",
+                            "success"
+                          );
+                        }}
+                      />
                     </Box>
                   </Grid>
 
-                  {/* CV/Resume Upload */}
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ mt: 1, height: 56, textTransform: "none" }}
-                        disabled={isUploading.cvPath}
-                        color={
-                          errors.cvPath || uploadErrors.cvPath
-                            ? "error"
-                            : "primary"
-                        }
-                        startIcon={
-                          isUploading.cvPath ? (
-                            <CircularProgress size={24} />
-                          ) : null
-                        }
-                      >
-                        {isUploading.cvPath
-                          ? "Uploading..."
-                          : files.cvPath
-                          ? "Change CV"
-                          : "Upload CV"}
-                        <input
-                          id="cv-upload"
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          hidden
-                          onChange={(e) => handleFileChange(e, "cvPath")}
-                          required
-                        />
-                      </Button>
-                      {(errors.cvPath || uploadErrors.cvPath) && (
-                        <FormHelperText error>
-                          {errors.cvPath?.message || uploadErrors.cvPath}
-                        </FormHelperText>
-                      )}
-                      {files.cvPath &&
-                        !errors.cvPath &&
-                        !uploadErrors.cvPath && (
-                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                            <Typography variant="caption" color="success.main">
-                              Uploaded successfully
-                            </Typography>
-                          </Box>
-                        )}
+                      <UploadButton
+                        className="upload-btn"
+                        endpoint={"pdfUploader"}
+                        onUploadBegin={() => {
+                          setIsUploading({ ...isUploading, cvPath: true });
+                          showToast("FIle is being uploaded", "info");
+                        }}
+                        onUploadError={(error) => {
+                          setToast({
+                            ...toast,
+                            message: error.message,
+                            severity: "error",
+                          });
+                          showToast(error.message, "error");
+                        }}
+                        onClientUploadComplete={(file) => {
+                          console.log(file, file[0]);
+                          setFiles({ ...files, photo: file[0].url });
+                          setToast({
+                            ...toast,
+                            message: "CV uploaded Successfully",
+                            severity: "success",
+                          });
+                          showToast("Cv Uploaded Successfully", "success");
+                        }}
+                      />
                     </Box>
                   </Grid>
                 </Grid>
@@ -1023,204 +979,6 @@ function TeacherRegistrationForm() {
                 >
                   {isSubmitting ? "Submitting..." : "Submit Application"}
                 </Button>
-              </Box>
-
-              {/* File Upload Section */}
-              <Box mt={4}>
-                <Typography variant="h6" gutterBottom>
-                  Documents
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={4}>
-                    <Box>
-                      <InputLabel htmlFor="photo-upload">
-                        Profile Photo
-                      </InputLabel>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ mt: 1, height: 56, textTransform: "none" }}
-                        disabled={isUploading.photo}
-                        color={uploadErrors.photo ? "error" : "primary"}
-                        startIcon={
-                          isUploading.photo ? (
-                            <CircularProgress size={24} />
-                          ) : null
-                        }
-                      >
-                        {isUploading.photo
-                          ? "Uploading..."
-                          : files.photo
-                          ? "Change Photo"
-                          : "Upload Photo"}
-                        <input
-                          id="photo-upload"
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          onChange={(e) => handleFileChange(e, "photo")}
-                        />
-                      </Button>
-                      {uploadErrors.photo && (
-                        <FormHelperText error>
-                          {uploadErrors.photo}
-                        </FormHelperText>
-                      )}
-                      {files.photo && !uploadErrors.photo && (
-                        <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                          <Typography variant="caption" color="success.main">
-                            Uploaded successfully
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <Box>
-                      <InputLabel htmlFor="verification-doc-upload">
-                        Verification Document
-                      </InputLabel>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ mt: 1, height: 56, textTransform: "none" }}
-                        disabled={isUploading.verificationDocument}
-                        color={
-                          uploadErrors.verificationDocument
-                            ? "error"
-                            : "primary"
-                        }
-                        startIcon={
-                          isUploading.verificationDocument ? (
-                            <CircularProgress size={24} />
-                          ) : null
-                        }
-                      >
-                        {isUploading.verificationDocument
-                          ? "Uploading..."
-                          : files.verificationDocument
-                          ? "Change Document"
-                          : "Upload Document"}
-                        <input
-                          id="verification-doc-upload"
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          hidden
-                          onChange={(e) =>
-                            handleFileChange(e, "verificationDocument")
-                          }
-                        />
-                      </Button>
-                      {uploadErrors.verificationDocument && (
-                        <FormHelperText error>
-                          {uploadErrors.verificationDocument}
-                        </FormHelperText>
-                      )}
-                      {files.verificationDocument &&
-                        !uploadErrors.verificationDocument && (
-                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                            <Typography variant="caption" color="success.main">
-                              Uploaded successfully
-                            </Typography>
-                          </Box>
-                        )}
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <Box>
-                      <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ mt: 1, height: 56, textTransform: "none" }}
-                        disabled={isUploading.cvPath}
-                        color={
-                          errors.cvPath || uploadErrors.cvPath
-                            ? "error"
-                            : "primary"
-                        }
-                        startIcon={
-                          isUploading.cvPath ? (
-                            <CircularProgress size={24} />
-                          ) : null
-                        }
-                      >
-                        {isUploading.cvPath
-                          ? "Uploading..."
-                          : files.cvPath
-                          ? "Change CV"
-                          : "Upload CV"}
-                        <input
-                          id="cv-upload"
-                          type="file"
-                          accept=".pdf"
-                          hidden
-                          onChange={(e) => handleFileChange(e, "cvPath")}
-                          required
-                        />
-                      </Button>
-                      {(errors.cvPath || uploadErrors.cvPath) && (
-                        <FormHelperText error>
-                          {errors.cvPath?.message || uploadErrors.cvPath}
-                        </FormHelperText>
-                      )}
-                      {files.cvPath &&
-                        !errors.cvPath &&
-                        !uploadErrors.cvPath && (
-                          <Box mt={1} sx={{ wordBreak: "break-all" }}>
-                            <Typography variant="caption" color="success.main">
-                              Uploaded successfully
-                            </Typography>
-                          </Box>
-                        )}
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-
-              {/* Submit Button */}
-              <Box mt={4} display="flex" justifyContent="flex-end">
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  disabled={
-                    isSubmitting ||
-                    isUploading.cvPath ||
-                    isUploading.photo ||
-                    isUploading.verificationDocument
-                  }
-                  startIcon={
-                    isSubmitting ? (
-                      <CircularProgress size={24} color="inherit" />
-                    ) : null
-                  }
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Application"}
-                </Button>
-                <Box>
-                  <InputLabel htmlFor="photo-upload">Profile Photo</InputLabel>
-                  <UploadButton
-                    className="upload-btn"
-                    endpoint={"pdfUploader"}
-                    onUploadBegin={() => console.log("Upload started")}
-                    onUploadError={(error) => {
-                      alert("Upload failed: " + error.message);
-                    }}
-                    onClientUploadComplete={(file) => {
-                      console.log(file, file[0]);
-                      setFiles({ ...files, photo: file[0].url });
-                      console.log({ files });
-                      alert("Upload SuccessFUll");
-                    }}
-                  />
-                </Box>
               </Box>
             </Box>
           </CardContent>
