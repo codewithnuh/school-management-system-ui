@@ -19,7 +19,6 @@ import { useLoginMutation } from "../../services/queries/auth";
 import { Link, useNavigate } from "react-router";
 import { darkTheme } from "../../theme/darkTheme";
 import { useUser } from "../../hooks/useUser";
-import { LoaderIcon } from "react-hot-toast";
 
 // --- Glass-styled container ---
 const GlassPaper = styled(Paper)(({ theme }) => ({
@@ -31,7 +30,7 @@ const GlassPaper = styled(Paper)(({ theme }) => ({
   backdropFilter: "blur(12px)",
 }));
 
-const Login = () => {
+const StudentLogin = () => {
   const { data: userData, isLoading: isUserLoading } = useUser();
   const navigate = useNavigate();
 
@@ -39,6 +38,7 @@ const Login = () => {
     entityType: "ADMIN",
     email: "",
     password: "",
+    schoolCode: "",
   });
 
   const [toast, setToast] = useState({
@@ -143,6 +143,17 @@ const Login = () => {
                     required
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    name="schoolCode"
+                    label="School Code"
+                    type="text"
+                    value={formData.schoolCode}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                  />
+                </Grid>
               </Grid>
 
               <Box textAlign="center" mt={4}>
@@ -171,7 +182,7 @@ const Login = () => {
 
               <Box display="flex" justifyContent="space-between" mt={3}>
                 <div style={{ opacity: 0 }} />
-                <Link to="/register">Don't have an account? Register</Link>
+
                 <Link to="/forgot-password">Forgot Password</Link>
               </Box>
             </form>
@@ -199,4 +210,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default StudentLogin;

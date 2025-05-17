@@ -40,11 +40,12 @@ import {
 } from "@mui/icons-material";
 import { useTheme, ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "../../theme/darkTheme"; // Import your existing dark theme
-
 // Query hooks
 import { useSubjects } from "../../services/queries/subject";
 import { useTeachers } from "../../services/queries/classTeachers";
 import { useCreateClass } from "../../services/queries/classes";
+import { useGetSchoolAdminId } from "../../services/queries/school";
+import { useUser } from "../../hooks/useUser";
 
 // Types
 type CreateClassFormValues = z.infer<typeof CreateClassSchema>;
@@ -79,7 +80,11 @@ const CreateClassForm: React.FC = () => {
   const createClassMutation = useCreateClass();
   const { data: subjectsData, isLoading: isLoadingSubjects } = useSubjects();
   const { data: teachersData, isLoading: isLoadingTeachers } = useTeachers();
+  const { data: adminData } = useUser();
+  const adminId = adminData?.data.user.id;
 
+  const { data: schoolData } = useGetSchoolAdminId(adminId, !!adminId);
+  const schoolId = schoolData?.data?.id;
   const subjects = subjectsData || [];
 
   const teachers = teachersData?.rows || [];
@@ -102,7 +107,7 @@ const CreateClassForm: React.FC = () => {
       periodLength: 45,
       workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
       subjectIds: [],
-      schoolId: 8,
+      schoolId: schoolId as number,
       sections: [],
     },
   });

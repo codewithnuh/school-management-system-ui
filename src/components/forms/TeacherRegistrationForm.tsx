@@ -43,7 +43,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 // Import your dark theme
 import { darkTheme } from "../../theme/darkTheme";
 import SchoolHeader from "../headers/SchoolHeader";
-import { ThemeProvider } from "@emotion/react";
+import { ThemeProvider } from "@mui/material";
 import { useGetSchoolById } from "../../services/queries/school";
 import { useGetTeacherRegistrationLinkById } from "../../services/queries/registrationLinks";
 import { UploadButton } from "../../utils/uploadthing";
@@ -108,7 +108,6 @@ function TeacherRegistrationForm() {
     isError: isRegistrationLinkError,
     error: registrationLinkError,
   } = useGetTeacherRegistrationLinkById(registrationLinkId || "");
-  console.log(registrationLinkData);
   // Get schoolId from registrationLinkData with safe access
   const schoolId = registrationLinkData?.data?.schoolId?.toString();
 
@@ -130,6 +129,12 @@ function TeacherRegistrationForm() {
     verificationDocument: "",
   });
 
+  // Get form values for files to handle both initial values and updates
+  const photoField = control._formValues.photo as string;
+  const cvPathField = control._formValues.cvPath as string;
+  const verificationDocumentField = control._formValues
+    .verificationDocument as string;
+
   // State for tracking file upload loading states
   const [isUploading, setIsUploading] = useState<FileUploadingStates>({
     cvPath: false,
@@ -149,10 +154,52 @@ function TeacherRegistrationForm() {
     setToast({ ...toast, open: false });
   };
 
+  // Function to validate required file uploads
+  const validateFileUploads = (): boolean => {
+    let isValid = true;
+    const newErrors: FileUploadErrors = {
+      cvPath: null,
+      photo: null,
+      verificationDocument: null,
+    };
+
+    // CV is required
+    if (!files.cvPath) {
+      newErrors.cvPath = "CV/Resume is required";
+      isValid = false;
+    }
+
+    // Photo is required
+    if (!files.photo) {
+      newErrors.photo = "Profile photo is required";
+      isValid = false;
+    }
+
+    // Verification document is required
+    if (!files.verificationDocument) {
+      newErrors.verificationDocument = "Verification document is required";
+      isValid = false;
+    }
+
+    setUploadErrors(newErrors);
+
+    if (!isValid) {
+      showToast("Please upload all required documents", "error");
+    }
+
+    return isValid;
+  };
+
   // Handle form submission
   const onSubmit = async (data: TeacherSchemaType) => {
     try {
+      // Validate file uploads first
+      if (!validateFileUploads()) {
+        return;
+      }
+
       // Combine form data with file URLs
+      console.log("Submitting...");
       const fullData = {
         ...data,
         cvPath: files.cvPath,
@@ -160,6 +207,7 @@ function TeacherRegistrationForm() {
         photo: files.photo,
         verificationDocument: files.verificationDocument,
       };
+
       registerTeacherMutation.mutate(fullData, {
         onSuccess: (response) => {
           // Show success toast when registration is successful
@@ -186,15 +234,20 @@ function TeacherRegistrationForm() {
           });
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
       // Handle error - show notification to user
       setToast({
         open: true,
-        message: "Error submitting form. Please try again.",
+        message: error.message || "Error submitting form. Please try again.",
         severity: "error",
       });
     }
+  };
+
+  // Manual form submission function as a backup
+  const submitForm = () => {
+    handleSubmit(onSubmit)();
   };
 
   // Helper function to show toast notifications
@@ -262,8 +315,6 @@ function TeacherRegistrationForm() {
           "success"
         );
       } catch (error: any) {
-        console.error(`Error uploading ${fieldName}:`, error);
-
         // Set error state
         setUploadErrors((prev) => ({
           ...prev,
@@ -358,11 +409,6 @@ function TeacherRegistrationForm() {
         });
       } catch (error) {
         retries++;
-        console.warn(
-          `Upload attempt ${retries} failed. ${
-            maxRetries - retries
-          } retries left.`
-        );
 
         if (retries >= maxRetries) {
           throw error;
@@ -849,14 +895,19 @@ function TeacherRegistrationForm() {
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="photo-upload">
-                        Profile Photo
+                        Profile Photo *
                       </InputLabel>
+                      {uploadErrors.photo && (
+                        <FormHelperText error>
+                          {uploadErrors.photo}
+                        </FormHelperText>
+                      )}
                       <UploadButton
                         className="upload-btn"
                         endpoint={"pdfUploader"}
                         onUploadBegin={() => {
-                          setIsUploading({ ...isUploading, cvPath: true });
-                          showToast("FIle is being uploaded", "info");
+                          setIsUploading({ ...isUploading, photo: true });
+                          showToast("File is being uploaded", "info");
                         }}
                         onUploadError={(error) => {
                           setToast({
@@ -867,11 +918,15 @@ function TeacherRegistrationForm() {
                           showToast(error.message, "error");
                         }}
                         onClientUploadComplete={(file) => {
-                          console.log(file, file[0]);
+                          const fileUrl = file[0].url;
+                          // Update both local state and form state
                           setFiles({
                             ...files,
-                            photo: file[0].url,
+                            photo: fileUrl,
                           });
+                          // Important: This updates the form state managed by React Hook Form
+                          setValue("photo", fileUrl);
+                          setIsUploading({ ...isUploading, photo: false });
                           setToast({
                             ...toast,
                             message: "Photo uploaded Successfully",
@@ -880,20 +935,51 @@ function TeacherRegistrationForm() {
                           showToast("Photo Uploaded Successfully", "success");
                         }}
                       />
+                      {/* Display photo preview if available */}
+                      {(files.photo || photoField) && (
+                        <Box mt={2}>
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            gutterBottom
+                            color="success.main"
+                          >
+                            ✓ Photo uploaded successfully
+                          </Typography>
+                          <img
+                            src={files.photo || photoField}
+                            alt="Profile preview"
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "100px",
+                              objectFit: "cover",
+                              borderRadius: "4px",
+                            }}
+                          />
+                        </Box>
+                      )}
                     </Box>
                   </Grid>
 
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="verification-doc-upload">
-                        Verification Document
+                        Verification Document *
                       </InputLabel>
+                      {uploadErrors.verificationDocument && (
+                        <FormHelperText error>
+                          {uploadErrors.verificationDocument}
+                        </FormHelperText>
+                      )}
                       <UploadButton
                         className="upload-btn"
                         endpoint={"pdfUploader"}
                         onUploadBegin={() => {
-                          setIsUploading({ ...isUploading, cvPath: true });
-                          showToast("FIle is being uploaded", "info");
+                          setIsUploading({
+                            ...isUploading,
+                            verificationDocument: true,
+                          });
+                          showToast("File is being uploaded", "info");
                         }}
                         onUploadError={(error) => {
                           setToast({
@@ -904,10 +990,17 @@ function TeacherRegistrationForm() {
                           showToast(error.message, "error");
                         }}
                         onClientUploadComplete={(file) => {
-                          console.log(file, file[0]);
+                          const fileUrl = file[0].url;
+                          // Update both local state and form state
                           setFiles({
                             ...files,
-                            verificationDocument: file[0].url,
+                            verificationDocument: fileUrl,
+                          });
+                          // Important: This updates the form state managed by React Hook Form
+                          setValue("verificationDocument", fileUrl);
+                          setIsUploading({
+                            ...isUploading,
+                            verificationDocument: false,
                           });
                           setToast({
                             ...toast,
@@ -921,18 +1014,50 @@ function TeacherRegistrationForm() {
                           );
                         }}
                       />
+                      {/* Display verification document info if available */}
+                      {(files.verificationDocument ||
+                        verificationDocumentField) && (
+                        <Box mt={2}>
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            gutterBottom
+                            color="success.main"
+                          >
+                            ✓ Verification document uploaded successfully
+                          </Typography>
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              window.open(
+                                files.verificationDocument ||
+                                  verificationDocumentField,
+                                "_blank"
+                              )
+                            }
+                            variant="outlined"
+                          >
+                            View Document
+                          </Button>
+                        </Box>
+                      )}
                     </Box>
                   </Grid>
 
                   <Grid item xs={12} md={4}>
                     <Box>
                       <InputLabel htmlFor="cv-upload">CV/Resume *</InputLabel>
+                      {uploadErrors.cvPath && (
+                        <FormHelperText error>
+                          {uploadErrors.cvPath}
+                        </FormHelperText>
+                      )}
                       <UploadButton
                         className="upload-btn"
                         endpoint={"pdfUploader"}
                         onUploadBegin={() => {
                           setIsUploading({ ...isUploading, cvPath: true });
-                          showToast("FIle is being uploaded", "info");
+                          showToast("File is being uploaded", "info");
                         }}
                         onUploadError={(error) => {
                           setToast({
@@ -943,20 +1068,69 @@ function TeacherRegistrationForm() {
                           showToast(error.message, "error");
                         }}
                         onClientUploadComplete={(file) => {
-                          console.log(file, file[0]);
-                          setFiles({ ...files, photo: file[0].url });
+                          const fileUrl = file[0].url;
+                          // Update both local state and form state
+                          setFiles({ ...files, cvPath: fileUrl });
+                          // Important: This updates the form state managed by React Hook Form
+                          setValue("cvPath", fileUrl);
+                          setIsUploading({ ...isUploading, cvPath: false });
                           setToast({
                             ...toast,
                             message: "CV uploaded Successfully",
                             severity: "success",
                           });
-                          showToast("Cv Uploaded Successfully", "success");
+                          showToast("CV Uploaded Successfully", "success");
                         }}
                       />
+                      {/* Display CV info if available */}
+                      {(files.cvPath || cvPathField) && (
+                        <Box mt={2}>
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            gutterBottom
+                            color="success.main"
+                          >
+                            ✓ CV uploaded successfully
+                          </Typography>
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              window.open(files.cvPath || cvPathField, "_blank")
+                            }
+                            variant="outlined"
+                          >
+                            View CV
+                          </Button>
+                        </Box>
+                      )}
                     </Box>
                   </Grid>
                 </Grid>
               </Box>
+
+              {/* Form Debugging Section (optional) */}
+              {import.meta.env.DEV && (
+                <Box
+                  mt={4}
+                  p={2}
+                  sx={{ backgroundColor: "black", borderRadius: 1 }}
+                >
+                  <Typography variant="subtitle2" gutterBottom>
+                    Debug Info (Development Only)
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Form Files: Photo: {photoField ? "✓" : "✗"}, CV:{" "}
+                    {cvPathField ? "✓" : "✗"}, Verification:{" "}
+                    {verificationDocumentField ? "✓" : "✗"}
+                  </Typography>
+                  <Typography variant="caption" display="block">
+                    Local Files: Photo: {files.photo ? "✓" : "✗"}, CV:{" "}
+                    {files.cvPath ? "✓" : "✗"}, Verification:{" "}
+                    {files.verificationDocument ? "✓" : "✗"}
+                  </Typography>
+                </Box>
+              )}
 
               {/* Submit Button */}
               <Box mt={4} display="flex" justifyContent="flex-end">
@@ -966,10 +1140,10 @@ function TeacherRegistrationForm() {
                   color="primary"
                   size="large"
                   disabled={
-                    isSubmitting ||
                     isUploading.cvPath ||
                     isUploading.photo ||
-                    isUploading.verificationDocument
+                    isUploading.verificationDocument ||
+                    isSubmitting
                   }
                   startIcon={
                     isSubmitting ? (
@@ -983,23 +1157,6 @@ function TeacherRegistrationForm() {
             </Box>
           </CardContent>
         </Card>
-
-        {/* Toast Notification */}
-        <Snackbar
-          open={toast.open}
-          autoHideDuration={6000}
-          onClose={handleCloseToast}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Alert
-            onClose={handleCloseToast}
-            severity={toast.severity}
-            variant="filled"
-            sx={{ width: "100%" }}
-          >
-            {toast.message}
-          </Alert>
-        </Snackbar>
 
         {/* Toast Notification */}
         <Snackbar

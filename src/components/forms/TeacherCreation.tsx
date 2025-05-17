@@ -58,13 +58,6 @@ interface FileUploadingStates {
   verificationDocument: boolean;
 }
 
-// Mock school data - replace this with real API call if needed
-const mockSchool = {
-  name: "Green Valley High School",
-  brandColor: "#1e88e5", // Example color
-  logo: "https://example.com/school-logo.png", // Placeholder image
-};
-
 function TeacherCreation() {
   const {
     handleSubmit,
@@ -122,7 +115,7 @@ function TeacherCreation() {
       // Combine form data with file URLs
       const fullData = {
         ...data,
-        schoolId: school.data.id,
+        schoolId: school.data.id as number,
         cvPath: files.cvPath,
         photo: files.photo,
         verificationDocument: files.verificationDocument,

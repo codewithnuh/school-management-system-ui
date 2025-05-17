@@ -9,6 +9,7 @@ import { useRef, useEffect } from "react";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { Link } from "react-router";
 
 // Create motion components
 const MotionBox = motion(Box);
@@ -513,7 +514,7 @@ const EmpowerSection = () => {
               },
             }}
           >
-            Sign Up
+            <Link to={"/sign-up"}>Sign Up</Link>
           </MotionButton>
 
           <MotionButton

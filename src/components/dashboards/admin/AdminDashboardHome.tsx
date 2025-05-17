@@ -178,38 +178,6 @@ const AdminDashboardHome = () => {
               <Typography variant="h4">{school.sections}</Typography>
             </GlassCard>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <GlassCard>
-              <Typography variant="h6" gutterBottom>
-                Teacher Registration Link
-              </Typography>
-              <Button
-                color="primary"
-                variant="contained"
-                sx={{
-                  background: "green",
-                }}
-              >
-                Generate
-              </Button>
-            </GlassCard>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <GlassCard>
-              <Typography variant="h6" gutterBottom>
-                Student Registration Link
-              </Typography>
-              <Button
-                color="primary"
-                variant="contained"
-                sx={{
-                  background: "green",
-                }}
-              >
-                Generate
-              </Button>
-            </GlassCard>
-          </Grid>
         </Grid>
       </Container>
     </ThemeProvider>

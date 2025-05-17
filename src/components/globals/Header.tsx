@@ -61,6 +61,9 @@ const Header = () => {
               display: "flex",
               alignItems: "center",
               textDecoration: "none",
+              ":hover": {
+                color: "inherit",
+              },
               color: "inherit", // Inherit color from AppBar
               mr: 2, // Margin right for spacing
               flexShrink: 0, // Prevent logo from shrinking
@@ -76,9 +79,19 @@ const Header = () => {
                 letterSpacing: ".1rem",
                 color: "inherit", // Use AppBar's text color
                 textDecoration: "none",
+                ":hover": {
+                  color: "white",
+                },
               }}
             >
-              SMS
+              SMART
+              <span
+                style={{
+                  color: "#64b5f6",
+                }}
+              >
+                CAMPAS
+              </span>
             </Typography>
           </MuiLink>
 

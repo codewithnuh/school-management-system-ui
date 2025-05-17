@@ -3,7 +3,6 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { z } from "zod";
-import { useSearchParams } from "react-router"; // or 'react-router' depending on version
 import { useStudentRegistration } from "../../services/queries/studentRegistration";
 import {
   Box,
@@ -106,19 +105,7 @@ type AlertState = {
   severity: "success" | "error" | "info" | "warning";
 };
 
-const UserRegistrationForm = () => {
-  const [params] = useSearchParams();
-  const registrationLinkId = params.get("registrationLinkId");
-
-  const {
-    data: registrationLinkData,
-    isLoading: isLoadingRegistrationLink,
-    isError: isRegistrationLinkError,
-    error: registrationLinkError,
-  } = useGetTeacherRegistrationLinkById(registrationLinkId || "");
-
-  const schoolId = registrationLinkData?.data?.schoolId?.toString();
-
+const UserCreation = () => {
   const {
     data: schoolData,
     isLoading: isLoadingSchool,
@@ -934,4 +921,4 @@ const UserRegistrationForm = () => {
   );
 };
 
-export default UserRegistrationForm;
+export default UserCreation;

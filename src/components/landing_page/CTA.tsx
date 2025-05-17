@@ -9,6 +9,7 @@ import BookIcon from "@mui/icons-material/Book";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
+import { Link } from "react-router";
 
 // Wrap MUI components with motion
 const MotionBox = motion(Box);
@@ -341,7 +342,7 @@ const CTA = () => {
                     },
                   }}
                 >
-                  Sign Up
+                  <Link to={"/sign-up"}>Sign Up</Link>
                 </MotionButton>
 
                 <MotionButton

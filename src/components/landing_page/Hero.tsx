@@ -9,6 +9,7 @@ import { motion } from "motion/react";
 import { useRef } from "react";
 import { useGetStudentRegistrationLink } from "../../services/queries/teachers";
 import { useClasses } from "../../services/queries/classes";
+import { Link } from "react-router";
 
 // Wrap MUI components with motion
 const MotionBox = motion(Box);
@@ -264,7 +265,7 @@ const Hero = () => {
                     },
                   }}
                 >
-                  Sign Up
+                  <Link to={"/sign-up"}>Sign Up</Link>
                 </MotionButton>
 
                 <MotionButton
@@ -288,7 +289,7 @@ const Hero = () => {
                     py: 1.5,
                   }}
                 >
-                  Learn More
+                  <Link to={"/sign-up"}>Learn More</Link>
                 </MotionButton>
               </MotionBox>
             </MotionBox>

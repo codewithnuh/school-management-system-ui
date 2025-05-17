@@ -23,7 +23,7 @@ interface SchoolHeaderProps {
 
 const SchoolHeader: React.FC<SchoolHeaderProps> = ({ school }) => {
   const theme = useTheme();
-  console.log(school);
+
   return (
     <Paper
       elevation={3}

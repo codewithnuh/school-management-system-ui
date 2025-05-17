@@ -8,6 +8,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Container from "@mui/material/Container";
 import { motion, useInView } from "motion/react";
 import { useRef } from "react";
+import { Link } from "react-router";
 
 // Wrap MUI components with motion
 const MotionBox = motion(Box);
@@ -378,7 +379,7 @@ const Features = () => {
                 },
               }}
             >
-              Sign Up
+              <Link to={"/sign-up"}>Sign Up</Link>
             </MotionButton>
 
             <MotionButton

@@ -229,6 +229,7 @@ export default function RegistrationLinksPage() {
     type: "TEACHER" | "STUDENT"
   ) => {
     const hasLink = linkData?.url && linkData.url !== "";
+    console.log(hasLink, linkData);
     const qrCodeUrl = linkData?.qrCode ? linkData.qrCode : null;
 
     return (
