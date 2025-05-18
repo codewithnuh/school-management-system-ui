@@ -44,3 +44,23 @@ export const login = async (data: {
   });
   return response.data;
 };
+export const studentLogin = async (data: {
+  email: string;
+  password: string;
+  schoolCode: string;
+}) => {
+  const response = await axiosInstance.post("auth/login/user", {
+    ...data,
+  });
+  return response.data;
+};
+export const teacherLogin = async (data: {
+  email: string;
+  password: string;
+  schoolCode: string;
+}) => {
+  const response = await axiosInstance.post("auth/login/teacher", {
+    ...data,
+  });
+  return response.data;
+};

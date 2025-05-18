@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { useStudentLoginMutation } from "../../services/queries/auth";
+import { useTeacherLoginMutation } from "../../services/queries/auth";
 import { Link, useNavigate } from "react-router";
 import { darkTheme } from "../../theme/darkTheme";
 import { useUser } from "../../hooks/useUser";
@@ -30,7 +30,7 @@ const GlassPaper = styled(Paper)(({ theme }) => ({
   backdropFilter: "blur(12px)",
 }));
 
-const StudentLogin = () => {
+const TeacherLogin = () => {
   const { data: userData, isLoading: isUserLoading } = useUser();
   const navigate = useNavigate();
 
@@ -48,12 +48,12 @@ const StudentLogin = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const LoginMutation = useStudentLoginMutation();
+  const LoginMutation = useTeacherLoginMutation();
 
   // 🔁 Handle redirection only after user data is fetched
   useEffect(() => {
-    if (!isUserLoading && userData?.data?.role === "USER") {
-      navigate("/dashboard/admin/student");
+    if (!isUserLoading && userData?.data?.role === "TEACHER") {
+      navigate("/dashboard/teacher");
     }
   }, [userData, isUserLoading, navigate]);
 
@@ -105,7 +105,7 @@ const StudentLogin = () => {
   }
 
   // 🔒 Don't show login form if user is already logged in
-  if (userData?.data?.role === "USER") {
+  if (userData?.data?.role === "TEACHER") {
     return null; // Or return a loading spinner until navigation kicks in
   }
 
@@ -209,4 +209,4 @@ const StudentLogin = () => {
   );
 };
 
-export default StudentLogin;
+export default TeacherLogin;

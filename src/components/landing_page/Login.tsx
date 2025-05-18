@@ -19,8 +19,6 @@ import { useLoginMutation } from "../../services/queries/auth";
 import { Link, useNavigate } from "react-router";
 import { darkTheme } from "../../theme/darkTheme";
 import { useUser } from "../../hooks/useUser";
-import { LoaderIcon } from "react-hot-toast";
-
 // --- Glass-styled container ---
 const GlassPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),

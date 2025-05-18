@@ -9,6 +9,8 @@ import {
   sendOtp,
   signUp,
   SignUpFormData,
+  studentLogin,
+  teacherLogin,
   verifyOtp,
 } from "../../api/axios/auth";
 import { EntityType } from "../../types";
@@ -78,5 +80,23 @@ export const useLoginMutation = () => {
       entityType: string;
       password: string;
     }) => login(data),
+  });
+};
+export const useStudentLoginMutation = () => {
+  return useMutation({
+    mutationFn: (data: {
+      email: string;
+      password: string;
+      schoolCode: string;
+    }) => studentLogin(data),
+  });
+};
+export const useTeacherLoginMutation = () => {
+  return useMutation({
+    mutationFn: (data: {
+      email: string;
+      password: string;
+      schoolCode: string;
+    }) => teacherLogin(data),
   });
 };

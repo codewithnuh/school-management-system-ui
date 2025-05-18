@@ -42,6 +42,7 @@ import { GenerateTimetableForm } from "./components/dashboards/admin/Timetable.t
 import TimeTableGenerate from "./components/dashboards/admin/TimetableGenerator.tsx";
 import UserCreation from "./components/forms/UserCreation.tsx";
 import StudentLogin from "./components/landing_page/StudentLogin.tsx";
+import TeacherLogin from "./components/landing_page/TeacherLogin.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -52,6 +53,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/" element={<App />} />
             <Route path="/login" element={<Login />} />
             <Route path="/login/student" element={<StudentLogin />} />
+            <Route path="/login/teacher" element={<TeacherLogin />} />
             <Route path="/sign-up" element={<SignupForm />} />
             <Route path="/sample-upload" element={<SampleUploadForm />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

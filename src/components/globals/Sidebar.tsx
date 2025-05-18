@@ -10,7 +10,6 @@ import {
   Divider,
   Tooltip,
   Collapse,
-  ListSubheader,
 } from "@mui/material";
 import {
   Home,
@@ -24,9 +23,10 @@ import {
   Class,
   ExpandMore,
   ExpandLess,
+  Logout,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router";
-
+import { useLogoutMutation } from "../../services/queries/auth";
 import React, { useState } from "react";
 
 const GlassSidebar = styled(Box)(({ theme }) => ({
@@ -140,10 +140,17 @@ type MenuItemType = {
 const Sidebar = ({ role }: SidebarProps) => {
   const [open, setOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const logout = useLogoutMutation();
   const navigate = useNavigate();
 
   const toggleSidebar = () => setOpen(!open);
-
+  const handleLogout = () => {
+    try {
+      logout.mutate();
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const handleMenuClick = (label: string) => {
     if (
       menuStructure[role].find((item) => item.label === label)?.submenu ||
@@ -286,6 +293,20 @@ const Sidebar = ({ role }: SidebarProps) => {
           </React.Fragment>
         ))}
       </List>
+      <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.1)", mb: 1 }} />
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent={open ? "space-between" : "center"}
+        px={2}
+        py={2}
+      >
+        <IconButton onClick={handleLogout}>
+          <Tooltip title="Logout">
+            <Logout />
+          </Tooltip>
+        </IconButton>
+      </Box>
     </GlassSidebar>
   );
 };
