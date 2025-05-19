@@ -11,6 +11,7 @@ export interface User {
       lastName: string;
       email: string;
       subjectId: number;
+      schoolId?: number;
       classId?: number;
       sectionId?: number;
     };

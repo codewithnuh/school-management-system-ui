@@ -26,14 +26,14 @@ const features = [
 const plans = [
   {
     title: "Monthly Plan",
-    price: "$19",
+    price: "3000 PKR",
     cycle: "/month",
     background: "black)",
     blur: "10px",
   },
   {
     title: "Yearly Plan",
-    price: "$190",
+    price: "30000 PKR",
     cycle: "/year (2 months free)",
     background: "rgba(255, 255, 255, 0.08)",
     blur: "12px",
@@ -74,7 +74,12 @@ export default function PricingSection() {
                 <Typography variant="h5" gutterBottom>
                   {plan.title}
                 </Typography>
-                <Typography variant="h3" fontWeight="bold" gutterBottom>
+                <Typography
+                  variant="h3"
+                  fontSize={25}
+                  fontWeight="bold"
+                  gutterBottom
+                >
                   {plan.price}
                   <Typography component="span" variant="subtitle1">
                     {plan.cycle}

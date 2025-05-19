@@ -17,14 +17,20 @@ export interface SchoolResponse {
 /**
  * Fetches school by admin ID
  */
-export const getSchoolByAdminID = async (adminId: number): Promise<SchoolResponse> => {
+export const getSchoolByAdminID = async (
+  adminId: number
+): Promise<SchoolResponse> => {
   try {
-    if (!adminId) throw new Error('Admin ID is required');
+    if (!adminId) throw new Error("Admin ID is required");
     const response = await axiosInstance.get(`/schools/${adminId}`);
     return response.data;
   } catch (error: any) {
     console.error(`Failed to fetch school by admin ID (${adminId}):`, error);
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch school data');
+    throw new Error(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch school data"
+    );
   }
 };
 export interface SchoolFormData {
@@ -37,26 +43,37 @@ export interface SchoolFormData {
 /**
  * Creates a new school
  */
-export const createSchool = async (formData: SchoolFormData): Promise<SchoolResponse> => {
+export const createSchool = async (
+  formData: SchoolFormData
+): Promise<SchoolResponse> => {
   try {
-    if (!formData.name || !formData.adminId) throw new Error('School name and admin ID are required');
+    if (!formData.name || !formData.adminId)
+      throw new Error("School name and admin ID are required");
     const response = await axiosInstance.post("/schools", formData);
     return response.data;
   } catch (error: any) {
     console.error("Failed to create school:", error);
-    throw new Error(error.response?.data?.message || error.message || 'Failed to create school');
+    throw new Error(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to create school"
+    );
   }
 };
 /**
  * Fetches school by school ID
  */
-export const getSchool = async (schoolId: string): Promise<SchoolResponse> => {
+export const getSchoolById = async (
+  schoolId: number
+): Promise<SchoolResponse> => {
   try {
-    if (!schoolId) throw new Error('School ID is required');
+    if (!schoolId) throw new Error("School ID is required");
     const response = await axiosInstance.get(`/schools/schoolId/${schoolId}`);
     return response.data;
   } catch (error: any) {
     console.error(`Failed to fetch school (ID: ${schoolId}):`, error);
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch school');
+    throw new Error(
+      error.response?.data?.message || error.message || "Failed to fetch school"
+    );
   }
 };

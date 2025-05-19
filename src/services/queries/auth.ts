@@ -6,6 +6,7 @@ import {
 import {
   login,
   logout,
+  ownerLogin,
   sendOtp,
   signUp,
   SignUpFormData,
@@ -98,5 +99,11 @@ export const useTeacherLoginMutation = () => {
       password: string;
       schoolCode: string;
     }) => teacherLogin(data),
+  });
+};
+
+export const useOwnerLoginMutation = () => {
+  return useMutation({
+    mutationFn: (data: { email: string; password: string }) => ownerLogin(data),
   });
 };

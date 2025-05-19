@@ -40,24 +40,11 @@ const GlassSidebar = styled(Box)(({ theme }) => ({
 }));
 
 type SidebarProps = {
-  role: "admin" | "owner" | "teacher";
+  role: "admin" | "owner" | "teacher" | "student";
 };
 
 // Define menu structure with submenus
 const menuStructure = {
-  common: [
-    { label: "Dashboard", icon: <Home />, path: "/dashboard/admin/" },
-    {
-      label: "Timetable",
-      icon: <CalendarMonth />,
-      submenu: [
-        {
-          label: "View Timetable",
-          path: "/dashboard/admin/timetable/view",
-        },
-      ],
-    },
-  ],
   admin: [
     {
       label: "Registration",
@@ -128,15 +115,24 @@ const menuStructure = {
       path: "/owner/settings",
     },
   ],
+  student: [
+    {
+      label: "Dashboard",
+      icon: <Home />,
+      path: "/dashboard/student",
+    },
+    {
+      label: "Timetable",
+      icon: <CalendarMonth />,
+      path: "/dashboard/student/timetable",
+    },
+    {
+      label: "Settings",
+      icon: <Settings />,
+      path: "/dashboard/student/settings",
+    },
+  ],
 };
-
-type MenuItemType = {
-  label: string;
-  icon: React.ReactNode;
-  path?: string;
-  submenu?: Array<{ label: string; path: string }>;
-};
-
 const Sidebar = ({ role }: SidebarProps) => {
   const [open, setOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
@@ -167,7 +163,7 @@ const Sidebar = ({ role }: SidebarProps) => {
   };
 
   return (
-    <GlassSidebar sx={{ width: open ? 240 : 82 }}>
+    <GlassSidebar sx={{ width: open ? 270 : 82 }}>
       <Box
         display="flex"
         alignItems="center"
@@ -187,59 +183,6 @@ const Sidebar = ({ role }: SidebarProps) => {
       <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.1)", mb: 1 }} />
 
       <List>
-        {/* Common Items */}
-        {menuStructure.common.map(({ label, icon, path, submenu }) => (
-          <React.Fragment key={label}>
-            <Tooltip title={!open ? label : ""} placement="right">
-              <ListItemButton
-                onClick={() => handleMenuClick(label)}
-                sx={{ px: 2 }}
-              >
-                <ListItemIcon sx={{ color: "#fff", minWidth: 36 }}>
-                  {icon}
-                </ListItemIcon>
-                {open && (
-                  <ListItemText
-                    primary={label}
-                    primaryTypographyProps={{
-                      sx: { color: "#fff", fontSize: "0.95rem" },
-                    }}
-                  />
-                )}
-                {open &&
-                  submenu &&
-                  (expandedMenu === label ? <ExpandLess /> : <ExpandMore />)}
-              </ListItemButton>
-            </Tooltip>
-
-            {/* Submenu */}
-            {submenu && (
-              <Collapse
-                in={open && expandedMenu === label}
-                timeout="auto"
-                unmountOnExit
-              >
-                <List component="div" disablePadding>
-                  {submenu.map((subItem) => (
-                    <ListItemButton
-                      key={subItem.label}
-                      sx={{ pl: 4, pr: 2, py: 0.7 }}
-                      onClick={() => navigate(subItem.path)}
-                    >
-                      <ListItemText
-                        primary={subItem.label}
-                        primaryTypographyProps={{
-                          sx: { color: "#ccc", fontSize: "0.85rem" },
-                        }}
-                      />
-                    </ListItemButton>
-                  ))}
-                </List>
-              </Collapse>
-            )}
-          </React.Fragment>
-        ))}
-
         {/* Role-Specific Items */}
         {menuStructure[role].map(({ label, icon, path, submenu }) => (
           <React.Fragment key={label}>
@@ -261,7 +204,11 @@ const Sidebar = ({ role }: SidebarProps) => {
                 )}
                 {open &&
                   submenu &&
-                  (expandedMenu === label ? <ExpandLess /> : <ExpandMore />)}
+                  (expandedMenu === label ? (
+                    <ExpandLess sx={{ color: "white" }} />
+                  ) : (
+                    <ExpandMore sx={{ color: "white" }} />
+                  ))}
               </ListItemButton>
             </Tooltip>
 

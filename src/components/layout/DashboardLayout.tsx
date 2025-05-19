@@ -2,7 +2,11 @@ import { Box } from "@mui/material";
 import Sidebar from "../globals/Sidebar";
 import { Outlet } from "react-router";
 
-const DashboardLayout = ({ role }: { role: "admin" | "owner" | "teacher" }) => {
+const DashboardLayout = ({
+  role,
+}: {
+  role: "admin" | "owner" | "teacher" | "student";
+}) => {
   return (
     <Box display="flex" minHeight="100vh">
       <Sidebar role={role} />

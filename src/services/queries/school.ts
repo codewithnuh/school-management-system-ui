@@ -3,6 +3,7 @@ import {
   createSchool,
   getSchool,
   getSchoolByAdminID,
+  getSchoolById,
   SchoolFormData,
   SchoolResponse,
 } from "../../api/axios/schools";
@@ -32,11 +33,11 @@ export const useCreateSchool = () => {
  * @param schoolId - The school ID
  * @returns Query result with enhanced error handling
  */
-export const useGetSchoolById = (schoolId: string | null | undefined) => {
+export const useGetSchoolById = (schoolId: number | null | undefined) => {
   return useQuery<SchoolResponse, Error>({
     queryKey: ["school", "id", schoolId],
-    queryFn: () => getSchool(schoolId || ""),
-    enabled: !!schoolId && schoolId.length > 0, // Only fetch if schoolId exists and is not empty
+    queryFn: () => getSchoolById(schoolId as number),
+    enabled: !!schoolId, // Only fetch if schoolId exists and is not empty
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
