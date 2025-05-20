@@ -77,3 +77,8 @@ export const getSchoolById = async (
     );
   }
 };
+
+export const getSchoolsCount = async () => {
+  const response = await axiosInstance.get("schools/count/schools-count");
+  return response.data;
+};

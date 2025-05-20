@@ -41,5 +41,7 @@ export const updateClass = async ({
 export const deleteClass = async (id: number): Promise<void> => {
   await axiosInstance.delete(`classes/${id}`);
 };
-
-// Add these to your index.ts in the api folder for easier imports
+export const getAllClassesCount = async () => {
+  const response = await axiosInstance.get("/classes/classes-count");
+  return response.data;
+};

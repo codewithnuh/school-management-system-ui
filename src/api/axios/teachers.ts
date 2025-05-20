@@ -14,3 +14,8 @@ export const fetchAllSubjectsOfATeacher = async (
   );
   return response.data;
 };
+
+export const getTeachersCount = async () => {
+  const response = await axiosInstance.get("teachers/teachers-count");
+  return response.data;
+};

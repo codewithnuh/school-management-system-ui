@@ -3,23 +3,31 @@ import {
   Typography,
   Box,
   Grid,
-  Card,
   CardContent,
   Paper,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "../../../theme/darkTheme";
 import styled from "@mui/material/styles/styled";
+import { useGetTeachersCount } from "../../../services/queries/teachers";
+import { useGetStudentsCount } from "../../../services/queries/student";
+import { useGetSchoolsCount } from "../../../services/queries/school";
+import { useGetAllClassesCount } from "../../../services/queries/classes";
 
 // Styled components
-const GlassCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(2),
-  borderRadius: 16,
-  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
-  background: "rgba(255, 255, 255, 0.04)",
+const GlassCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: 20,
+  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
+  background: "rgba(255, 255, 255, 0.05)",
   border: "1px solid rgba(255, 255, 255, 0.08)",
-  backdropFilter: "blur(12px)",
-  color: "#fff",
+  backdropFilter: "blur(10px)",
+  height: "100%",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "translateY(-4px)",
+    boxShadow: "0 12px 24px rgba(0, 0, 0, 0.5)",
+  },
 }));
 
 const StatBox = styled(Paper)(({ theme }) => ({
@@ -65,12 +73,16 @@ function StatCard({
 }
 
 export default function OwnerDashboard() {
+  const { data: teachersCount } = useGetTeachersCount();
+  const { data: studentsCount } = useGetStudentsCount();
+  const { data: schoolsCount } = useGetSchoolsCount();
+  const { data: classesCount } = useGetAllClassesCount();
   // These are placeholder values — you'll replace them with real data from your backend
   const stats = {
-    totalTeachers: 47,
-    totalStudents: 982,
-    totalClasses: 34,
-    activeSchools: 5,
+    totalTeachers: teachersCount.data,
+    totalStudents: studentsCount.data,
+    totalClasses: classesCount.data,
+    activeSchools: schoolsCount.data,
   };
 
   return (
@@ -118,7 +130,7 @@ export default function OwnerDashboard() {
             <StatCard
               title="Schools"
               value={stats.activeSchools}
-              description="Number of active institutions"
+              description="Number of active/inactive institutions"
             />
           </Grid>
         </Grid>

@@ -6,6 +6,7 @@ import {
   createClass,
   updateClass,
   deleteClass,
+  getAllClassesCount,
 } from "../../api/axios/classes";
 import { fetchSectionsOfAClass } from "../../api/axios/sections";
 import { Class, CreateClassFormValues } from "../../types/class";
@@ -18,7 +19,12 @@ export const useClasses = () => {
     queryFn: () => fetchClasses(),
   });
 };
-
+export const useGetAllClassesCount = () => {
+  return useQuery({
+    queryKey: ["classes"],
+    queryFn: () => getAllClassesCount(),
+  });
+};
 /**
  * Hook for fetching a single class
  */

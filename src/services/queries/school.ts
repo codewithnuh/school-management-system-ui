@@ -4,6 +4,7 @@ import {
   getSchool,
   getSchoolByAdminID,
   getSchoolById,
+  getSchoolsCount,
   SchoolFormData,
   SchoolResponse,
 } from "../../api/axios/schools";
@@ -43,5 +44,11 @@ export const useGetSchoolById = (schoolId: number | null | undefined) => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Provide default data structure to prevent undefined errors
     placeholderData: { data: null },
+  });
+};
+export const useGetSchoolsCount = () => {
+  return useQuery({
+    queryKey: ["school"],
+    queryFn: () => getSchoolsCount(),
   });
 };

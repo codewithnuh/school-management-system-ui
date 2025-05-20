@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import {
   Container,
@@ -8,7 +6,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableRow,
   Paper,
   Button,
@@ -22,9 +19,40 @@ import {
   DialogActions,
   Divider,
   Stack,
+  styled,
+  Grid,
+  TableContainer,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "../../../theme/darkTheme";
+
+// Styled Components
+const GlassCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: 20,
+  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
+  background: "rgba(255, 255, 255, 0.05)",
+  border: "1px solid rgba(255, 255, 255, 0.1)",
+  backdropFilter: "blur(10px)",
+  height: "100%",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "translateY(-4px)",
+    boxShadow: "0 12px 24px rgba(0, 0, 0, 0.5)",
+  },
+}));
+
+const GlassTableCell = styled(TableCell)(({ theme }) => ({
+  color: "#fff",
+  borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+}));
+
+const GlassTableRow = styled(TableRow)(({ theme }) => ({
+  transition: "background-color 0.3s ease",
+  "&:hover": {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+  },
+}));
 
 // Mock data — replace with real API calls
 const mockAdmins = [
@@ -63,30 +91,8 @@ const mockAdmins = [
   },
   {
     id: 4,
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    subscriptionStatus: "active" as const,
-    subscriptionType: "monthly" as const,
-    schoolsCreated: 2,
-    classes: 16,
-    students: 200,
-    teachers: 18,
-  },
-  {
-    id: 5,
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    subscriptionStatus: "active" as const,
-    subscriptionType: "monthly" as const,
-    schoolsCreated: 2,
-    classes: 16,
-    students: 200,
-    teachers: 18,
-  },
-  {
-    id: 6,
-    name: "Alice Johnson",
-    email: "alice@example.com",
+    name: "Bob Anderson",
+    email: "bob@example.com",
     subscriptionStatus: "active" as const,
     subscriptionType: "monthly" as const,
     schoolsCreated: 2,
@@ -115,7 +121,6 @@ export default function OwnerDashboardAdmins() {
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
 
   const totalPages = Math.ceil(admins.length / pageSize);
-
   const paginatedAdmins = admins.slice((page - 1) * pageSize, page * pageSize);
 
   const handleToggleStatus = (id: number) => {
@@ -160,73 +165,76 @@ export default function OwnerDashboardAdmins() {
         </Typography>
 
         {/* Admin Table */}
-        <TableContainer component={Paper} elevation={3}>
-          <Table aria-label="admins table">
-            <TableBody>
-              {paginatedAdmins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell component="th" scope="row">
-                    {admin.name}
-                  </TableCell>
-                  <TableCell>{admin.email}</TableCell>
-                  <TableCell>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Plan</InputLabel>
-                      <Select
-                        value={admin.subscriptionType}
-                        label="Plan"
-                        onChange={(e) =>
-                          handleChangeSubscriptionType(
-                            admin.id,
-                            e.target.value as "monthly" | "yearly"
-                          )
+        <GlassCard elevation={3}>
+          <TableContainer>
+            <Table aria-label="admins table">
+              <TableBody>
+                {paginatedAdmins.map((admin) => (
+                  <GlassTableRow key={admin.id}>
+                    <GlassTableCell component="th" scope="row">
+                      {admin.name}
+                    </GlassTableCell>
+                    <GlassTableCell>{admin.email}</GlassTableCell>
+                    <GlassTableCell>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Plan</InputLabel>
+                        <Select
+                          value={admin.subscriptionType}
+                          label="Plan"
+                          onChange={(e) =>
+                            handleChangeSubscriptionType(
+                              admin.id,
+                              e.target.value as "monthly" | "yearly"
+                            )
+                          }
+                          sx={{
+                            color: "#fff",
+                            "& .MuiSelect-select": {
+                              padding: "8px",
+                            },
+                          }}
+                        >
+                          <MenuItem value="monthly">Monthly</MenuItem>
+                          <MenuItem value="yearly">Yearly</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </GlassTableCell>
+                    <GlassTableCell>
+                      <Button
+                        variant={
+                          admin.subscriptionStatus === "active"
+                            ? "contained"
+                            : "outlined"
                         }
-                        sx={{
-                          color: "#fff",
-                          "& .MuiSelect-select": {
-                            padding: "8px",
-                          },
-                        }}
+                        color={
+                          admin.subscriptionStatus === "active"
+                            ? "success"
+                            : "error"
+                        }
+                        onClick={() => handleToggleStatus(admin.id)}
+                        fullWidth
                       >
-                        <MenuItem value="monthly">Monthly</MenuItem>
-                        <MenuItem value="yearly">Yearly</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant={
-                        admin.subscriptionStatus === "active"
-                          ? "contained"
-                          : "outlined"
-                      }
-                      color={
-                        admin.subscriptionStatus === "active"
-                          ? "success"
-                          : "error"
-                      }
-                      onClick={() => handleToggleStatus(admin.id)}
-                      fullWidth
-                    >
-                      {admin.subscriptionStatus === "active"
-                        ? "Disable Subscription"
-                        : "Enable Subscription"}
-                    </Button>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => openDetailsModal(admin)}
-                    >
-                      View Details
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                        {admin.subscriptionStatus === "active"
+                          ? "Disable Subscription"
+                          : "Enable Subscription"}
+                      </Button>
+                    </GlassTableCell>
+                    <GlassTableCell align="right">
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => openDetailsModal(admin)}
+                        fullWidth
+                      >
+                        View Details
+                      </Button>
+                    </GlassTableCell>
+                  </GlassTableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </GlassCard>
 
         {/* Pagination */}
         <Box mt={2} display="flex" justifyContent="center" gap={2}>

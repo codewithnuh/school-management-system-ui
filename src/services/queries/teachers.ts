@@ -2,6 +2,7 @@ import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import {
   fetchAllSubjectsOfATeacher,
   fetchSingleTeacher,
+  getTeachersCount,
 } from "../../api/axios/teachers";
 import { Teacher } from "../../types/teacher";
 import {
@@ -83,5 +84,11 @@ export const useDeleteStudentRegistrationLink = () => {
 export const useDeleteTeacherRegistrationLink = () => {
   return useMutation({
     mutationFn: deleteTeacherRegistrationLink,
+  });
+};
+export const useGetTeachersCount = () => {
+  return useQuery({
+    queryKey: ["teachers"],
+    queryFn: () => getTeachersCount(),
   });
 };

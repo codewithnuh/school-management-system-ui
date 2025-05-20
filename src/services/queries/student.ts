@@ -1,5 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchStudentById, updateStudentById } from "../../api/axios/user";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  fetchStudentById,
+  getStudentsCount,
+  updateStudentById,
+} from "../../api/axios/student.ts";
 import { User } from "../../types/index.ts";
 import { queryClient } from "../../utils/queryClient.ts";
 
@@ -26,5 +30,12 @@ export const useUpdateStudentById = () => {
         queryClient.invalidateQueries(["sections"]);
       }
     },
+  });
+};
+
+export const useGetStudentsCount = () => {
+  return useQuery({
+    queryKey: ["students"],
+    queryFn: () => getStudentsCount(),
   });
 };

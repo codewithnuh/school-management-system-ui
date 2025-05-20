@@ -11,3 +11,8 @@ export const updateStudentById = async (id: number, data: User) => {
   const response = await axiosInstance.put(`users/${id}`, data);
   return response.data;
 };
+
+export const getStudentsCount = async () => {
+  const response = await axiosInstance.get("/users/users-count");
+  return response.data;
+};
