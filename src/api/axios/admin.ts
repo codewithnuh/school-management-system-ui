@@ -6,3 +6,8 @@ export const getSubscriptionVerifyStatus = async (adminId: number) => {
   );
   return response.data;
 };
+
+export const getAllAdmins = async () => {
+  const response = await axiosInstance.get("/admins");
+  return response.data;
+};

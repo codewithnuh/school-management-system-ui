@@ -13,6 +13,7 @@ import { useGetTeachersCount } from "../../../services/queries/teachers";
 import { useGetStudentsCount } from "../../../services/queries/student";
 import { useGetSchoolsCount } from "../../../services/queries/school";
 import { useGetAllClassesCount } from "../../../services/queries/classes";
+import { useEffect, useState } from "react";
 
 // Styled components
 const GlassCard = styled(Paper)(({ theme }) => ({
@@ -48,19 +49,17 @@ const StatBox = styled(Paper)(({ theme }) => ({
   },
 }));
 
-function StatCard({
-  title,
-  value,
-  description,
-}: {
+interface StatProps {
   title: string;
   value: number | string;
   description: string;
-}) {
+}
+
+function StatCard({ title, value, description }: StatProps) {
   return (
     <StatBox elevation={3}>
       <Typography variant="h4" component="div" fontWeight="bold">
-        {value}
+        {value ?? 0}
       </Typography>
       <Typography variant="subtitle1" color="text.secondary">
         {title}
@@ -73,17 +72,32 @@ function StatCard({
 }
 
 export default function OwnerDashboard() {
-  const { data: teachersCount } = useGetTeachersCount();
-  const { data: studentsCount } = useGetStudentsCount();
-  const { data: schoolsCount } = useGetSchoolsCount();
-  const { data: classesCount } = useGetAllClassesCount();
-  // These are placeholder values — you'll replace them with real data from your backend
-  const stats = {
-    totalTeachers: teachersCount.data,
-    totalStudents: studentsCount.data,
-    totalClasses: classesCount.data,
-    activeSchools: schoolsCount.data,
-  };
+  const { data: teachersData, isLoading: isLoadingTeachers } =
+    useGetTeachersCount();
+  const { data: studentsData, isLoading: isLoadingStudents } =
+    useGetStudentsCount();
+  const { data: schoolsData, isLoading: isLoadingSchools } =
+    useGetSchoolsCount();
+  const { data: classesData, isLoading: isLoadingClasses } =
+    useGetAllClassesCount();
+
+  // Local state for stats
+  const [stats, setStats] = useState({
+    totalTeachers: 0,
+    totalStudents: 0,
+    totalClasses: 0,
+    activeSchools: 0,
+  });
+
+  // Update stats safely when data changes
+  useEffect(() => {
+    setStats({
+      totalTeachers: teachersData?.data ?? 0,
+      totalStudents: studentsData?.data ?? 0,
+      totalClasses: classesData?.data ?? 0,
+      activeSchools: schoolsData?.data ?? 0,
+    });
+  }, [teachersData, studentsData, schoolsData, classesData]);
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -135,7 +149,7 @@ export default function OwnerDashboard() {
           </Grid>
         </Grid>
 
-        {/* Additional Content Area */}
+        {/* Summary Section */}
         <Box mt={6}>
           <GlassCard>
             <CardContent>
