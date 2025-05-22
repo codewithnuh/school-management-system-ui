@@ -19,3 +19,8 @@ export const getTeachersCount = async () => {
   const response = await axiosInstance.get("teachers/teachers-count");
   return response.data;
 };
+
+export const getAllTeachers = async () => {
+  const response = await axiosInstance.get("teachers");
+  return response.data;
+};

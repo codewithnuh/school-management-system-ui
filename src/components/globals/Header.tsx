@@ -47,6 +47,7 @@ const Header = () => {
         background: alpha(theme.palette.background.paper, 0.85), // Adjust alpha for desired transparency
         backdropFilter: "blur(10px)", // Glassmorphism effect
         borderBottom: `1px solid ${theme.palette.divider}`,
+
         color: theme.palette.text.primary, // Ensure text color contrasts with background
       }}
     >

@@ -2,6 +2,7 @@ import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import {
   fetchAllSubjectsOfATeacher,
   fetchSingleTeacher,
+  getAllTeachers,
   getTeachersCount,
 } from "../../api/axios/teachers";
 import { Teacher } from "../../types/teacher";
@@ -90,5 +91,12 @@ export const useGetTeachersCount = () => {
   return useQuery({
     queryKey: ["teachers"],
     queryFn: () => getTeachersCount(),
+  });
+};
+
+export const useGetAllTeachers = () => {
+  return useQuery({
+    queryKey: ["teachers"],
+    queryFn: () => getAllTeachers(),
   });
 };

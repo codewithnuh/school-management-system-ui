@@ -163,7 +163,14 @@ const Sidebar = ({ role }: SidebarProps) => {
   };
 
   return (
-    <GlassSidebar sx={{ width: open ? 270 : 82 }}>
+    <GlassSidebar
+      sx={{
+        width: open ? 270 : 82,
+        height: "100%",
+        position: "sticky",
+        top: 0,
+      }}
+    >
       <Box
         display="flex"
         alignItems="center"

@@ -40,6 +40,9 @@ import StudentDashboardHome from "./components/dashboards/student/StudentDashboa
 import OwnerLogin from "./components/landing_page/OwnerLogin.tsx";
 import OwnerDashboardHome from "./components/dashboards/owner/OwnerDashboardHome.tsx";
 import OwnerDashboardAdmins from "./components/dashboards/owner/OwnerDashboardAdmins.tsx";
+import TeachersTab from "./components/dashboards/admin/TeachersTab.tsx";
+import TeacherDetailView from "./components/dashboards/admin/TeacherDetailedView.tsx";
+import TeacherGridView from "./components/dashboards/admin/TeachersGridView.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -73,7 +76,12 @@ createRoot(document.getElementById("root")!).render(
               <Route path="student/create" element={<UserCreation />} />
               <Route path="classes" element={<CreateClassForm />} />
               <Route path="school/create" element={<CreateSchool />} />
-
+              <Route path="teachers/view" element={<TeachersTab />} />
+              <Route
+                path="teachers/view/:teacherId"
+                element={<TeacherDetailView />}
+              />
+              <Route path="teachers/grid-view" element={<TeacherGridView />} />
               <Route path="teacher/create" element={<TeacherCreation />} />
               <Route path="timetables/view" element={<TimetableView />} />
               <Route

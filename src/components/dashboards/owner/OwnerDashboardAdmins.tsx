@@ -16,23 +16,36 @@ import {
   IconButton,
   Paper,
   styled,
-  Modal, // Added Modal
-  Fade, // Added Fade for modal transition
-  Backdrop, // Added Backdrop for modal
+  Modal,
+  Fade,
+  Backdrop,
+  Select,
+  MenuItem,
+  TextField,
+  Snackbar, // Added Snackbar for toasts
+  Alert as MuiAlert, // Added Alert for Snackbar content (aliased to avoid conflict if you have a custom Alert)
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit"; // Using EditIcon for subscription toggle
-
+import EditIcon from "@mui/icons-material/Edit";
+import { useUpdateAdminById } from "../../../services/queries/admin"; // Adjust path if needed
 import { useGetAllAdmins } from "../../../services/queries/admin"; // Adjust path if needed
+
+// Forward ref for MuiAlert to be used in Snackbar
+const Alert = React.forwardRef<
+  HTMLDivElement,
+  import("@mui/material").AlertProps
+>(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 const GlassCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: 20,
   boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
-  background: "rgba(255, 255, 255, 0.05)", // As per your definition
+  background: "rgba(255, 255, 255, 0.05)",
   border: "1px solid rgba(255, 255, 255, 0.08)",
   backdropFilter: "blur(10px)",
-  height: "100%", // Be mindful of layout implications
+  height: "100%",
   transition: "all 0.3s ease",
   "&:hover": {
     transform: "translateY(-4px)",
@@ -46,7 +59,7 @@ const StyledModalBox = styled(Box)(({ theme }) => ({
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: 450,
-  background: "rgba(30, 30, 46, 0.95)", // Darker, more solid glass for modal
+  background: "rgba(30, 30, 46, 0.95)",
   border: "1px solid rgba(255, 255, 255, 0.1)",
   backdropFilter: "blur(15px)",
   boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
@@ -54,8 +67,8 @@ const StyledModalBox = styled(Box)(({ theme }) => ({
   borderRadius: 20,
   color: theme.palette.text.primary,
 }));
-// Define the Admin type based on the provided JSON structure
-interface Admin {
+
+export interface Admin {
   createdAt: string;
   email: string;
   entityType: string;
@@ -64,42 +77,158 @@ interface Admin {
   isSubscriptionActive: boolean;
   lastName: string;
   middleName: string | null;
-  subscriptionPlan: string;
+  subscriptionPlan: "monthly" | "yearly"; // Made this more specific
   updatedAt: string;
 }
 
 const OwnerDashboardAdmins: React.FC = () => {
-  const { data: queryData, isLoading, isError, error } = useGetAllAdmins();
+  const {
+    data: queryData,
+    isLoading,
+    isError,
+    error: fetchErrorData,
+  } = useGetAllAdmins(); // Renamed error to fetchErrorData
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const adminMutation = useUpdateAdminById(); // Renamed for clarity
 
-  console.log(queryData);
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  const showAppToast = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setToast({ open: true, message, severity });
+  };
+
+  const handleCloseToast = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setToast((prev) => ({ ...prev, open: false }));
+  };
+
   useEffect(() => {
     if (queryData?.data) {
       setAdmins(queryData.data);
     } else if (!isLoading && !isError) {
-      // If not loading, no error, but no data
       setAdmins([]);
     }
   }, [queryData, isLoading, isError]);
 
   const handleToggleSubscription = (adminId: number) => {
-    console.log(`Plan update initiated for admin ID: ${adminId}`); // Mock function log as requested
+    const currentAdmin = admins.find((admin) => admin.id === adminId);
+    if (!currentAdmin) return;
+
+    const newSubscriptionState = !currentAdmin.isSubscriptionActive; // Determine the NEW state
+
+    // Optimistically update UI
     setAdmins((prevAdmins) =>
       prevAdmins.map((admin) =>
         admin.id === adminId
-          ? { ...admin, isSubscriptionActive: !admin.isSubscriptionActive }
+          ? { ...admin, isSubscriptionActive: newSubscriptionState }
           : admin
       )
     );
-    console.log(
-      `Subscription status visually updated for admin ID: ${adminId}. (Client-side only)`
+
+    const payload = {
+      ...currentAdmin,
+      isSubscriptionActive: newSubscriptionState,
+    };
+    // Ensure `id` is not part of the `data` field if your API expects `adminId` separately
+    // delete payload.id; // If `id` is not part of the `data` object for the mutation
+
+    adminMutation.mutate(
+      { adminId, data: payload },
+      {
+        onSuccess: () => {
+          showAppToast(
+            `Subscription for ${currentAdmin.firstName} ${
+              newSubscriptionState ? "activated" : "deactivated"
+            }.`,
+            "success"
+          );
+        },
+        onError: (err: any) => {
+          showAppToast(
+            `Failed to update subscription: ${err.message || "Unknown error"}`,
+            "error"
+          );
+          // Revert UI change
+          setAdmins((prevAdmins) =>
+            prevAdmins.map((admin) =>
+              admin.id === adminId
+                ? {
+                    ...admin,
+                    isSubscriptionActive: currentAdmin.isSubscriptionActive,
+                  } // Revert to original state
+                : admin
+            )
+          );
+        },
+      }
     );
-    // In a real application, you would call a mutation here:
-    // e.g., updateAdminSubscriptionMutation.mutate({ adminId, newStatus: newStatus });
+  };
+
+  const handleUpdateSubscriptionType = (
+    adminId: number,
+    newPlan: "monthly" | "yearly"
+  ) => {
+    const currentAdmin = admins.find((admin) => admin.id === adminId);
+    if (!currentAdmin || currentAdmin.subscriptionPlan === newPlan) return;
+
+    const oldPlan = currentAdmin.subscriptionPlan;
+
+    // Optimistically update UI
+    setAdmins((prevAdmins) =>
+      prevAdmins.map((admin) =>
+        admin.id === adminId ? { ...admin, subscriptionPlan: newPlan } : admin
+      )
+    );
+
+    const payload = { ...currentAdmin, subscriptionPlan: newPlan };
+    // delete payload.id; // If `id` is not part of the `data` object for the mutation
+
+    adminMutation.mutate(
+      { adminId, data: payload },
+      {
+        onSuccess: () => {
+          console.log("Mutation succeeded. Attempting to show success toast."); // DEBUG
+          showAppToast(
+            `Subscription plan for ${currentAdmin.firstName} updated to ${newPlan}.`,
+            "success"
+          );
+        },
+        onError: (err: any) => {
+          showAppToast(
+            `Failed to update plan: ${err.message || "Unknown error"}`,
+            "error"
+          );
+          // Revert UI change
+          setAdmins((prevAdmins) =>
+            prevAdmins.map((admin) =>
+              admin.id === adminId
+                ? { ...admin, subscriptionPlan: oldPlan }
+                : admin
+            )
+          );
+        },
+      }
+    );
   };
 
   const handleViewDetails = (admin: Admin) => {
@@ -134,10 +263,12 @@ const OwnerDashboardAdmins: React.FC = () => {
           p: 3,
         }}
       >
-        <CircularProgress />
+        {" "}
+        <CircularProgress />{" "}
         <Typography sx={{ ml: 2, color: "text.secondary" }}>
-          Loading Admins...
-        </Typography>
+          {" "}
+          Loading Admins...{" "}
+        </Typography>{" "}
       </Box>
     );
   }
@@ -145,35 +276,40 @@ const OwnerDashboardAdmins: React.FC = () => {
   if (isError) {
     return (
       <GlassCard sx={{ m: 2, p: { xs: 1, sm: 2, md: 3 } }}>
+        {" "}
         <Typography variant="h6" color="error" gutterBottom>
-          Error
-        </Typography>
+          {" "}
+          Error{" "}
+        </Typography>{" "}
         <Typography color="error.light">
+          {" "}
           Failed to fetch admin data.{" "}
-          {error instanceof Error
-            ? error.message
-            : "An unknown error occurred."}
-        </Typography>
+          {fetchErrorData instanceof Error
+            ? fetchErrorData.message
+            : "An unknown error occurred."}{" "}
+        </Typography>{" "}
       </GlassCard>
     );
   }
 
-  // Handles the case where data is fetched but is null/undefined or an empty array
   if (!admins || admins.length === 0) {
     return (
       <GlassCard sx={{ m: 2, p: { xs: 1, sm: 2, md: 3 } }}>
+        {" "}
         <Typography
           variant="h5"
           gutterBottom
           sx={{ mb: 2, color: "text.primary" }}
         >
-          Admins Management
-        </Typography>
+          {" "}
+          Admins Management{" "}
+        </Typography>{" "}
         <Typography
           sx={{ color: "text.secondary", textAlign: "center", py: 4 }}
         >
-          No admin data available.
-        </Typography>
+          {" "}
+          No admin data available.{" "}
+        </Typography>{" "}
       </GlassCard>
     );
   }
@@ -195,14 +331,12 @@ const OwnerDashboardAdmins: React.FC = () => {
       </Typography>
       <TableContainer
         component={Paper}
-        // Make TableContainer's Paper transparent to let GlassCard's style through
-        // The theme's MuiPaper style (backdropFilter, border, backgroundColor) might conflict if not transparent here.
         sx={{
-          background: "rgba(255, 255, 255, 0.03)", // Very subtle background for the table area within the glass
+          background: "rgba(255, 255, 255, 0.03)",
           border: "1px solid rgba(255, 255, 255, 0.05)",
-          borderRadius: "12px", // Rounded corners for the table container itself
-          boxShadow: "none", // Remove default Paper shadow if GlassCard provides the main shadow
-          backdropFilter: "blur(5px)", // Optional: slight inner blur if desired
+          borderRadius: "12px",
+          boxShadow: "none",
+          backdropFilter: "blur(5px)",
         }}
       >
         <Table stickyHeader aria-label="admins table">
@@ -215,7 +349,8 @@ const OwnerDashboardAdmins: React.FC = () => {
                   borderBottomColor: "rgba(255, 255, 255, 0.2)",
                 }}
               >
-                Name
+                {" "}
+                Name{" "}
               </TableCell>
               <TableCell
                 sx={{
@@ -224,7 +359,8 @@ const OwnerDashboardAdmins: React.FC = () => {
                   borderBottomColor: "rgba(255, 255, 255, 0.2)",
                 }}
               >
-                Email
+                {" "}
+                Email{" "}
               </TableCell>
               <TableCell
                 sx={{
@@ -233,7 +369,8 @@ const OwnerDashboardAdmins: React.FC = () => {
                   borderBottomColor: "rgba(255, 255, 255, 0.2)",
                 }}
               >
-                Sub. Status
+                {" "}
+                Sub. Status{" "}
               </TableCell>
               <TableCell
                 sx={{
@@ -242,7 +379,8 @@ const OwnerDashboardAdmins: React.FC = () => {
                   borderBottomColor: "rgba(255, 255, 255, 0.2)",
                 }}
               >
-                Sub. Plan
+                {" "}
+                Sub. Plan{" "}
               </TableCell>
               <TableCell
                 align="center"
@@ -252,7 +390,8 @@ const OwnerDashboardAdmins: React.FC = () => {
                   borderBottomColor: "rgba(255, 255, 255, 0.2)",
                 }}
               >
-                Actions
+                {" "}
+                Actions{" "}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -265,7 +404,7 @@ const OwnerDashboardAdmins: React.FC = () => {
                   "&:hover": { backgroundColor: "action.hover" },
                   "& td, & th": {
                     borderBottomColor: "rgba(255, 255, 255, 0.1)",
-                  }, // Lighter border for rows
+                  },
                 }}
               >
                 <TableCell sx={{ color: "text.primary" }}>
@@ -285,7 +424,22 @@ const OwnerDashboardAdmins: React.FC = () => {
                 <TableCell
                   sx={{ color: "text.primary", textTransform: "capitalize" }}
                 >
-                  {admin.subscriptionPlan}
+                  <TextField
+                    select
+                    label="Plan"
+                    value={admin.subscriptionPlan}
+                    onChange={(e) =>
+                      handleUpdateSubscriptionType(
+                        admin.id,
+                        e.target.value as "monthly" | "yearly"
+                      )
+                    }
+                    size="small"
+                    sx={{ minWidth: 120 }}
+                  >
+                    <MenuItem value={"monthly"}>Monthly</MenuItem>
+                    <MenuItem value={"yearly"}>Yearly</MenuItem>
+                  </TextField>
                 </TableCell>
                 <TableCell align="center">
                   <IconButton
@@ -294,14 +448,15 @@ const OwnerDashboardAdmins: React.FC = () => {
                     color="info"
                     size="small"
                   >
-                    <VisibilityIcon />
+                    {" "}
+                    <VisibilityIcon />{" "}
                   </IconButton>
                   <Button
                     variant="outlined"
                     size="small"
                     color={admin.isSubscriptionActive ? "warning" : "success"}
                     onClick={() => handleToggleSubscription(admin.id)}
-                    sx={{ ml: 1, minWidth: "110px" }} // Ensure enough width for text
+                    sx={{ ml: 1, minWidth: "110px" }}
                     startIcon={<EditIcon />}
                   >
                     {admin.isSubscriptionActive ? "Deactivate" : "Activate"}
@@ -320,7 +475,7 @@ const OwnerDashboardAdmins: React.FC = () => {
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        sx={{ color: "text.secondary", mt: 2 }} // Ensure pagination controls are visible
+        sx={{ color: "text.secondary", mt: 2 }}
       />
 
       {/* Admin Details Modal */}
@@ -331,9 +486,7 @@ const OwnerDashboardAdmins: React.FC = () => {
         aria-describedby="admin-details-modal-description"
         closeAfterTransition
         BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
+        BackdropProps={{ timeout: 500 }}
       >
         <Fade in={isModalOpen}>
           <StyledModalBox>
@@ -354,24 +507,28 @@ const OwnerDashboardAdmins: React.FC = () => {
             {selectedAdmin && (
               <Box id="admin-details-modal-description">
                 <Typography variant="body1" gutterBottom>
+                  {" "}
                   <strong>Name:</strong> {selectedAdmin.firstName}{" "}
                   {selectedAdmin.middleName
                     ? `${selectedAdmin.middleName} `
-                    : ""}
-                  {selectedAdmin.lastName}
+                    : ""}{" "}
+                  {selectedAdmin.lastName}{" "}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
-                  <strong>Email:</strong> {selectedAdmin.email}
+                  {" "}
+                  <strong>Email:</strong> {selectedAdmin.email}{" "}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
+                  {" "}
                   <strong>Subscription Plan:</strong>{" "}
                   <Chip
                     label={selectedAdmin.subscriptionPlan}
                     size="small"
                     sx={{ textTransform: "capitalize" }}
-                  />
+                  />{" "}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
+                  {" "}
                   <strong>Subscription Status:</strong>{" "}
                   <Chip
                     label={
@@ -381,10 +538,11 @@ const OwnerDashboardAdmins: React.FC = () => {
                       selectedAdmin.isSubscriptionActive ? "success" : "error"
                     }
                     size="small"
-                  />
+                  />{" "}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
-                  <strong>Entity Type:</strong> {selectedAdmin.entityType}
+                  {" "}
+                  <strong>Entity Type:</strong> {selectedAdmin.entityType}{" "}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -392,21 +550,41 @@ const OwnerDashboardAdmins: React.FC = () => {
                   color="text.secondary"
                   mt={2}
                 >
-                  Created: {new Date(selectedAdmin.createdAt).toLocaleString()}
+                  {" "}
+                  Created: {new Date(
+                    selectedAdmin.createdAt
+                  ).toLocaleString()}{" "}
                 </Typography>
                 <Typography
                   variant="caption"
                   display="block"
                   color="text.secondary"
                 >
+                  {" "}
                   Last Updated:{" "}
-                  {new Date(selectedAdmin.updatedAt).toLocaleString()}
+                  {new Date(selectedAdmin.updatedAt).toLocaleString()}{" "}
                 </Typography>
               </Box>
             )}
           </StyledModalBox>
         </Fade>
       </Modal>
+
+      {/* Toast Snackbar */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseToast}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </GlassCard>
   );
 };
