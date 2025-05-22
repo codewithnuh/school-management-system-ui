@@ -65,7 +65,7 @@ export const teacherLogin = async (data: {
   return response.data;
 };
 export const ownerLogin = async (data: { email: string; password: string }) => {
-  const response = await axiosInstance.post("auth/login/owner", {
+  const response = await axiosInstance.post("auth/owner/login", {
     ...data,
   });
   return response.data;

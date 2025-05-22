@@ -23,20 +23,13 @@ import {
   MenuItem,
   TextField,
   Snackbar, // Added Snackbar for toasts
-  Alert as MuiAlert, // Added Alert for Snackbar content (aliased to avoid conflict if you have a custom Alert)
+  Alert as MuiAlert,
+  Alert, // Added Alert for Snackbar content (aliased to avoid conflict if you have a custom Alert)
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import { useUpdateAdminById } from "../../../services/queries/admin"; // Adjust path if needed
 import { useGetAllAdmins } from "../../../services/queries/admin"; // Adjust path if needed
-
-// Forward ref for MuiAlert to be used in Snackbar
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  import("@mui/material").AlertProps
->(function Alert(props, ref) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
 
 const GlassCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -104,23 +97,17 @@ const OwnerDashboardAdmins: React.FC = () => {
     message: "",
     severity: "info",
   });
-
-  const showAppToast = (
+  const showSnackbar = (
     message: string,
     severity: "success" | "error" | "info" | "warning"
   ) => {
-    setToast({ open: true, message, severity });
+    setToast({
+      open: true,
+      message,
+      severity,
+    });
   };
-
-  const handleCloseToast = (
-    event?: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setToast((prev) => ({ ...prev, open: false }));
-  };
+  const handleCloseToast = () => setToast({ ...toast, open: false });
 
   useEffect(() => {
     if (queryData?.data) {
@@ -156,7 +143,7 @@ const OwnerDashboardAdmins: React.FC = () => {
       { adminId, data: payload },
       {
         onSuccess: () => {
-          showAppToast(
+          showSnackbar(
             `Subscription for ${currentAdmin.firstName} ${
               newSubscriptionState ? "activated" : "deactivated"
             }.`,
@@ -164,7 +151,7 @@ const OwnerDashboardAdmins: React.FC = () => {
           );
         },
         onError: (err: any) => {
-          showAppToast(
+          showSnackbar(
             `Failed to update subscription: ${err.message || "Unknown error"}`,
             "error"
           );
@@ -208,13 +195,13 @@ const OwnerDashboardAdmins: React.FC = () => {
       {
         onSuccess: () => {
           console.log("Mutation succeeded. Attempting to show success toast."); // DEBUG
-          showAppToast(
+          showSnackbar(
             `Subscription plan for ${currentAdmin.firstName} updated to ${newPlan}.`,
             "success"
           );
         },
         onError: (err: any) => {
-          showAppToast(
+          showSnackbar(
             `Failed to update plan: ${err.message || "Unknown error"}`,
             "error"
           );
@@ -570,12 +557,12 @@ const OwnerDashboardAdmins: React.FC = () => {
         </Fade>
       </Modal>
 
-      {/* Toast Snackbar */}
+      {/* Toast Notification */}
       <Snackbar
         open={toast.open}
-        autoHideDuration={6000}
+        autoHideDuration={5000}
         onClose={handleCloseToast}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={handleCloseToast}

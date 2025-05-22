@@ -12,12 +12,18 @@ import {
   MenuItem,
   TextField,
   Typography,
+  Alert,
+  Snackbar,
 } from "@mui/material";
-import { useGetAllTeachers } from "../../../services/queries/teachers";
+import {
+  useGetAllTeachers,
+  useUpdateTeacherById,
+} from "../../../services/queries/teachers";
 import { useNavigate } from "react-router";
 import { ThemeProvider } from "@mui/material/styles";
 import { darkTheme } from "../../../theme/darkTheme";
 import { styled } from "@mui/material/styles";
+import { TeacherData } from "../../../api/axios/registerTeachers";
 
 // Styled Components
 const GlassCard = styled(Paper)(({ theme }) => ({
@@ -32,10 +38,31 @@ const GlassCard = styled(Paper)(({ theme }) => ({
 export default function TeacherGridView() {
   const navigate = useNavigate();
   const { data: teachers, isLoading } = useGetAllTeachers();
-  const [localTeachers, setLocalTeachers] = useState([]);
+  const [localTeachers, setLocalTeachers] = useState<TeacherData[]>([]);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<number, boolean>>(
     {}
   );
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setToast({
+      open: true,
+      message,
+      severity,
+    });
+  };
+  const handleCloseToast = () => setToast({ ...toast, open: false });
+  const updateTeacher = useUpdateTeacherById();
   console.log(localTeachers);
   useEffect(() => {
     if (teachers?.data) {
@@ -56,11 +83,22 @@ export default function TeacherGridView() {
   const handleRowSave = (rowId: number) => {
     const updatedTeacher = localTeachers.find((t) => t.id === rowId);
     // Call API mutation here
-    console.log("Saving:", updatedTeacher);
-    setUnsavedChanges((prev) => ({
-      ...prev,
-      [rowId]: false,
-    }));
+    if (!updatedTeacher) return;
+    console.log({ updatedTeacher });
+    updateTeacher.mutate(
+      {
+        data: { ...updatedTeacher },
+        id: updatedTeacher.id as number,
+      },
+      {
+        onSuccess: () => {
+          showSnackbar("Teacher updated successfully", "success");
+        },
+        onError: (err) => {
+          showSnackbar("Error updating teacher", "error");
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -103,8 +141,16 @@ export default function TeacherGridView() {
                         }`}
                         onChange={(e) => {
                           const [first, last] = e.target.value.split(" ");
-                          handleFieldChange(teacher.id, "firstName", first);
-                          handleFieldChange(teacher.id, "lastName", last);
+                          handleFieldChange(
+                            teacher.id as number,
+                            "firstName",
+                            first
+                          );
+                          handleFieldChange(
+                            teacher.id as number,
+                            "lastName",
+                            last
+                          );
                         }}
                         fullWidth
                         size="small"
@@ -120,7 +166,11 @@ export default function TeacherGridView() {
                       <TextField
                         value={teacher.email || ""}
                         onChange={(e) =>
-                          handleFieldChange(teacher.id, "email", e.target.value)
+                          handleFieldChange(
+                            teacher.id as number,
+                            "email",
+                            e.target.value
+                          )
                         }
                         fullWidth
                         size="small"
@@ -137,7 +187,7 @@ export default function TeacherGridView() {
                         value={teacher.address || ""}
                         onChange={(e) =>
                           handleFieldChange(
-                            teacher.id,
+                            teacher.id as number,
                             "address",
                             e.target.value
                           )
@@ -158,7 +208,7 @@ export default function TeacherGridView() {
                         value={teacher.isVerified ? "Yes" : "No"}
                         onChange={(e) =>
                           handleFieldChange(
-                            teacher.id,
+                            teacher.id as number,
                             "isVerified",
                             e.target.value === "Yes"
                           )
@@ -186,13 +236,19 @@ export default function TeacherGridView() {
                         View Profile
                       </Button>
                       <Button
-                        onClick={() => handleRowSave(teacher.id)}
-                        disabled={!unsavedChanges[teacher.id]}
+                        onClick={() => handleRowSave(teacher.id as number)}
+                        disabled={
+                          teacher.id === undefined
+                            ? true
+                            : !unsavedChanges[teacher.id]
+                        }
                         variant="contained"
                         color="primary"
                         sx={{ textTransform: "none" }}
                       >
-                        {unsavedChanges[teacher.id] ? "Save" : "Saved"}
+                        {unsavedChanges[teacher.id as number]
+                          ? "Save"
+                          : "Saved"}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -201,6 +257,21 @@ export default function TeacherGridView() {
             </Table>
           </TableContainer>
         </GlassCard>
+        {/* Toast Notification */}
+        <Snackbar
+          open={toast.open}
+          autoHideDuration={5000}
+          onClose={handleCloseToast}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            onClose={handleCloseToast}
+            severity={toast.severity}
+            sx={{ width: "100%" }}
+          >
+            {toast.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </ThemeProvider>
   );

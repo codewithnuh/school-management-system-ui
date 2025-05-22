@@ -43,6 +43,7 @@ import OwnerDashboardAdmins from "./components/dashboards/owner/OwnerDashboardAd
 import TeachersTab from "./components/dashboards/admin/TeachersTab.tsx";
 import TeacherDetailView from "./components/dashboards/admin/TeacherDetailedView.tsx";
 import TeacherGridView from "./components/dashboards/admin/TeachersGridView.tsx";
+import { RoleGuard } from "./components/RoleGuard.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -63,9 +64,14 @@ createRoot(document.getElementById("root")!).render(
               element={<UserRegistrationForm />}
             />
             {/*  ----------------- ADMIN ROUTES ------------------- */}
+
             <Route
               path="/dashboard/admin/"
-              element={<DashboardLayout role="admin" />}
+              element={
+                <RoleGuard allowedRoles={["ADMIN"]}>
+                  <DashboardLayout role="admin" />
+                </RoleGuard>
+              }
             >
               <Route index element={<AdminDashboardHome />} />
               <Route
@@ -93,7 +99,11 @@ createRoot(document.getElementById("root")!).render(
             {/* ----------------------- OWNER ROUTES ------------------ */}
             <Route
               path="/dashboard/owner/"
-              element={<DashboardLayout role="owner" />}
+              element={
+                <RoleGuard allowedRoles={["OWNER"]}>
+                  <DashboardLayout role="owner" />
+                </RoleGuard>
+              }
             >
               <Route index element={<OwnerDashboardHome />} />
               <Route path="admins" element={<OwnerDashboardAdmins />} />

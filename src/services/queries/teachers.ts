@@ -4,6 +4,7 @@ import {
   fetchSingleTeacher,
   getAllTeachers,
   getTeachersCount,
+  updateTeacher,
 } from "../../api/axios/teachers";
 import { Teacher } from "../../types/teacher";
 import {
@@ -98,5 +99,13 @@ export const useGetAllTeachers = () => {
   return useQuery({
     queryKey: ["teachers"],
     queryFn: () => getAllTeachers(),
+  });
+};
+
+export const useUpdateTeacherById = () => {
+  return useMutation({
+    mutationFn: ({ data, id }: { data: TeacherData; id: number }) =>
+      updateTeacher(id, data),
+    mutationKey: ["updateTeacher"],
   });
 };

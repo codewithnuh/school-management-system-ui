@@ -4,7 +4,7 @@ import { Navigate } from "react-router";
 import { useUser } from "../hooks/useUser";
 
 interface RoleGuardProps {
-  allowedRoles: Array<"ADMIN" | "TEACHER" | "PARENT" | "USER">;
+  allowedRoles: Array<"ADMIN" | "TEACHER" | "PARENT" | "USER" | "OWNER">;
   children: React.ReactElement;
 }
 
@@ -13,7 +13,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   children,
 }) => {
   const { data: user, isLoading, isError } = useUser();
-  
+  console.log(user);
   if (isLoading) {
     // Show a loading indicator while fetching
     return <div>Loading...</div>;
