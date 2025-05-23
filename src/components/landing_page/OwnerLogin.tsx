@@ -73,6 +73,7 @@ const OwnerLogin = () => {
           severity: "success",
         });
         setLoading(false);
+        navigate("/dashboard/owner");
       },
       onError: (error) => {
         console.error("Login error:", error);

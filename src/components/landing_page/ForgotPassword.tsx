@@ -41,7 +41,7 @@ import {
 } from "../../services/queries/auth";
 
 // Define entity type options
-type EntityType = "ADMIN" | "STUDENT" | "TEACHER";
+type EntityType = "ADMIN" | "STUDENT" | "TEACHER" | "OWNER";
 
 // Enhanced OTP Input component with better UX
 const OtpInput: React.FC<{
@@ -453,6 +453,7 @@ const ForgotPasswordPage: React.FC = () => {
                 <MenuItem value="ADMIN">Administrator</MenuItem>
                 <MenuItem value="TEACHER">Teacher</MenuItem>
                 <MenuItem value="STUDENT">Student</MenuItem>
+                <MenuItem value="OWNER">OWNER</MenuItem>
               </Select>
               {formErrors.entityType && (
                 <FormHelperText>{formErrors.entityType}</FormHelperText>

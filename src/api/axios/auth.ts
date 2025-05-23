@@ -7,7 +7,7 @@ export const logout = async () => {
 
 export const sendOtp = async (
   email: string,
-  entityType: "ADMIN" | "TEACHER" | "STUDENT"
+  entityType: "ADMIN" | "TEACHER" | "STUDENT" | "OWNER"
 ) => {
   const response = await axiosInstance.post("/auth/forgot-password/initiate", {
     email,

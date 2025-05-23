@@ -1,12 +1,12 @@
 // Application entity types
-export type EntityType = "TEACHER" | "STUDENT" | "ADMIN";
+export type EntityType = "TEACHER" | "STUDENT" | "ADMIN" | "OWNER";
 export type Gender = "Male" | "Female" | "Other";
 export type ApplicationStatus =
   | "Pending"
   | "Accepted"
   | "Rejected"
   | "Interview";
-export type Role = "TEACHER" | "STUDENT" | "ADMIN";
+export type Role = "TEACHER" | "STUDENT" | "ADMIN" | "OWNER";
 
 // Application item interface
 export interface Application {

@@ -247,6 +247,7 @@ const Sidebar = ({ role }: SidebarProps) => {
   const handleLogout = useCallback(async () => {
     try {
       await logout.mutateAsync();
+      navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
     }
