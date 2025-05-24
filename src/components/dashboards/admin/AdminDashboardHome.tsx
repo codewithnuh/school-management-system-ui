@@ -51,7 +51,7 @@ const AdminDashboardHome = () => {
     error,
     isLoading,
   } = useGetSchoolAdminId(adminId as number, !!adminId);
-
+  if (SchoolData?.data == null) navigate("/dashboard/admin/school/create");
   // Safely extract school data
   const school = SchoolData?.data || {
     name: "Loading...",

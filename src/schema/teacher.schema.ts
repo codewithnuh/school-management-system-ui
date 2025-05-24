@@ -104,3 +104,5 @@ export const teacherBasicInfoSchema = teacherSchema.pick({
   gender: true,
   dateOfBirth: true,
 });
+// Infer type for React Hook Form's default values
+export type TeacherFormInputs = z.infer<typeof teacherSchema>;

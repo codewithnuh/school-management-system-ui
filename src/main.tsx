@@ -44,6 +44,7 @@ import TeachersTab from "./components/dashboards/admin/TeachersTab.tsx";
 import TeacherDetailView from "./components/dashboards/admin/TeacherDetailedView.tsx";
 import TeacherGridView from "./components/dashboards/admin/TeachersGridView.tsx";
 import { RoleGuard } from "./components/RoleGuard.tsx";
+import SubjectCreationForm from "./components/dashboards/admin/SubjectCreationForm.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
@@ -82,6 +83,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="student/create" element={<UserCreation />} />
               <Route path="classes" element={<CreateClassForm />} />
               <Route path="school/create" element={<CreateSchool />} />
+              <Route path="subject/create" element={<SubjectCreationForm />} />
               <Route path="teachers/view" element={<TeachersTab />} />
               <Route
                 path="teachers/view/:teacherId"

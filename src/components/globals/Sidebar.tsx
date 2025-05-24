@@ -30,10 +30,15 @@ import {
   ExpandLess,
   Logout,
   Close as CloseIcon,
+  Person,
+  Create,
+  ClassOutlined,
+  RemoveRedEye,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router";
 import { useLogoutMutation } from "../../services/queries/auth";
 import React, { useState, useCallback, useEffect } from "react";
+import path from "path";
 
 const GlassSidebar = styled(Box)(({ theme }) => ({
   height: "100vh",
@@ -78,55 +83,68 @@ type SidebarProps = {
 const menuStructure = {
   admin: [
     {
-      label: "Registration",
-      path: "/dashboard/admin/registration-links",
+      label: "Home",
+      path: "/dashboard/admin",
+      icon: <Home />,
+      ariaLabel: "Home",
+    },
+    {
+      label: "Registration Links",
       icon: <LinkSharp />,
-      ariaLabel: "Registration links management",
+      ariaLabel: "Registration Links",
+      path: "/dashboard/admin/registration-links",
     },
     {
-      label: "Staff",
-      icon: <People />,
-      ariaLabel: "Staff management menu",
+      label: "Students",
+      icon: <Person />,
+      ariaLabel: "Students",
       submenu: [
         {
-          label: "Teachers",
-          path: "/dashboard/admin/teachers",
-          ariaLabel: "Manage teachers",
-        },
-        {
-          label: "Students",
-          path: "/dashboard/admin/students",
-          ariaLabel: "Manage students",
+          label: "Create Student",
+          path: "/dashboard/admin/student/create",
+          ariaLabel: "Create Student",
+          icon: <Create />,
         },
       ],
     },
+
     {
-      label: "School",
+      label: "Classes",
+      icon: <ClassOutlined />,
+      path: "/dashboard/admin/classes",
+      ariaLabel: "Classes",
+    },
+    {
+      label: "school",
       icon: <School />,
-      ariaLabel: "School management menu",
+      ariaLabel: "School",
       submenu: [
         {
-          label: "Manage Classes",
-          path: "/dashboard/admin/classes",
-          ariaLabel: "Manage school classes",
-        },
-        {
-          label: "Sections",
-          path: "/dashboard/admin/sections",
-          ariaLabel: "Manage class sections",
-        },
-        {
-          label: "Subjects",
-          path: "/dashboard/admin/subjects",
-          ariaLabel: "Manage subjects",
+          label: "Create School",
+          ariaLabel: "Create School",
+          icon: <Create />,
+          path: "/dashboard/admin/school/create",
         },
       ],
     },
     {
-      label: "Settings",
-      icon: <Settings />,
-      path: "/dashboard/admin/settings",
-      ariaLabel: "Admin settings",
+      label: "Teachers",
+      ariaLabel: "Teachers",
+      icon: <Person />,
+      submenu: [
+        {
+          label: "Create Teacher",
+          ariaLabel: "Create Teacher",
+          icon: <Create />,
+          path: "/dashboard/admin/teacher/create",
+        },
+        {
+          label: "View Teacher",
+          ariaLabel: "View Teacher",
+          icon: <RemoveRedEye />,
+          path: "/dashboard/admin/teachers/grid-view",
+        },
+      ],
     },
   ],
   teacher: [
@@ -167,33 +185,16 @@ const menuStructure = {
   ],
   owner: [
     {
-      label: "My Schools",
-      icon: <School />,
-      path: "/owner/schools",
-      ariaLabel: "Manage my schools",
+      label: "Home",
+      path: "/dashboard/owner",
+      icon: <Home />,
+      ariaLabel: "Home",
     },
     {
-      label: "Staff",
-      icon: <People />,
-      ariaLabel: "Staff management menu",
-      submenu: [
-        {
-          label: "Admins",
-          path: "/owner/staff/admins",
-          ariaLabel: "Manage administrators",
-        },
-        {
-          label: "Teachers",
-          path: "/owner/staff/teachers",
-          ariaLabel: "Manage teachers",
-        },
-      ],
-    },
-    {
-      label: "Settings",
-      icon: <Settings />,
-      path: "/owner/settings",
-      ariaLabel: "Owner settings",
+      label: "Admins",
+      icon: <Person />,
+      path: "/dashboard/owner/admins",
+      ariaLabel: "Admins",
     },
   ],
   student: [
@@ -246,8 +247,11 @@ const Sidebar = ({ role }: SidebarProps) => {
 
   const handleLogout = useCallback(async () => {
     try {
-      await logout.mutateAsync();
-      navigate("/login");
+      logout.mutate(undefined, {
+        onSuccess: () => {
+          navigate("/login");
+        },
+      });
     } catch (error) {
       console.error("Logout error:", error);
     }

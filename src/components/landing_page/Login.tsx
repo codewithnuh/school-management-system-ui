@@ -71,6 +71,7 @@ const Login = () => {
           open: true,
           severity: "success",
         });
+        navigate("/dashboard/admin");
         setLoading(false);
       },
       onError: (error) => {

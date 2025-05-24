@@ -1,7 +1,4 @@
-import {
-  generateUploadButton,
-  UploadthingComponentProps,
-} from "@uploadthing/react";
+import { generateUploadButton } from "@uploadthing/react";
 
 // Image Uploader Button
 export const UploadButton = generateUploadButton({

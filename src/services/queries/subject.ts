@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../api";
+import { SubjectCreationInputs } from "../../schema/subject.schema";
 // Define the Subject type based on the API response
 export interface Subject {
   id: number;
@@ -23,8 +24,10 @@ export interface ApiResponse<T> {
  * Fetches all subjects from the API
  * @returns Promise with the subjects data
  */
-const fetchSubjects = async (): Promise<Subject[]> => {
-  const response = await axiosInstance.get<ApiResponse<Subject[]>>("subjects");
+const fetchSubjects = async (schoolId: number): Promise<Subject[]> => {
+  const response = await axiosInstance.get<ApiResponse<Subject[]>>(
+    `subjects?${schoolId}`
+  );
 
   return response.data.data;
 };
@@ -33,10 +36,10 @@ const fetchSubjects = async (): Promise<Subject[]> => {
  * Custom hook to fetch and manage subjects data
  * @returns Query result with subjects data and status
  */
-export const useSubjects = () => {
+export const useSubjects = (schoolId: number) => {
   return useQuery<Subject[], Error>({
     queryKey: ["subjects"],
-    queryFn: fetchSubjects,
+    queryFn: () => fetchSubjects(schoolId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });
@@ -53,7 +56,25 @@ const fetchSubjectById = async (id: number): Promise<Subject> => {
   );
   return response.data.data;
 };
-
+const deleteSubjectById = async (
+  id: number,
+  schoolId: number
+): Promise<Subject> => {
+  const response = await axiosInstance.delete(
+    `subjects?id=${id}&schoolId=${schoolId}`
+  );
+  return response.data.data;
+};
+const createSubject = async (data: SubjectCreationInputs) => {
+  const response = await axiosInstance.post("subjects", data);
+  return response.data.data;
+};
+export const useCreateSubject = () => {
+  return useMutation({
+    mutationKey: ["subject"],
+    mutationFn: (data: SubjectCreationInputs) => createSubject(data),
+  });
+};
 /**
  * Custom hook to fetch and manage a single subject's data
  * @param id - The subject ID to fetch
@@ -65,5 +86,12 @@ export const useSubject = (id: number) => {
     queryFn: () => fetchSubjectById(id),
     enabled: !!id, // Only run the query if an ID is provided
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+export const useDeleteSubjectById = () => {
+  return useMutation({
+    mutationKey: ["Subject"],
+    mutationFn: ({ id, schoolId }: { id: number; schoolId: number }) =>
+      deleteSubjectById(id, schoolId),
   });
 };

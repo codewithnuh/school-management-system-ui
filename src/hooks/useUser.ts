@@ -14,6 +14,7 @@ export interface User {
       schoolId?: number;
       classId?: number;
       sectionId?: number;
+      isSubscriptionActive: boolean;
     };
   };
 

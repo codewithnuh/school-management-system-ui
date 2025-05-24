@@ -40,6 +40,8 @@ import { useSubjects } from "../../services/queries/subject";
 import { useUser } from "../../hooks/useUser";
 import { useGetSchoolAdminId } from "../../services/queries/school";
 import { useCreateTeacher } from "../../services/queries/teachers";
+import { useNavigate } from "react-router";
+import { useVerifyAdminSubscription } from "../../utils/verifyAdminAccountSubscription";
 // Define the public key for Uploadcare
 const UPLOADCARE_PUBLIC_KEY = import.meta.env
   .VITE_REACT_APP_UPLOADCARE_PUBLIC_KEY; // Replace with env var in production
@@ -82,8 +84,10 @@ function TeacherCreation() {
   const { data: userData } = useUser();
   const adminId = userData?.data.user.id;
   const { data: school } = useGetSchoolAdminId(adminId!, !!adminId);
-  console.log(school);
+  const { subscriptionStatus } = useVerifyAdminSubscription();
+  const navigate = useNavigate();
   // State for uploaded file URLs
+  if (subscriptionStatus != true) navigate("/dashboard/admin/activate");
   const [files, setFiles] = useState<FileUploads>({
     cvPath: "",
     photo: "",

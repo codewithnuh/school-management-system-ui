@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Container,
   Paper,
@@ -16,7 +16,12 @@ import {
 import { darkTheme } from "../../theme/darkTheme"; // your existing theme
 import { uploadDirect } from "@uploadcare/upload-client";
 import { useUser } from "../../hooks/useUser";
-import { useCreateSchool } from "../../services/queries/school";
+import {
+  useCreateSchool,
+  useGetSchoolAdminId,
+} from "../../services/queries/school";
+import { useNavigate } from "react-router";
+import { useVerifyAdminSubscription } from "../../utils/verifyAdminAccountSubscription";
 
 // Styled components
 const GlassPaper = styled(Paper)(({ theme }) => ({
@@ -37,16 +42,34 @@ const CreateSchool = () => {
     name: "",
     brandColor: "",
     description: "",
-    logo: "",
+    logo: "https://codewithnuh.vercel.app",
   });
   const { data } = useUser();
-  const adminId = data?.data.user.id;
   console.log(data);
+  const navigate = useNavigate();
+  const { data: userData } = useUser();
+
+  // Redirect non-admins
+  const adminId = userData?.data.role === "ADMIN" ? userData.data.user.id : "";
+  useEffect(() => {
+    if (!adminId) {
+      navigate("/login");
+    }
+  }, [adminId, navigate]);
+
+  // Fetch school data
+  const {
+    data: SchoolData,
+    error,
+    isLoading,
+  } = useGetSchoolAdminId(adminId as number, !!adminId);
+  if (SchoolData?.data != null) navigate("/dashboard/admin");
   const createSchoolMutation = useCreateSchool();
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [schoolCreated, setSchoolCreated] = useState(false);
-
+  const { subscriptionStatus } = useVerifyAdminSubscription();
+  if (subscriptionStatus == false) navigate("/dashboard/admin/activate");
   const [toast, setToast] = useState({
     open: false,
     message: "",
